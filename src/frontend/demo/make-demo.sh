@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Builds one demo for the landing page from a video and its exact text: the bot's engine
-# burns subtitles in every style into media/<name>/, and media/demos.json gets the entry.
+# burns subtitles in every style into public/media/<name>/, and src/data/demos.json gets
+# the entry.
 # Needs ffmpeg, Docker, python3 and the bot repository next to this one (SUBLYA_BOT_DIR,
 # default ../bot) with STT_API_KEY in its .env. Recognition costs a fraction of a cent.
 #
@@ -14,7 +15,7 @@ usage="usage: make-demo.sh name video.mp4 [text.txt]"
 name="${1:?$usage}"
 source="${2:?$usage}"
 text="${3:-$here/$name.txt}"
-out="$site/media/$name"
+out="$site/public/media/$name"
 work="$(mktemp -d)"
 trap 'rm -rf "$work"' EXIT
 
@@ -42,17 +43,17 @@ for file in before classic; do
 done
 mv "$out/classic.jpg" "$out/poster.jpg"
 
-# the page asks for media/<name>/*?v=<version>: new files, new URLs, whatever browsers cached
+# the page asks for /media/<name>/*?v=<version>: new files, new URLs, whatever browsers cached
 version="$(cat "$out"/*.mp4 "$out"/*.jpg | shasum | cut -c1-8)"
 duration="$("$ffprobe" -v error -show_entries format=duration -of csv=p=0 "$out/before.mp4")"
-python3 - "$site/media/demos.json" "$name" "$version" "$duration" <<'EOF'
+python3 - "$site/src/data/demos.json" "$name" "$version" "$duration" <<'EOF'
 import json, os, sys
 path, name, version, duration = sys.argv[1], sys.argv[2], sys.argv[3], float(sys.argv[4])
 demos = json.load(open(path)) if os.path.exists(path) else []
-entry = next((d for d in demos if d["name"] == name), None)
+entry = next((d for d in demos if d["id"] == name), None)
 if entry is None:
-    # the note under the player is written by hand afterwards
-    entry = {"name": name, "note": ""}
+    # the note under the player is written by hand afterwards; the build fails until it is
+    entry = {"id": name, "note": ""}
     demos.append(entry)
 entry.update(v=version, duration=round(duration, 1))
 with open(path, "w") as f:

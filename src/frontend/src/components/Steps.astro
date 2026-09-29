@@ -1,0 +1,42 @@
+---
+import '../styles/steps.css'
+
+const frame = 'background-image:url(/media/samara/before.jpg)'
+---
+
+<section class="steps">
+  <h2>Три шага</h2>
+  <ol>
+    <li>
+      <div class="scene scene-send" aria-hidden="true">
+        <div class="chat-bubble">
+          <div class="clip" style={frame}><span class="play"></span></div>
+          <div class="upload"><i></i></div>
+          <svg class="check" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 5 5 9-10"></path></svg>
+        </div>
+      </div>
+      <b>Пришли видео</b>Обычным сообщением, файлом или кружком. До 3 минут и 200 МБ.
+    </li>
+    <li>
+      <div class="scene scene-type" aria-hidden="true">
+        <div class="field">
+          <span class="label">Подпись</span>
+          <p><span class="typed" data-text="Сегодня мы ездили в Самару за рыбой"></span><span class="caret"></span></p>
+        </div>
+      </div>
+      <b>Добавь текст в подпись</b>Если он есть: стих, сценарий, песня. На экране будут твои слова, а тайминги бот возьмёт из речи. Переносы строк станут сменой экрана.
+    </li>
+    <li>
+      <div class="scene scene-result" aria-hidden="true">
+        <div class="frame" style={frame}><p class="subs"><span>вкусным</span> <span>обедом.</span></p></div>
+        <div class="kb"><span>Исправить текст</span><span>Стиль</span></div>
+      </div>
+      <b>Забери ролик</b>Если бот ослышался, нажми «Исправить текст» и пришли правильный. Видео пересоберётся за секунды.
+    </li>
+  </ol>
+</section>
+
+<script>
+  import { scenes } from '../scripts/scenes.js'
+  scenes()
+</script>
