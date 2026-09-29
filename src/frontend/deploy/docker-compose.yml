@@ -1,0 +1,20 @@
+# Production: the site shares the skator.ru server, whose Caddy owns ports 80/443 and
+# proxies sublya.aimuzov.online here over the skator_default network.
+
+services:
+  site:
+    image: sublya-site:latest
+    container_name: sublya-site
+    restart: unless-stopped
+    networks:
+      - skator
+    logging:
+      driver: json-file
+      options:
+        max-size: '5m'
+        max-file: '2'
+
+networks:
+  skator:
+    name: skator_default
+    external: true
