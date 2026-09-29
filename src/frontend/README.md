@@ -8,19 +8,27 @@ The bot itself lives in a separate repository, cloned next to this one as `bot/`
 ## Look at it
 
 ```bash
-python3 -m http.server 8765
+docker run --rm -p 8765:80 -v "$PWD:/usr/share/nginx/html:ro" -v "$PWD/nginx.conf:/etc/nginx/conf.d/default.conf:ro" nginx:1.29-alpine
 ```
 
 ## Demo videos
 
-`media/` holds the demo: a short video from a cafe as it was sent, and the same video with
-subtitles in each of the four styles. The exact text is in `demo/text.txt`; its line breaks
-are the screen breaks. To rebuild it, the bot repository has to sit next to this one (or
-`SUBLYA_BOT_DIR` has to point at it) with `STT_API_KEY` in its `.env`:
+The demo is a deck of cards: each is a real video as it was sent, plus the same video with
+subtitles in each of the four styles. The page shuffles the deck, and a swipe shows the next
+one. `media/<name>/` holds the files of one demo, `media/demos.json` lists them with the note
+shown under the player, and `demo/<name>.txt` is the exact text; its line breaks are the
+screen breaks.
+
+To add a demo, write its text, build it, then fill in its note in `media/demos.json`. The bot
+repository has to sit next to this one (or `SUBLYA_BOT_DIR` has to point at it) with
+`STT_API_KEY` in its `.env`:
 
 ```bash
-SUBLYA_FFMPEG=/opt/homebrew/opt/ffmpeg-full/bin/ffmpeg demo/make-demo.sh video.mp4
+SUBLYA_FFMPEG=/opt/homebrew/opt/ffmpeg-full/bin/ffmpeg demo/make-demo.sh name video.mp4
 ```
+
+Serving the files needs HTTP range requests: without them the player can't seek, and
+switching styles jumps back to the start. nginx has them, `python3 -m http.server` doesn't.
 
 Rendering goes through the bot's Docker image, so the font and ffmpeg are the same as in
 production. Recognition costs a fraction of a cent.

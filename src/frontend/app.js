@@ -1,117 +1,264 @@
-function setSoundIcon(button, video) {
-  button.dataset.muted = String(video.muted)
-  button.setAttribute('aria-label', video.muted ? 'Включить звук' : 'Выключить звук')
-}
-
-// only one video speaks at a time
-for (const button of document.querySelectorAll('[data-sound-for]')) {
-  const video = document.getElementById(button.dataset.soundFor)
-  button.addEventListener('click', () => {
-    const unmute = video.muted
-    for (const other of document.querySelectorAll('[data-sound-for]')) {
-      const v = document.getElementById(other.dataset.soundFor)
-      v.muted = true
-      setSoundIcon(other, v)
-    }
-    video.muted = !unmute
-    if (unmute) video.play()
-    setSoundIcon(button, video)
+const once = (el, event, ms = 3000) =>
+  new Promise((resolve) => {
+    el.addEventListener(event, resolve, { once: true })
+    setTimeout(resolve, ms) // a stalled network shouldn't freeze the switch forever
   })
+
+const url = (demo, file, ext = 'mp4') => `/media/${demo.name}/${file}.${ext}?v=${demo.v}`
+
+function shuffle(list) {
+  const a = [...list]
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[a[i], a[j]] = [a[j], a[i]]
+  }
+  return a
 }
 
-// before/after and the four styles share one timeline, so switching shows the same
-// moment of the video in another look
-const demo = document.getElementById('demo-video')
-// set by demo/make-demo.sh: a rebuilt demo gets new URLs, so no browser keeps the old one
-const MEDIA = document.body.dataset.media
-const toggle = document.querySelector('.toggle')
-const styles = document.querySelector('.styles')
-let version = 'after'
-let style = 'classic'
+// Two stacked videos: the next version loads and seeks behind the one on screen and takes
+// its place only once it plays, so switching keeps the moment and never flashes black.
+class Player {
+  constructor() {
+    this.root = document.createElement('div')
+    this.root.className = 'player'
+    this.videos = [0, 1].map(() => {
+      const v = document.createElement('video')
+      Object.assign(v, { muted: true, loop: true, playsInline: true, preload: 'auto' })
+      this.root.append(v)
+      return v
+    })
+    this.front = this.videos[0]
+    this.front.classList.add('front')
+    this.active = false
+    this.seq = 0
+  }
 
-function check(group, attr, value) {
+  async show(src, keepTime) {
+    const seq = ++this.seq
+    const cur = this.front
+    const next = this.videos.find((v) => v !== cur)
+    next.muted = cur.muted
+    next.src = src
+    await once(next, 'loadedmetadata')
+    if (seq !== this.seq) return false
+    // seeking takes a moment, so aim a bit ahead of where the playing video will be by then
+    const ahead = keepTime && !cur.paused ? 0.12 : 0
+    next.currentTime = keepTime ? Math.min(cur.currentTime + ahead, next.duration - 0.1) : 0
+    await once(next, 'seeked')
+    if (seq !== this.seq) return false
+    if (this.active) await next.play().catch(() => {})
+    if (seq !== this.seq) return false
+    next.classList.add('front')
+    cur.classList.remove('front')
+    cur.pause()
+    this.front = next
+    return true
+  }
+
+  play() {
+    this.active = true
+    this.front.play().catch(() => {})
+  }
+
+  pause() {
+    this.active = false
+    for (const v of this.videos) v.pause()
+  }
+
+  get muted() {
+    return this.front.muted
+  }
+
+  set muted(value) {
+    for (const v of this.videos) v.muted = value
+    if (!value) this.play()
+  }
+}
+
+function soundButton(target) {
+  const button = document.getElementById('sound-button').content.firstElementChild.cloneNode(true)
+  const sync = () => {
+    button.dataset.muted = String(target.muted)
+    button.setAttribute('aria-label', target.muted ? 'Включить звук' : 'Выключить звук')
+  }
+  button.addEventListener('click', () => {
+    target.muted = !target.muted
+    sync()
+  })
+  sync()
+  return button
+}
+
+function checkRadio(group, attr, value) {
   for (const b of group.querySelectorAll('[role="radio"]')) {
     b.setAttribute('aria-checked', String(b.dataset[attr] === value))
   }
 }
 
-function load() {
-  const at = demo.currentTime
-  const playing = !demo.paused
-  demo.src = `/media/${version === 'before' ? 'before' : style}.mp4?v=${MEDIA}`
-  demo.addEventListener(
-    'loadedmetadata',
-    () => {
-      demo.currentTime = at
-      if (playing) demo.play()
-    },
-    { once: true },
-  )
-  styles.setAttribute('aria-disabled', String(version === 'before'))
-}
+// The teal glow circles the middle of the screen once over the whole page: it starts on the
+// left, goes down, across the bottom, up the right and over the top. It trails the scroll a
+// little, so it glides instead of jumping with the wheel.
+function glow() {
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return
+  // an ellipse around the centre, in percent of the screen; the start matches the CSS
+  const [rx, ry] = [38, 34]
+  const start = Math.atan2(30 - 50, 12 - 50)
+  const style = document.documentElement.style
+  let current = 0
+  let frame = 0
 
-toggle.addEventListener('click', (e) => {
-  const b = e.target.closest('[data-src]')
-  if (!b) return
-  version = b.dataset.src
-  check(toggle, 'src', version)
-  load()
-})
-
-styles.addEventListener('click', (e) => {
-  const b = e.target.closest('[data-style]')
-  if (!b) return
-  style = b.dataset.style
-  version = 'after'
-  check(styles, 'style', style)
-  check(toggle, 'src', version)
-  load()
-})
-
-// videos play only while on screen
-const onScreen = new IntersectionObserver(
-  (entries) => {
-    for (const entry of entries) {
-      if (entry.isIntersecting) entry.target.play().catch(() => {})
-      else entry.target.pause()
-    }
-  },
-  { threshold: 0.4 },
-)
-onScreen.observe(demo)
-onScreen.observe(document.getElementById('hero-video'))
-
-// the chat replays the bot's progress messages once it scrolls into view
-const chat = document.getElementById('chat')
-const status = document.getElementById('status')
-const STATUS = ['Распознаю речь…', 'Рендерю…']
-const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches
-const wait = (ms) => new Promise((r) => setTimeout(r, reduced ? 0 : ms))
-
-function showStep(n) {
-  chat.querySelector(`[data-step="${n}"]`).classList.add('shown')
-}
-
-async function playChat() {
-  showStep(0)
-  await wait(700)
-  showStep(1)
-  for (const text of STATUS) {
-    await wait(1100)
-    status.textContent = text
+  function tick() {
+    const range = document.documentElement.scrollHeight - innerHeight
+    const target = range > 0 ? Math.min(scrollY / range, 1) : 0
+    current += (target - current) * 0.08
+    // screen y grows downwards, so a falling angle goes down the left side first
+    const angle = start - current * 2 * Math.PI
+    style.setProperty('--glow-x', `${(50 + rx * Math.cos(angle)).toFixed(2)}%`)
+    style.setProperty('--glow-y', `${(50 + ry * Math.sin(angle)).toFixed(2)}%`)
+    frame = Math.abs(target - current) > 0.0005 ? requestAnimationFrame(tick) : 0
   }
-  await wait(1200)
-  // like the bot, the progress message goes away once the video arrives
-  chat.querySelector('[data-step="1"]').remove()
-  showStep(2)
+
+  addEventListener('scroll', () => frame || (frame = requestAnimationFrame(tick)), { passive: true })
+  tick()
 }
 
-new IntersectionObserver(
-  (entries, observer) => {
-    if (entries.some((e) => e.isIntersecting)) {
-      observer.disconnect()
-      playChat()
-    }
-  },
-  { threshold: 0.5 },
-).observe(chat)
+glow()
+
+async function main() {
+  const demos = await fetch('/media/demos.json', { cache: 'no-cache' }).then((r) => r.json())
+  let order = shuffle(demos)
+
+  const deck = document.getElementById('deck')
+  const count = document.getElementById('deck-count')
+  const note = document.getElementById('demo-note')
+  const toggle = document.querySelector('.toggle')
+  const styles = document.querySelector('.styles')
+  const player = new Player()
+  let variant = 'after'
+  let style = 'classic'
+  let seen = 0
+
+  player.root.append(soundButton(player))
+
+  const cards = new Map(
+    demos.map((demo) => {
+      const card = document.createElement('div')
+      card.className = 'card'
+      const img = document.createElement('img')
+      img.src = url(demo, 'poster', 'jpg')
+      img.alt = ''
+      card.append(img)
+      deck.append(card)
+      return [demo, card]
+    }),
+  )
+  if (demos.length < 2) document.querySelector('.deck-nav').hidden = true
+
+  const file = () => (variant === 'before' ? 'before' : style)
+
+  function layout() {
+    order.forEach((demo, i) => {
+      const card = cards.get(demo)
+      card.style.setProperty('--i', i)
+      card.style.zIndex = String(order.length - i)
+      card.style.opacity = i > 2 ? '0' : ''
+      card.classList.toggle('current', i === 0)
+    })
+    const top = order[0]
+    cards.get(top).append(player.root)
+    note.textContent = top.note
+    count.textContent = `${(seen % demos.length) + 1} / ${demos.length}`
+  }
+
+  async function openTop() {
+    player.root.classList.add('loading')
+    const shown = await player.show(url(order[0], file()), false)
+    if (shown) player.root.classList.remove('loading')
+  }
+
+  function step(dir) {
+    if (demos.length < 2) return
+    if (dir > 0) order.push(order.shift())
+    else order.unshift(order.pop())
+    seen = (seen + (dir > 0 ? 1 : demos.length - 1)) % demos.length
+    layout()
+    openTop()
+  }
+
+  // the top card flies off to the side it was thrown, then goes under the stack
+  function fly(dir) {
+    const card = cards.get(order[0])
+    card.classList.remove('dragging')
+    card.style.transform = `translateX(${dir * 140}%) rotate(${dir * 24}deg)`
+    card.style.opacity = '0'
+    setTimeout(() => {
+      card.style.transform = ''
+      step(1)
+    }, 260)
+  }
+
+  let drag = null
+  deck.addEventListener('pointerdown', (e) => {
+    const card = cards.get(order[0])
+    if (!card.contains(e.target) || e.target.closest('button') || demos.length < 2) return
+    drag = { x: e.clientX, dx: 0, card, id: e.pointerId }
+    card.setPointerCapture(e.pointerId)
+    card.classList.add('dragging')
+  })
+  deck.addEventListener('pointermove', (e) => {
+    if (!drag || e.pointerId !== drag.id) return
+    drag.dx = e.clientX - drag.x
+    drag.card.style.transform = `translateX(${drag.dx}px) rotate(${drag.dx / 18}deg)`
+  })
+  const release = (e) => {
+    if (!drag || e.pointerId !== drag.id) return
+    const { dx, card } = drag
+    drag = null
+    if (Math.abs(dx) > 80) return fly(Math.sign(dx))
+    card.classList.remove('dragging')
+    card.style.transform = ''
+  }
+  deck.addEventListener('pointerup', release)
+  deck.addEventListener('pointercancel', release)
+
+  document.querySelector('.deck-nav').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-go]')
+    if (!b) return
+    if (b.dataset.go === '1') fly(-1)
+    else step(-1)
+  })
+  deck.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight') fly(-1)
+    if (e.key === 'ArrowLeft') step(-1)
+  })
+
+  toggle.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-src]')
+    if (!b || b.dataset.src === variant) return
+    variant = b.dataset.src
+    checkRadio(toggle, 'src', variant)
+    styles.setAttribute('aria-disabled', String(variant === 'before'))
+    player.show(url(order[0], file()), true)
+  })
+
+  styles.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-style]')
+    if (!b || (b.dataset.style === style && variant === 'after')) return
+    style = b.dataset.style
+    variant = 'after'
+    checkRadio(styles, 'style', style)
+    checkRadio(toggle, 'src', variant)
+    styles.setAttribute('aria-disabled', 'false')
+    player.show(url(order[0], file()), true)
+  })
+
+  // the video plays only while on screen
+  new IntersectionObserver(([entry]) => (entry.isIntersecting ? player.play() : player.pause()), {
+    threshold: 0.4,
+  }).observe(deck)
+
+  layout()
+  openTop()
+}
+
+main()
