@@ -430,15 +430,45 @@ main > section {
   gap: 20px;
 }
 .cards article {
+  position: relative;
+  isolation: isolate;
   padding: 28px;
   border-radius: var(--radius);
   background: linear-gradient(160deg, var(--card), var(--bg-2));
   border: 1px solid var(--line);
+  transition: border-color 0.25s ease;
 }
-.cards p { color: var(--muted); margin: 0; }
+/* a gradient can't be animated, so the hover glow is a layer that fades in */
+.cards article::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: linear-gradient(160deg, #33215f, #1f1440);
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+.cards article:hover { border-color: #5a4396; }
+.cards article:hover::before { opacity: 1; }
+.cards p { color: var(--muted); margin: 0; transition: color 0.25s ease; }
+.cards article:hover p { color: var(--text); }
+/* the word being "spoken", as in the bot's classic style */
+.cards .w { transition: color 0.08s ease, text-shadow 0.08s ease; }
+.cards .w.lit { color: var(--yellow); text-shadow: 0 0 18px rgba(255, 238, 0, 0.45); }
 
 .final { text-align: center; }
 .final h2 { margin-bottom: 1.75rem; }
+.final .btn {
+  min-width: 13rem;
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.15s ease;
+}
+/* caught on the fourth try: a little hop of defeat */
+.final .btn.caught { animation: caught 0.45s ease; }
+@keyframes caught {
+  40% { scale: 1.15; }
+  70% { scale: 0.95; }
+}
 
 footer {
   padding: 32px 16px 48px;
