@@ -38,4 +38,10 @@ for name in before classic; do
   "$ffmpeg" -v error -y -ss 1.6 -i "$media/$name.mp4" -frames:v 1 -q:v 4 "$media/$name.jpg"
 done
 mv "$media/classic.jpg" "$media/poster.jpg"
+
+# the page asks for /media/*?v=<version>: new files, new URLs, whatever browsers cached
+version="$(cat "$media"/*.mp4 "$media"/*.jpg | shasum | cut -c1-8)"
+sed -i.bak -E "s/\?v=[0-9a-f]+\"/?v=$version\"/g; s/data-media=\"[0-9a-f]+\"/data-media=\"$version\"/" "$site/index.html"
+rm "$site/index.html.bak"
+echo "media version $version"
 ls -lh "$media"

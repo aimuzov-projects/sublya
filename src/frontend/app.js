@@ -20,8 +20,10 @@ for (const button of document.querySelectorAll('[data-sound-for]')) {
 }
 
 // before/after and the four styles share one timeline, so switching shows the same
-// moment of the poem in another look
+// moment of the video in another look
 const demo = document.getElementById('demo-video')
+// set by demo/make-demo.sh: a rebuilt demo gets new URLs, so no browser keeps the old one
+const MEDIA = document.body.dataset.media
 const toggle = document.querySelector('.toggle')
 const styles = document.querySelector('.styles')
 let version = 'after'
@@ -36,7 +38,7 @@ function check(group, attr, value) {
 function load() {
   const at = demo.currentTime
   const playing = !demo.paused
-  demo.src = `/media/${version === 'before' ? 'before' : style}.mp4`
+  demo.src = `/media/${version === 'before' ? 'before' : style}.mp4?v=${MEDIA}`
   demo.addEventListener(
     'loadedmetadata',
     () => {
