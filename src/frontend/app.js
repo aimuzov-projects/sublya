@@ -337,6 +337,58 @@ function karaoke() {
   }
 }
 
+// The step scenes play only while on screen: the first is pure CSS, the second types its
+// caption, the third lights its subtitles word by word.
+function scenes() {
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches
+  const typed = document.querySelector('.scene-type .typed')
+  const words = [...document.querySelectorAll('.scene-result .subs span')]
+  if (reduced) {
+    if (typed) typed.textContent = typed.dataset.text
+    return
+  }
+  const loops = {}
+
+  const typing = () => {
+    const text = typed.dataset.text
+    let i = 0
+    const step = () => {
+      typed.textContent = text.slice(0, i)
+      if (i++ < text.length) return (loops.type = setTimeout(step, 55 + Math.random() * 60))
+      loops.type = setTimeout(() => ((i = 0), step()), 1800)
+    }
+    step()
+  }
+  const lighting = () => {
+    let i = 0
+    const step = () => {
+      words.forEach((w, j) => w.classList.toggle('lit', j === i % (words.length + 1)))
+      i++
+      loops.result = setTimeout(step, 650)
+    }
+    step()
+  }
+
+  const io = new IntersectionObserver(
+    (entries) => {
+      for (const { target, isIntersecting } of entries) {
+        target.classList.toggle('running', isIntersecting)
+        if (target.classList.contains('scene-type')) {
+          clearTimeout(loops.type)
+          if (isIntersecting) typing()
+        }
+        if (target.classList.contains('scene-result')) {
+          clearTimeout(loops.result)
+          if (isIntersecting) lighting()
+        }
+      }
+    },
+    { threshold: 0.3 },
+  )
+  for (const scene of document.querySelectorAll('.scene')) io.observe(scene)
+}
+
+scenes()
 karaoke()
 dodgy()
 main()

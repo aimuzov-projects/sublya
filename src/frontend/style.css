@@ -144,7 +144,7 @@ main > section {
    demo controls where the column ends. */
 .stage {
   --header: 64px;
-  --deck-h: 640px;
+  --deck-h: 580px;
   --stick: max(80px, calc((100vh + var(--header) - var(--deck-h)) / 2));
   max-width: 1120px;
   margin: 0 auto;
@@ -271,17 +271,28 @@ main > section {
 /* a new card shows its poster until its video can play */
 .player.loading video { opacity: 0; }
 
+/* the arrows hang on both sides of the deck, halfway down; the layer lets swipes through */
 .deck-nav {
-  position: relative;
+  position: absolute;
+  inset: 0;
   z-index: 1;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 18px;
-  margin-top: 36px;
-  color: var(--muted);
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+.deck-nav .nav {
+  position: absolute;
+  top: 50%;
+  translate: 0 -50%;
+  pointer-events: auto;
+}
+.deck-nav [data-go="-1"] { left: -64px; }
+.deck-nav [data-go="1"] { right: -64px; }
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 .nav {
   width: 44px;
@@ -295,6 +306,7 @@ main > section {
   cursor: pointer;
 }
 .nav:hover { border-color: var(--yellow); }
+.nav { backdrop-filter: blur(6px); }
 .nav svg {
   width: 20px;
   height: 20px;
@@ -428,6 +440,156 @@ main > section {
 }
 .steps li b { color: var(--text); display: block; margin-bottom: 6px; }
 
+/* Each step shows what it means: app.js plays a scene while its card is on screen. */
+.steps li { position: relative; }
+/* the number sits on the card's top edge, clear of the scene */
+.steps li::before { position: absolute; top: -18px; left: 24px; z-index: 2; box-shadow: 0 0 0 6px var(--bg); }
+.steps ol { padding-top: 22px; }
+.scene {
+  position: relative;
+  height: 164px;
+  margin-bottom: 20px;
+  border-radius: 16px;
+  background: #0e1621;
+  border: 1px solid #1f2b38;
+  overflow: hidden;
+}
+
+/* 1: the video flies into the chat, uploads, and gets a tick */
+.chat-bubble {
+  position: absolute;
+  right: 16px;
+  bottom: 14px;
+  width: 104px;
+  padding: 6px;
+  border-radius: 14px 14px 4px 14px;
+  background: #2b5278;
+}
+.clip {
+  position: relative;
+  height: 96px;
+  border-radius: 9px;
+  background: #000 center / cover;
+}
+.clip .play {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 0;
+  height: 0;
+  border-left: 14px solid rgba(255, 255, 255, 0.9);
+  border-top: 9px solid transparent;
+  border-bottom: 9px solid transparent;
+}
+.upload { height: 3px; margin-top: 6px; border-radius: 2px; background: rgba(255, 255, 255, 0.15); }
+.upload i { display: block; height: 100%; width: 100%; border-radius: inherit; background: var(--yellow); transform: scaleX(0); transform-origin: left; }
+.check {
+  position: absolute;
+  right: -6px;
+  top: -6px;
+  width: 22px;
+  height: 22px;
+  padding: 3px;
+  border-radius: 50%;
+  background: var(--pink);
+  fill: none;
+  stroke: #fff;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0;
+  scale: 0.4;
+}
+.scene-send.running .chat-bubble { animation: fly-in 3.6s ease infinite; }
+.scene-send.running .upload i { animation: upload 3.6s ease infinite; }
+.scene-send.running .check { animation: tick 3.6s ease infinite; }
+@keyframes fly-in {
+  0% { transform: translate(-120%, 40px) rotate(-8deg); opacity: 0; }
+  18%, 90% { transform: none; opacity: 1; }
+  100% { transform: none; opacity: 0; }
+}
+@keyframes upload {
+  0%, 22% { transform: scaleX(0); }
+  62%, 100% { transform: scaleX(1); }
+}
+@keyframes tick {
+  0%, 62% { opacity: 0; scale: 0.4; }
+  70%, 90% { opacity: 1; scale: 1; }
+  100% { opacity: 0; scale: 1; }
+}
+
+/* 2: the caption types itself */
+.field {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 16px;
+  padding: 10px 14px 12px;
+  border-radius: 12px;
+  background: #182533;
+  border: 1px solid #2b5278;
+}
+.field .label { display: block; font-size: 0.7rem; color: #6c8aa6; text-transform: uppercase; letter-spacing: 0.08em; }
+.field p { margin: 4px 0 0; min-height: 3em; color: var(--text); font-size: 0.95rem; line-height: 1.5; }
+.caret {
+  display: inline-block;
+  width: 2px;
+  height: 1.1em;
+  margin-left: 2px;
+  vertical-align: -0.2em;
+  background: var(--yellow);
+  animation: blink 1s steps(1) infinite;
+}
+@keyframes blink { 50% { opacity: 0; } }
+
+/* 3: the finished video with the spoken word lit, and the bot's buttons */
+.frame {
+  position: absolute;
+  right: 16px;
+  top: 12px;
+  bottom: 12px;
+  width: 72px;
+  border-radius: 10px;
+  background: #000 center / cover;
+}
+.subs {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 12px;
+  margin: 0;
+  text-align: center;
+  font-size: 0.55rem;
+  font-weight: 900;
+  line-height: 1.2;
+  text-transform: uppercase;
+  color: #fff;
+  text-shadow: 0 0 2px #000, 0 0 2px #000;
+}
+.subs .lit { color: var(--yellow); }
+.scene-result .kb {
+  position: absolute;
+  left: 16px;
+  right: 104px;
+  bottom: 14px;
+  display: grid;
+  gap: 6px;
+}
+.scene-result .kb span {
+  padding: 7px 8px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text);
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+.scene-result.running .kb span:first-child { animation: nudge 3.2s ease infinite 1s; }
+@keyframes nudge {
+  0%, 70%, 100% { background: rgba(255, 255, 255, 0.08); }
+  80%, 90% { background: rgba(254, 44, 85, 0.45); }
+}
+
 .cards {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -491,8 +653,12 @@ footer a:hover { color: var(--yellow); }
     grid-template-areas: "hero" "rail" "demo";
   }
   .hero, .demo { min-height: 0; padding: 48px 0; }
-  .deck-wrap { position: static; margin-top: 0; }
+  .deck-wrap { position: relative; top: 0; margin-top: 0; }
   .deck { width: min(100%, 300px); }
+  /* no room beside the deck on a phone: the arrows overlap its edges */
+  .deck-nav [data-go="-1"] { left: -14px; }
+  .deck-nav [data-go="1"] { right: -14px; }
+  .nav { background: rgba(18, 10, 36, 0.7); }
   .steps ol, .cards { grid-template-columns: 1fr; }
   main > section { padding: 48px 16px; }
 }
@@ -500,4 +666,7 @@ footer a:hover { color: var(--yellow); }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   .card, .btn, .styles button { transition: none; }
+  .scene * { animation: none !important; }
+  .scene-send .upload i { transform: none; }
+  .scene-send .check { opacity: 1; scale: 1; }
 }
