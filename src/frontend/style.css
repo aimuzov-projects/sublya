@@ -452,8 +452,13 @@ main > section {
   height: 32px;
   font-size: 0.85rem;
   box-shadow: 0 0 0 4px var(--bg);
+  transition: background 0.25s ease, color 0.25s ease, scale 0.25s ease;
 }
 .steps ol { padding-top: 16px; }
+/* on hover the card rises and lights up, and its scene starts over (app.js) */
+.steps li { transition: transform 0.25s ease, border-color 0.25s ease, background 0.25s ease; }
+.steps li:hover { transform: translateY(-4px); border-color: #5a4396; background: #2a1c52; }
+.steps li:hover::before { background: var(--yellow); color: #140b26; scale: 1.15; }
 .scene {
   position: relative;
   height: 164px;

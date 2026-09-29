@@ -369,23 +369,30 @@ function scenes() {
     step()
   }
 
+  // stops a scene, and starts it from the beginning when asked to
+  const run = (scene, on) => {
+    scene.classList.remove('running')
+    if (scene.classList.contains('scene-type')) clearTimeout(loops.type)
+    if (scene.classList.contains('scene-result')) clearTimeout(loops.result)
+    if (!on) return
+    void scene.offsetWidth // restarts the CSS animations
+    scene.classList.add('running')
+    if (scene.classList.contains('scene-type') && typed) typing()
+    if (scene.classList.contains('scene-result')) lighting()
+  }
+
   const io = new IntersectionObserver(
     (entries) => {
-      for (const { target, isIntersecting } of entries) {
-        target.classList.toggle('running', isIntersecting)
-        if (target.classList.contains('scene-type')) {
-          clearTimeout(loops.type)
-          if (isIntersecting) typing()
-        }
-        if (target.classList.contains('scene-result')) {
-          clearTimeout(loops.result)
-          if (isIntersecting) lighting()
-        }
-      }
+      for (const { target, isIntersecting } of entries) run(target, isIntersecting)
     },
     { threshold: 0.3 },
   )
-  for (const scene of document.querySelectorAll('.scene')) io.observe(scene)
+  for (const scene of document.querySelectorAll('.scene')) {
+    io.observe(scene)
+    scene.closest('li').addEventListener('pointerenter', (e) => {
+      if (e.pointerType === 'mouse') run(scene, true)
+    })
+  }
 }
 
 scenes()
