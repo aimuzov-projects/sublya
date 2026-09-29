@@ -446,7 +446,7 @@ main > section {
 .steps li::before {
   position: absolute;
   top: -16px;
-  left: 24px;
+  left: 40px;
   z-index: 2;
   width: 32px;
   height: 32px;
