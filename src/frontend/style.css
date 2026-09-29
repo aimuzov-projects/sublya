@@ -83,6 +83,21 @@ h3 { font-size: 1.15rem; margin-bottom: 0.5rem; }
 .btn:hover { transform: translateY(-2px); box-shadow: 0 14px 36px rgba(255, 238, 0, 0.35); }
 .btn-small { padding: 9px 18px; font-size: 0.9rem; box-shadow: none; }
 
+.top-links { display: flex; align-items: center; gap: 14px; }
+.gh {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  color: var(--muted);
+}
+.gh:hover { color: var(--text); background: rgba(255, 255, 255, 0.06); }
+
+.repo-links { margin-top: 12px !important; font-weight: 700; }
+.repo-links a { color: var(--yellow); text-decoration: none; }
+.repo-links a:hover { text-decoration: underline; }
+
 .link { color: var(--muted); text-decoration: none; font-weight: 700; }
 .link:hover { color: var(--text); }
 
@@ -400,6 +415,9 @@ footer {
   font-size: 0.85rem;
   border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
+footer p { margin: 0.4rem 0; }
+footer a { color: var(--text); text-decoration: none; }
+footer a:hover { color: var(--yellow); }
 
 @media (max-width: 860px) {
   .stage {

@@ -3,7 +3,7 @@
 The landing page of [Sublya](https://sublya.aimuzov.online), a Telegram bot that burns
 TikTok-style subtitles into videos. Plain HTML, CSS and JS, no build step.
 
-The bot itself lives in a separate repository, cloned next to this one as `bot/`.
+The bot itself lives in [aimuzov/sublya-bot](https://github.com/aimuzov/sublya-bot); the demo script expects it cloned next to this one as `bot/`.
 
 ## Look at it
 
