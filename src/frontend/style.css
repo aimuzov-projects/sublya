@@ -228,6 +228,8 @@ main > section {
   margin: 0 auto;
   touch-action: pan-y;
   outline: none;
+  /* the cards' z-index stays inside the deck, so their shadows can't cover the counter */
+  isolation: isolate;
 }
 .deck:focus-visible { outline: 2px solid var(--yellow); outline-offset: 8px; border-radius: 36px; }
 .card {
@@ -270,6 +272,8 @@ main > section {
 .player.loading video { opacity: 0; }
 
 .deck-nav {
+  position: relative;
+  z-index: 1;
   display: flex;
   justify-content: center;
   align-items: center;
