@@ -13,13 +13,13 @@ python3 -m http.server 8765
 
 ## Demo videos
 
-`media/` holds a synthetic demo: the macOS voice Milena reads Pushkin's "Winter Morning"
-over a drifting gradient, and the bot's engine burns subtitles in each of the four styles.
-No real person appears in it. To rebuild it, the bot repository has to sit next to this one
-(or `SUBLYA_BOT_DIR` has to point at it) with `STT_API_KEY` in its `.env`:
+`media/` holds the demo: a short video from a cafe as it was sent, and the same video with
+subtitles in each of the four styles. The exact text is in `demo/text.txt`; its line breaks
+are the screen breaks. To rebuild it, the bot repository has to sit next to this one (or
+`SUBLYA_BOT_DIR` has to point at it) with `STT_API_KEY` in its `.env`:
 
 ```bash
-SUBLYA_FFMPEG=/opt/homebrew/opt/ffmpeg-full/bin/ffmpeg SUBLYA_FFPROBE=/opt/homebrew/opt/ffmpeg-full/bin/ffprobe demo/make-demo.sh
+SUBLYA_FFMPEG=/opt/homebrew/opt/ffmpeg-full/bin/ffmpeg demo/make-demo.sh video.mp4
 ```
 
 Rendering goes through the bot's Docker image, so the font and ffmpeg are the same as in
