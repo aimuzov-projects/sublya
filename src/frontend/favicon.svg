@@ -1,1 +1,16 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="16" fill="#120a24"/><rect x="10" y="38" width="20" height="10" rx="3" fill="#fff"/><rect x="34" y="38" width="20" height="10" rx="3" fill="#ffee00"/><rect x="10" y="22" width="30" height="10" rx="3" fill="#fff" opacity=".45"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fe2c55"/>
+      <stop offset="1" stop-color="#5b23c9"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="18" fill="url(#bg)"/>
+  <!-- a curved sabre: the blade narrows to the tip, a guard across, a short grip -->
+  <path d="M19 30 C30 28 43 21 54 8 C47 22 36 31 21 35 Z" fill="#fff"/>
+  <path d="M14 25 L22 38" stroke="#fff" stroke-width="4" stroke-linecap="round"/>
+  <path d="M17 32 L10 36" stroke="#fff" stroke-width="5" stroke-linecap="round"/>
+  <!-- the subtitle line it cuts into words, the spoken one lit -->
+  <rect x="10" y="44" width="17" height="9" rx="3" fill="#fff"/>
+  <rect x="30" y="44" width="24" height="9" rx="3" fill="#ffee00"/>
+</svg>
