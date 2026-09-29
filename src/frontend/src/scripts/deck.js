@@ -4,7 +4,7 @@ const once = (el, event, ms = 3000) =>
     setTimeout(resolve, ms) // a stalled network shouldn't freeze the switch forever
   })
 
-const url = (demo, file, ext = 'mp4') => `/media/${demo.name}/${file}.${ext}?v=${demo.v}`
+const url = (demo, file, ext = 'mp4') => `/media/${demo.id}/${file}.${ext}?v=${demo.v}`
 
 function shuffle(list) {
   const a = [...list]
@@ -95,40 +95,11 @@ function checkRadio(group, attr, value) {
   }
 }
 
-// The teal glow circles the middle of the screen once over the whole page: it starts on the
-// left, goes down, across the bottom, up the right and over the top. It trails the scroll a
-// little, so it glides instead of jumping with the wheel.
-function glow() {
-  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return
-  // an ellipse around the centre, in percent of the screen; the start matches the CSS
-  const [rx, ry] = [38, 34]
-  const start = Math.atan2(30 - 50, 12 - 50)
-  const style = document.documentElement.style
-  let current = 0
-  let frame = 0
-
-  function tick() {
-    const range = document.documentElement.scrollHeight - innerHeight
-    const target = range > 0 ? Math.min(scrollY / range, 1) : 0
-    current += (target - current) * 0.08
-    // screen y grows downwards, so a falling angle goes down the left side first
-    const angle = start - current * 2 * Math.PI
-    style.setProperty('--glow-x', `${(50 + rx * Math.cos(angle)).toFixed(2)}%`)
-    style.setProperty('--glow-y', `${(50 + ry * Math.sin(angle)).toFixed(2)}%`)
-    frame = Math.abs(target - current) > 0.0005 ? requestAnimationFrame(tick) : 0
-  }
-
-  addEventListener('scroll', () => frame || (frame = requestAnimationFrame(tick)), { passive: true })
-  tick()
-}
-
-glow()
-
-async function main() {
-  const demos = await fetch('/media/demos.json', { cache: 'no-cache' }).then((r) => r.json())
+export function deck() {
+  const deck = document.getElementById('deck')
+  const demos = JSON.parse(deck.dataset.demos)
   let order = shuffle(demos)
 
-  const deck = document.getElementById('deck')
   const count = document.getElementById('deck-count')
   const note = document.getElementById('demo-note')
   const toggle = document.querySelector('.toggle')
@@ -260,142 +231,3 @@ async function main() {
   layout()
   openTop()
 }
-
-// The last button teases a mouse: it dodges left, then right, then back to the middle, and
-// gives in on the fourth try. Touch screens and keyboards get a plain button.
-function dodgy() {
-  const btn = document.querySelector('.final .btn')
-  const fine = matchMedia('(hover: hover) and (pointer: fine)').matches
-  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches
-  if (!btn || !fine || reduced) return
-  const name = btn.textContent
-  // where each dodge goes: -1 left, 1 right, 0 home
-  const dodges = [
-    { side: -1, text: 'Мимо!' },
-    { side: 1, text: 'Ещё разок' },
-    { side: 0, text: 'Почти!' },
-  ]
-  let tries = 0
-
-  btn.addEventListener('pointerenter', (e) => {
-    if (e.pointerType !== 'mouse' || tries > dodges.length) return
-    if (tries++ === dodges.length) {
-      btn.textContent = name
-      btn.classList.add('caught')
-      return
-    }
-    const { side, text } = dodges[tries - 1]
-    btn.textContent = text
-    if (!side) {
-      btn.style.transform = ''
-      return
-    }
-    // as far as the section allows, so it stays in sight
-    const room = btn.parentElement.clientWidth / 2 - btn.offsetWidth / 2 - 16
-    const x = side * Math.min(room, 320) * (0.75 + Math.random() * 0.25)
-    // on a narrow screen the side step is short, so it also hops down off the cursor
-    const y = Math.abs(x) < btn.offsetWidth ? 70 : (Math.random() - 0.5) * 60
-    btn.style.transform = `translate(${x | 0}px, ${y | 0}px) rotate(${side * 5}deg)`
-  })
-}
-
-// A card under the cursor plays its text like the bot's subtitles: one word lit at a time,
-// longer words longer, then a breath and again from the top.
-function karaoke() {
-  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches
-  for (const card of document.querySelectorAll('.cards article')) {
-    const text = card.querySelector('p')
-    if (!text || reduced) continue
-    const words = text.textContent.split(/(\s+)/).map((part) => {
-      if (!part.trim()) return document.createTextNode(part)
-      const span = document.createElement('span')
-      span.className = 'w'
-      span.textContent = part
-      return span
-    })
-    text.replaceChildren(...words)
-    const spans = words.filter((w) => w.nodeType === 1)
-    let timer = 0
-
-    const stop = () => {
-      clearTimeout(timer)
-      for (const s of spans) s.classList.remove('lit')
-    }
-    const play = (i = 0) => {
-      spans.forEach((s, j) => s.classList.toggle('lit', j === i))
-      if (i === spans.length) {
-        timer = setTimeout(play, 700)
-        return
-      }
-      timer = setTimeout(() => play(i + 1), 110 + spans[i].textContent.length * 38)
-    }
-    card.addEventListener('pointerenter', () => {
-      stop()
-      play()
-    })
-    card.addEventListener('pointerleave', stop)
-  }
-}
-
-// The step scenes play only while on screen: the first is pure CSS, the second types its
-// caption, the third lights its subtitles word by word.
-function scenes() {
-  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches
-  const typed = document.querySelector('.scene-type .typed')
-  const words = [...document.querySelectorAll('.scene-result .subs span')]
-  if (reduced) {
-    if (typed) typed.textContent = typed.dataset.text
-    return
-  }
-  const loops = {}
-
-  const typing = () => {
-    const text = typed.dataset.text
-    let i = 0
-    const step = () => {
-      typed.textContent = text.slice(0, i)
-      if (i++ < text.length) return (loops.type = setTimeout(step, 55 + Math.random() * 60))
-      loops.type = setTimeout(() => ((i = 0), step()), 1800)
-    }
-    step()
-  }
-  const lighting = () => {
-    let i = 0
-    const step = () => {
-      words.forEach((w, j) => w.classList.toggle('lit', j === i % (words.length + 1)))
-      i++
-      loops.result = setTimeout(step, 650)
-    }
-    step()
-  }
-
-  // stops a scene, and starts it from the beginning when asked to
-  const run = (scene, on) => {
-    scene.classList.remove('running')
-    if (scene.classList.contains('scene-type')) clearTimeout(loops.type)
-    if (scene.classList.contains('scene-result')) clearTimeout(loops.result)
-    if (!on) return
-    void scene.offsetWidth // restarts the CSS animations
-    scene.classList.add('running')
-    if (scene.classList.contains('scene-type') && typed) typing()
-    if (scene.classList.contains('scene-result')) lighting()
-  }
-
-  const io = new IntersectionObserver(
-    (entries) => {
-      for (const { target, isIntersecting } of entries) run(target, isIntersecting)
-    },
-    { threshold: 0.3 },
-  )
-  for (const scene of document.querySelectorAll('.scene')) {
-    io.observe(scene)
-    scene.closest('li').addEventListener('pointerenter', (e) => {
-      if (e.pointerType === 'mouse') run(scene, true)
-    })
-  }
-}
-
-scenes()
-karaoke()
-dodgy()
-main()

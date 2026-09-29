@@ -15,25 +15,20 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      # installs from package-lock.json, runs astro build and uploads dist/ for Pages;
+      # public/CNAME keeps the custom domain
+      - uses: withastro/action@v6
+
   deploy:
+    needs: build
     runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: actions/checkout@v4
-      # only the page itself goes out, not the demo tooling or the README
-      - name: Collect the site
-        run: |
-          mkdir _site
-          cp -r index.html style.css app.js favicon.svg fonts media _site/
-          echo sublya.aimuzov.online > _site/CNAME
-          # Pages caches everything for 10 minutes and takes no headers from us, so CSS and JS
-          # get the commit in their URL: a deploy never meets a stale copy in a browser
-          sed -i "s/?v=dev/?v=${GITHUB_SHA::8}/g" _site/index.html
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: _site
       - id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
