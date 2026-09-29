@@ -57,9 +57,10 @@
 .facts li { display: inline-flex; align-items: center; gap: 8px; }
 
 
+.deck-wrap { --deck-w: 320px; }
 .deck {
   position: relative;
-  width: 320px;
+  width: var(--deck-w);
   max-width: 100%;
   aspect-ratio: 9 / 16;
   margin: 0 auto;
@@ -109,9 +110,15 @@
 .player.loading video { opacity: 0; }
 
 /* the arrows hang on both sides of the deck, halfway down; the layer lets swipes through */
+/* exactly as wide as the deck, so the arrows stay next to the cards on any screen */
 .deck-nav {
   position: absolute;
-  inset: 0;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: var(--deck-w);
+  max-width: 100%;
+  translate: -50% 0;
   z-index: 1;
   pointer-events: none;
 }
@@ -245,10 +252,10 @@
   }
   .hero, .demo { min-height: 0; padding: 48px 0; }
   .deck-wrap { position: relative; top: 0; margin-top: 0; }
-  .deck { width: min(100%, 300px); }
-  /* no room beside the deck on a phone: the arrows overlap its edges */
-  .deck-nav [data-go="-1"] { left: -14px; }
-  .deck-nav [data-go="1"] { right: -14px; }
+  .deck-wrap { --deck-w: min(100%, 300px); }
+  /* no room beside the deck on a phone: the arrows sit on its edges, half over the card */
+  .deck-nav [data-go="-1"] { left: -22px; }
+  .deck-nav [data-go="1"] { right: -22px; }
   .nav { background: rgba(18, 10, 36, 0.7); }
 }
 
