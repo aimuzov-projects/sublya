@@ -443,8 +443,17 @@ main > section {
 /* Each step shows what it means: app.js plays a scene while its card is on screen. */
 .steps li { position: relative; }
 /* the number sits on the card's top edge, clear of the scene */
-.steps li::before { position: absolute; top: -18px; left: 24px; z-index: 2; box-shadow: 0 0 0 6px var(--bg); }
-.steps ol { padding-top: 22px; }
+.steps li::before {
+  position: absolute;
+  top: -16px;
+  left: 24px;
+  z-index: 2;
+  width: 32px;
+  height: 32px;
+  font-size: 0.85rem;
+  box-shadow: 0 0 0 4px var(--bg);
+}
+.steps ol { padding-top: 16px; }
 .scene {
   position: relative;
   height: 164px;
