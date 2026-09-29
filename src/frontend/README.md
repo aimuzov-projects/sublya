@@ -25,6 +25,7 @@ repository has to sit next to this one (or `SUBLYA_BOT_DIR` has to point at it) 
 
 ```bash
 SUBLYA_FFMPEG=/opt/homebrew/opt/ffmpeg-full/bin/ffmpeg demo/make-demo.sh name video.mp4
+# footage shot on the move: SUBLYA_CRF=31 keeps each file around 3 MB
 ```
 
 Serving the files needs HTTP range requests: without them the player can't seek, and
