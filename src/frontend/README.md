@@ -8,7 +8,7 @@ The bot itself lives in [sublya/bot](https://github.com/sublya/bot); the demo sc
 ## Look at it
 
 ```bash
-docker run --rm -p 8765:80 -v "$PWD:/usr/share/nginx/html:ro" -v "$PWD/nginx.conf:/etc/nginx/conf.d/default.conf:ro" nginx:1.29-alpine
+docker run --rm -p 8765:80 -v "$PWD:/usr/share/nginx/html:ro" nginx:alpine
 ```
 
 ## Demo videos
@@ -35,15 +35,9 @@ production. Recognition costs a fraction of a cent.
 
 ## Deploy
 
-The page is served by nginx in a small container:
-
-```bash
-docker build -t sublya-site .
-docker run -d -p 8080:80 sublya-site
-```
-
-In production it sits behind the Caddy of the server it shares, see the bot's
-`docs/deploy.md`.
+GitHub Pages, on every push to `main`: `.github/workflows/pages.yml` copies the page, the
+fonts and the demo into the artifact and adds the commit to the CSS and JS URLs, since Pages
+caches everything for ten minutes. The domain comes from the `CNAME` file it writes.
 
 ## License
 
