@@ -21,7 +21,8 @@ trap 'rm -rf "$work"' EXIT
 ffmpeg="${SUBLYA_FFMPEG:-ffmpeg}"
 ffprobe="${SUBLYA_FFPROBE:-ffprobe}"
 # the web versions: small, and playable before they're fully downloaded
-web=(-c:v libx264 -preset slow -crf 27 -pix_fmt yuv420p -movflags +faststart)
+# shaky footage from a bike or a walk compresses badly: raise SUBLYA_CRF to keep it light
+web=(-c:v libx264 -preset slow -crf "${SUBLYA_CRF:-27}" -pix_fmt yuv420p -movflags +faststart)
 
 mkdir -p "$out"
 "$ffmpeg" -v error -y -i "$source" -vf "scale=720:-2" "${web[@]}" -c:a aac -b:a 96k "$work/demo.mp4"
