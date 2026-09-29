@@ -144,7 +144,7 @@ main > section {
    demo controls where the column ends. */
 .stage {
   --header: 64px;
-  --deck-h: 640px;
+  --deck-h: 580px;
   --stick: max(80px, calc((100vh + var(--header) - var(--deck-h)) / 2));
   max-width: 1120px;
   margin: 0 auto;
@@ -271,17 +271,28 @@ main > section {
 /* a new card shows its poster until its video can play */
 .player.loading video { opacity: 0; }
 
+/* the arrows hang on both sides of the deck, halfway down; the layer lets swipes through */
 .deck-nav {
-  position: relative;
+  position: absolute;
+  inset: 0;
   z-index: 1;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 18px;
-  margin-top: 36px;
-  color: var(--muted);
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+.deck-nav .nav {
+  position: absolute;
+  top: 50%;
+  translate: 0 -50%;
+  pointer-events: auto;
+}
+.deck-nav [data-go="-1"] { left: -64px; }
+.deck-nav [data-go="1"] { right: -64px; }
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 .nav {
   width: 44px;
@@ -295,6 +306,7 @@ main > section {
   cursor: pointer;
 }
 .nav:hover { border-color: var(--yellow); }
+.nav { backdrop-filter: blur(6px); }
 .nav svg {
   width: 20px;
   height: 20px;
@@ -491,8 +503,12 @@ footer a:hover { color: var(--yellow); }
     grid-template-areas: "hero" "rail" "demo";
   }
   .hero, .demo { min-height: 0; padding: 48px 0; }
-  .deck-wrap { position: static; margin-top: 0; }
+  .deck-wrap { position: relative; top: 0; margin-top: 0; }
   .deck { width: min(100%, 300px); }
+  /* no room beside the deck on a phone: the arrows overlap its edges */
+  .deck-nav [data-go="-1"] { left: -14px; }
+  .deck-nav [data-go="1"] { right: -14px; }
+  .nav { background: rgba(18, 10, 36, 0.7); }
   .steps ol, .cards { grid-template-columns: 1fr; }
   main > section { padding: 48px 16px; }
 }
