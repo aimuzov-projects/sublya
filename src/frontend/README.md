@@ -51,13 +51,15 @@ The videos keep their names across rebuilds, so their URLs carry a version from
 
 ## Deploy
 
-GitHub Pages, on every push to `main`: `.github/workflows/pages.yml` builds the site with the
-official Astro action and publishes `dist/`. The domain comes from `public/CNAME`.
+sublya.aimuzov.online is served by the skator.ru server: `deploy/vps.sh` builds the site and
+runs it there in an nginx container behind the server's Caddy. The domain has an A record for
+the server, and the skator `deploy/Caddyfile` has its `sublya.aimuzov.online` block. Run the
+script by hand after merging into `main`.
 
-The fallback is the skator.ru server, for when Pages can't serve the domain: `deploy/vps.sh`
-builds the site and runs it there in an nginx container behind the server's Caddy. The domain
-then needs an A record for the server instead of the CNAME to `sublya.github.io`, and the
-skator `deploy/Caddyfile` needs its `sublya.aimuzov.online` block.
+GitHub Pages keeps a mirror at sublya.github.io/site, on every push to `main`:
+`.github/workflows/pages.yml` builds the site with `SITE_BASE=/site` and publishes `dist/`.
+Links and media go through `withBase()` from `src/scripts/base.js`, so both builds find their
+files. The Pages settings have no custom domain, or github.io would redirect to the domain.
 
 ## License
 

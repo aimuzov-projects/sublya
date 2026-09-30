@@ -1,10 +1,12 @@
+import { withBase } from './base.js'
+
 const once = (el, event, ms = 3000) =>
   new Promise((resolve) => {
     el.addEventListener(event, resolve, { once: true })
     setTimeout(resolve, ms) // a stalled network shouldn't freeze the switch forever
   })
 
-const url = (demo, file, ext = 'mp4') => `/media/${demo.id}/${file}.${ext}?v=${demo.v}`
+const url = (demo, file, ext = 'mp4') => withBase(`media/${demo.id}/${file}.${ext}?v=${demo.v}`)
 
 function shuffle(list) {
   const a = [...list]

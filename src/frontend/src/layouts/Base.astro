@@ -1,6 +1,7 @@
 ---
 import cyrillic from '../assets/fonts/montserrat-cyrillic.woff2?url'
 import latin from '../assets/fonts/montserrat-latin.woff2?url'
+import { withBase } from '../scripts/base.js'
 import '../styles/base.css'
 
 const title = 'Сабля — субтитры как в тиктоке'
@@ -19,7 +20,8 @@ const description =
     <meta property="og:description" content="Пришли видео в Telegram — получи его с субтитрами, где подсвечено произносимое слово." />
     <meta property="og:image" content={new URL('/media/samara/poster.jpg', Astro.site)} />
     <meta name="theme-color" content="#120a24" />
-    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href={withBase('favicon.svg')} type="image/svg+xml" />
+    <link rel="canonical" href={Astro.site} />
     <link rel="preload" href={cyrillic} as="font" type="font/woff2" crossorigin />
     <link rel="preload" href={latin} as="font" type="font/woff2" crossorigin />
     <!-- Yandex.Metrika counter: the stock snippet, except that tag.js (90 KB) is fetched after

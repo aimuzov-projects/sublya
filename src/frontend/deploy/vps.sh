@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
-# Builds the site and puts it on the skator.ru server, next to the bot. This is the fallback
-# for when GitHub Pages can't serve the domain: sublya.aimuzov.online then needs an A record
-# for the server instead of the CNAME to sublya.github.io, and the skator Caddyfile needs
-# its sublya.aimuzov.online block.
+# Builds the site and puts it on the skator.ru server, next to the bot. sublya.aimuzov.online
+# has an A record for the server, and the skator Caddyfile has its sublya.aimuzov.online block.
+# GitHub Pages only keeps a mirror at sublya.github.io/site.
 #
 # Usage: deploy/vps.sh
 set -euo pipefail
