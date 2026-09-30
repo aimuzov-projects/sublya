@@ -54,6 +54,11 @@ The videos keep their names across rebuilds, so their URLs carry a version from
 GitHub Pages, on every push to `main`: `.github/workflows/pages.yml` builds the site with the
 official Astro action and publishes `dist/`. The domain comes from `public/CNAME`.
 
+The fallback is the skator.ru server, for when Pages can't serve the domain: `deploy/vps.sh`
+builds the site and runs it there in an nginx container behind the server's Caddy. The domain
+then needs an A record for the server instead of the CNAME to `sublya.github.io`, and the
+skator `deploy/Caddyfile` needs its `sublya.aimuzov.online` block.
+
 ## License
 
 [MIT](LICENSE)
