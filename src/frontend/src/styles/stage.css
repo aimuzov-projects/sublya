@@ -109,7 +109,19 @@
 /* a new card shows its poster until its video can play */
 .player.loading video { opacity: 0; }
 /* shows up only if the switch takes a while, so a cached video doesn't blink it */
+.player.switching::before {
+  content: '';
+  position: absolute;
+  inset: 10px;
+  z-index: 1;
+  border-radius: 28px;
+  background: rgba(0, 0, 0, 0.45);
+  pointer-events: none;
+  opacity: 0;
+  animation: appear 0.2s ease 0.25s forwards;
+}
 .player.switching::after {
+  z-index: 2;
   content: '';
   position: absolute;
   inset: 0;
@@ -173,6 +185,7 @@
 
 .sound {
   position: absolute;
+  z-index: 2;
   right: 22px;
   bottom: 22px;
   width: 44px;
