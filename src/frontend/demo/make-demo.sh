@@ -42,6 +42,10 @@ for file in before classic; do
   "$ffmpeg" -v error -y -ss 1.6 -i "$out/$file.mp4" -frames:v 1 -q:v 4 "$out/$file.jpg"
 done
 mv "$out/classic.jpg" "$out/poster.jpg"
+# the page shows these small: the deck poster at 273 px wide, the steps frame at 72; the JPEGs
+# stay for link previews, where WebP isn't everywhere yet
+"$ffmpeg" -v error -y -i "$out/poster.jpg" -vf scale=540:-2 -c:v libwebp -quality 72 "$out/poster.webp"
+"$ffmpeg" -v error -y -i "$out/before.jpg" -vf scale=400:-2 -c:v libwebp -quality 72 "$out/before.webp"
 
 # the page asks for /media/<name>/*?v=<version>: new files, new URLs, whatever browsers cached
 version="$(cat "$out"/*.mp4 "$out"/*.jpg | shasum | cut -c1-8)"

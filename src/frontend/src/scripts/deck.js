@@ -116,8 +116,7 @@ export function deck() {
       const card = document.createElement('div')
       card.className = 'card'
       const img = document.createElement('img')
-      img.src = url(demo, 'poster', 'jpg')
-      img.alt = ''
+      Object.assign(img, { src: url(demo, 'poster', 'webp'), alt: '', width: 540, height: 960, decoding: 'async' })
       card.append(img)
       deck.append(card)
       return [demo, card]
@@ -223,11 +222,29 @@ export function deck() {
     player.show(url(order[0], file()), true)
   })
 
+  // The video loads only once the page has and the deck is on screen: on a slow network it
+  // would take the whole channel from the fonts and the text, and on a phone the deck is
+  // below the first screen, so a visitor who never scrolls down never downloads it.
+  let loaded = document.readyState === 'complete'
+  let visible = false
+  let started = false
+  const start = () => {
+    if (started || !loaded || !visible) return
+    started = true
+    openTop()
+  }
+  addEventListener('load', () => ((loaded = true), start()), { once: true })
+
   // the video plays only while on screen
-  new IntersectionObserver(([entry]) => (entry.isIntersecting ? player.play() : player.pause()), {
-    threshold: 0.4,
-  }).observe(deck)
+  new IntersectionObserver(
+    ([entry]) => {
+      visible = entry.isIntersecting
+      if (visible) player.play()
+      else player.pause()
+      start()
+    },
+    { threshold: 0.4 },
+  ).observe(deck)
 
   layout()
-  openTop()
 }
