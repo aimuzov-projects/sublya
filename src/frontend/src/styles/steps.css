@@ -132,7 +132,7 @@
   background: #182533;
   border: 1px solid #2b5278;
 }
-.field .label { display: block; font-size: 0.7rem; color: #6c8aa6; text-transform: uppercase; letter-spacing: 0.08em; }
+.field .label { display: block; font-size: 0.7rem; color: #9db4cc; text-transform: uppercase; letter-spacing: 0.08em; }
 .field p { margin: 4px 0 0; min-height: 3em; color: var(--text); font-size: 0.95rem; line-height: 1.5; }
 .caret {
   display: inline-block;
