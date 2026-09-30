@@ -19,9 +19,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      # installs from package-lock.json, runs astro build and uploads dist/ for Pages;
-      # public/CNAME keeps the custom domain
+      # installs from package-lock.json, runs astro build and uploads dist/ for Pages.
+      # The domain lives on the VPS, Pages is a mirror at sublya.github.io/site
       - uses: withastro/action@v6
+        env:
+          SITE_BASE: /site
 
   deploy:
     needs: build

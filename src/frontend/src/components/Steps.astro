@@ -1,7 +1,8 @@
 ---
+import { withBase } from '../scripts/base.js'
 import '../styles/steps.css'
 
-const frame = 'background-image:url(/media/samara/before.webp)'
+const frame = `background-image:url(${withBase('media/samara/before.webp')})`
 ---
 
 <section class="steps">
