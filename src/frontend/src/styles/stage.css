@@ -8,6 +8,9 @@
   max-width: 1120px;
   margin: 0 auto;
   padding: 0 16px;
+  /* the right arrow hangs 54px past the rail: it takes the page margin, and the padding when
+     the margin is too narrow, so main's clip never cuts it and it keeps 8px off the edge */
+  padding-right: clamp(16px, calc(62px - (100% - 1120px) / 2), 62px);
   display: grid;
   grid-template-columns: minmax(0, 1fr) 340px;
   grid-template-areas: "hero rail" "demo rail";
@@ -280,6 +283,7 @@
   .stage {
     grid-template-columns: 1fr;
     grid-template-areas: "hero" "rail" "demo";
+    padding-right: 16px;
   }
   .hero, .demo { min-height: 0; padding: 48px 0; }
   .deck-wrap { position: relative; top: 0; margin-top: 0; }
