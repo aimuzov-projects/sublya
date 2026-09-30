@@ -37,6 +37,7 @@ class Player {
 
   async show(src, keepTime) {
     const seq = ++this.seq
+    this.root.classList.add('switching')
     const cur = this.front
     const next = this.videos.find((v) => v !== cur)
     next.muted = cur.muted
@@ -55,7 +56,7 @@ class Player {
     cur.pause()
     this.front = next
     // whoever wins shows the video: a style picked while a card loads cancels its open
-    this.root.classList.remove('loading')
+    this.root.classList.remove('loading', 'switching')
     return true
   }
 
