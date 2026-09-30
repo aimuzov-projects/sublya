@@ -54,6 +54,8 @@ class Player {
     cur.classList.remove('front')
     cur.pause()
     this.front = next
+    // whoever wins shows the video: a style picked while a card loads cancels its open
+    this.root.classList.remove('loading')
     return true
   }
 
@@ -127,6 +129,8 @@ export function deck() {
   if (demos.length < 2) document.querySelector('.deck-nav').hidden = true
 
   const file = () => (variant === 'before' ? 'before' : style)
+  // until the card's own video is up, the time on screen belongs to the previous one
+  const keepTime = () => !player.root.classList.contains('loading')
 
   function layout() {
     order.forEach((demo, i) => {
@@ -144,8 +148,7 @@ export function deck() {
 
   async function openTop() {
     player.root.classList.add('loading')
-    const shown = await player.show(url(order[0], file()), false)
-    if (shown) player.root.classList.remove('loading')
+    await player.show(url(order[0], file()), false)
   }
 
   function step(dir) {
@@ -210,7 +213,7 @@ export function deck() {
     variant = b.dataset.src
     checkRadio(toggle, 'src', variant)
     styles.setAttribute('aria-disabled', String(variant === 'before'))
-    player.show(url(order[0], file()), true)
+    player.show(url(order[0], file()), keepTime())
   })
 
   styles.addEventListener('click', (e) => {
@@ -221,7 +224,7 @@ export function deck() {
     checkRadio(styles, 'style', style)
     checkRadio(toggle, 'src', variant)
     styles.setAttribute('aria-disabled', 'false')
-    player.show(url(order[0], file()), true)
+    player.show(url(order[0], file()), keepTime())
   })
 
   // The video loads only once the page has and the deck is on screen: on a slow network it
