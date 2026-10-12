@@ -54,7 +54,7 @@ The videos keep their names across rebuilds, so their URLs carry a version from
 sublya.aimuzov.online is served by the projects server, next to the bot. The repository is
 cloned to `/srv/sublya-site` there; the `Dockerfile` builds the site into an nginx image and
 `deploy/docker-compose.yml` runs it in the `edge` network behind the shared Caddy from
-[server-infra](https://github.com/aimuzov-projects/server-infra), whose `sites/sublya.caddy`
+[infra-server](https://github.com/aimuzov-projects/infra-server), whose `sites/sublya.caddy`
 holds the domain.
 
 Every push to `main` deploys it: `.github/workflows/deploy.yml` logs into the server with the

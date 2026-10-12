@@ -1,5 +1,5 @@
 # The site on the projects server. Ports 80/443 belong to the shared Caddy from
-# aimuzov-projects/server-infra: it proxies sublya.aimuzov.online here over the edge network.
+# aimuzov-projects/infra-server: it proxies sublya.aimuzov.online here over the edge network.
 # deploy/remote.sh rebuilds it on every push to main.
 
 name: sublya-site
