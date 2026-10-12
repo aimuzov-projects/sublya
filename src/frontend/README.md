@@ -51,10 +51,15 @@ The videos keep their names across rebuilds, so their URLs carry a version from
 
 ## Deploy
 
-sublya.aimuzov.online is served by the skator.ru server: `deploy/vps.sh` builds the site and
-runs it there in an nginx container behind the server's Caddy. The domain has an A record for
-the server, and the skator `deploy/Caddyfile` has its `sublya.aimuzov.online` block. Run the
-script by hand after merging into `main`.
+sublya.aimuzov.online is served by the projects server, next to the bot. The repository is
+cloned to `/srv/sublya-site` there; the `Dockerfile` builds the site into an nginx image and
+`deploy/docker-compose.yml` runs it in the `edge` network behind the shared Caddy from
+[server-infra](https://github.com/aimuzov-projects/server-infra), whose `sites/sublya.caddy`
+holds the domain.
+
+Every push to `main` deploys it: `.github/workflows/deploy.yml` logs into the server with the
+`DEPLOY_SSH_KEY` secret, and that key is bound to `deploy/remote.sh` in `authorized_keys`, which
+pulls `main` and rebuilds the container. To deploy without a push: `gh workflow run deploy.yml`.
 
 GitHub Pages keeps a mirror at sublya.github.io/site, on every push to `main`:
 `.github/workflows/pages.yml` builds the site with `SITE_BASE=/site` and publishes `dist/`.
