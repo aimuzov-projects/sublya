@@ -3,7 +3,7 @@
 The production bot runs on the projects server (1 vCPU, 2 GB RAM), which it shares with other
 projects. The repository is cloned to `/srv/sublya-bot` there, and `deploy/docker-compose.yml`
 builds and runs the stack. Ports 80/443 and the domains belong to the shared Caddy from
-[server-infra](https://github.com/aimuzov-projects/server-infra).
+[infra-server](https://github.com/aimuzov-projects/infra-server).
 
 Every push to `main` deploys it: `.github/workflows/deploy.yml` runs the tests, then logs into
 the server with the `DEPLOY_SSH_KEY` secret. That key is bound to `deploy/remote.sh` in the
@@ -19,7 +19,7 @@ The script pulls `main` and rebuilds the containers. To deploy without a push:
 ## Why there's a tunnel
 
 The server is in Russia: `api.telegram.org`, Telegram's data centres and OpenRouter don't
-answer from it. server-infra runs a shared VPN exit, the `vpn` container with a SOCKS proxy on
+answer from it. infra-server runs a shared VPN exit, the `vpn` container with a SOCKS proxy on
 `vpn:1080`. The Bot API server talks MTProto and has no setting for a SOCKS proxy, so instead
 of teaching every client about the proxy, three containers share one network namespace:
 
@@ -55,6 +55,6 @@ docker run --rm --network vpn curlimages/curl -sS -o /dev/null -w '%{http_code}\
 The bot needs no open ports: it polls Telegram through the local Bot API server. The only way
 in is the admin Mini App: `tunnel` also joins the `edge` network, and the shared Caddy proxies
 `https://sublya.aimuzov.online/admin` to `sublya-tunnel:8090`. That block lives in
-server-infra's `sites/sublya.caddy`. Set `ADMIN_URL` to that address in the server's `.env`.
+infra-server's `sites/sublya.caddy`. Set `ADMIN_URL` to that address in the server's `.env`.
 
 The site is served next to it, see [sublya/site](https://github.com/sublya/site).
