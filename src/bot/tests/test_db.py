@@ -21,7 +21,7 @@ async def db(tmp_path):
     await d.close()
 
 
-async def submit(db: Db, user: int, parent_id: int | None = None, limit: int = 10) -> int:
+async def submit(db: Db, user: int, parent_id: int | None = None, limit: int | None = 10) -> int:
     return await db.submit(
         user_id=user, chat_id=user, input_path="in.mp4", text=None, style="classic",
         lang=None, parent_id=parent_id, daily_limit=limit,
@@ -167,3 +167,24 @@ async def test_migration_adds_note_to_old_jobs(tmp_path):
         assert (await db.get_job(1)).note == 0
     finally:
         await db.close()
+
+
+async def test_bonus_raises_todays_quota_only(db):
+    await db.finish(await submit(db, 1, limit=1), "done")
+    assert await db.grant_videos(1, 2) == 2
+    assert await db.grant_videos(1, 1) == 3
+    for _ in range(3):
+        await db.finish(await submit(db, 1, limit=1), "done")
+    with pytest.raises(QuotaExceeded):
+        await submit(db, 1, limit=1)
+    db.clock_.t += 86400
+    assert await db.bonus_today(1) == 0
+    await db.finish(await submit(db, 1, limit=1), "done")
+    with pytest.raises(QuotaExceeded):
+        await submit(db, 1, limit=1)
+
+
+async def test_no_limit_still_counts_videos(db):
+    for _ in range(3):
+        await db.finish(await submit(db, 1, limit=None), "done")
+    assert await db.videos_today(1) == 3

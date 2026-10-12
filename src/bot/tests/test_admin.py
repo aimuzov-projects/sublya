@@ -114,6 +114,12 @@ class FakeBot:
     def __init__(self, tmp_path):
         self.tmp = tmp_path
         self.chats = 0
+        self.sent = []
+
+    async def send_message(self, chat_id, text):
+        if chat_id == 3:
+            raise TelegramForbiddenError(method=GetChat(chat_id=3), message="Forbidden")
+        self.sent.append((chat_id, text))
 
     async def get_chat(self, user_id):
         self.chats += 1
@@ -202,3 +208,19 @@ async def test_avatar_needs_an_admin_and_a_photo(client):
 async def test_page_is_served(client):
     r = await client.get("/admin")
     assert r.status == 200 and "telegram-web-app.js" in await r.text()
+
+
+async def test_bonus_adds_videos_for_today_and_tells_the_user(client, db, profiles):
+    import time
+    auth = {"Authorization": "tma " + signed(auth_date=time.time())}
+    assert (await client.post("/admin/api/users/1/bonus")).status == 401
+    other = {"Authorization": "tma " + signed(8, time.time())}
+    assert (await client.post("/admin/api/users/1/bonus", headers=other)).status == 403
+    r = await client.post("/admin/api/users/1/bonus", headers=auth)
+    assert r.status == 200 and await r.json() == {"limit": 20, "notified": True}
+    r = await client.post("/admin/api/users/1/bonus", headers=auth)
+    assert (await r.json())["limit"] == 30
+    assert await db.bonus_today(1) == 20 and len(profiles.bot.sent) == 2
+    r = await client.post("/admin/api/users/3/bonus", headers=auth)
+    assert r.status == 200 and (await r.json())["notified"] is False
+    assert (await client.post("/admin/api/users/x/bonus", headers=auth)).status == 404

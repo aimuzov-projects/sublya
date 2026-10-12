@@ -136,7 +136,8 @@ async def enqueue(
             user_id=user_id, chat_id=message.chat.id,
             input_path=parent.input_path if parent else None,
             text=text, style=style, lang=lang,
-            parent_id=parent.root_id if parent else None, daily_limit=settings.daily_videos,
+            parent_id=parent.root_id if parent else None,
+            daily_limit=None if user_id in settings.admin_ids else settings.daily_videos,
             note=bool(parent.note) if parent else note,
         )
     except Busy:

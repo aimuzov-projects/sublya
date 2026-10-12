@@ -72,6 +72,7 @@
   .row .main { flex: 1; min-width: 0; }
   .row .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .row .num { font-variant-numeric: tabular-nums; font-weight: 600; }
+  .row .bonus { flex: none; padding: 5px 10px; font-weight: 600; }
   .err { color: var(--bad); font-size: 12px; margin-top: 3px; word-break: break-word; }
   .status { font-size: 12px; font-weight: 600; white-space: nowrap; }
   .status::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%;
@@ -260,12 +261,17 @@ function render(data) {
     tile("Очередь", nf.format(data.queue.queued + data.queue.running),
       data.queue.running ? "одно видео в работе" : "никто не ждёт"));
 
-  const top = el("div", { class: "card list" }, data.top.length ? data.top.map((t) =>
-    el("div", { class: "row" }, avatar(t),
+  const top = el("div", { class: "card list" }, data.top.length ? data.top.map((t) => {
+    const admin = data.admin_ids.includes(t.user_id);
+    const quota = admin ? "без лимита" : `сегодня ${t.today} из ${data.daily_videos + t.bonus}`;
+    return el("div", { class: "row" }, avatar(t),
       el("div", { class: "main" },
         el("div", { class: "name" }, person(t)),
-        el("div", { class: "sub" }, contacts(t), contacts(t).length ? ", " : "", `последнее ${when(t.last)}`)),
-      el("div", { class: "num" }, `${t.done} / ${t.videos}`))) : el("div", { class: "empty" }, "Пока никого"));
+        el("div", { class: "sub" }, contacts(t), contacts(t).length ? ", " : "", `последнее ${when(t.last)}`),
+        el("div", { class: "sub" }, quota)),
+      el("div", { class: "num" }, `${t.done} / ${t.videos}`),
+      admin ? null : bonusButton(t.user_id, data.bonus_videos));
+  }) : el("div", { class: "empty" }, "Пока никого"));
 
   const recent = el("div", { class: "card list" }, data.recent.length ? data.recent.map((j) => {
     const took = j.finished_at ? Math.round(j.finished_at - j.created_at) + " с" : "";
@@ -282,6 +288,26 @@ function render(data) {
     el("h2", {}, `Видео по дням, ${data.days.length} дней (UTC)`), chart(data.days, app.clientWidth - 32),
     el("h2", {}, "Самые активные: готово / всего"), top,
     el("h2", {}, "Последние задачи"), recent);
+}
+
+// adds n videos to the user's quota for today; the bot tells them about it
+function bonusButton(userId, n) {
+  const button = el("button", { type: "button", class: "bonus" }, `+${n}`);
+  button.addEventListener("click", async () => {
+    button.disabled = true;
+    try {
+      const res = await fetch(`/admin/api/users/${userId}/bonus`, { method: "POST", headers: auth() });
+      if (!res.ok) throw new Error(res.status);
+      const { notified } = await res.json();
+      tg?.HapticFeedback?.notificationOccurred(notified ? "success" : "warning");
+      if (!notified) tg?.showAlert?.("Видео добавлены, но написать человеку не вышло: похоже, он заблокировал бота.");
+      await load();
+    } catch {
+      tg?.HapticFeedback?.notificationOccurred("error");
+      button.disabled = false;
+    }
+  });
+  return button;
 }
 
 async function load() {

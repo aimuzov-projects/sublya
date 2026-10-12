@@ -72,7 +72,8 @@ Everything comes from the environment; `.env.example` lists it.
 | `STT_LAG` | tuned per timing kind | how late the recogniser places word starts, seconds |
 | `DEFAULT_LANG` | `ru` | speech language for users who never ran `/lang`; empty for autodetect, which can take Russian for English |
 | `STT_DAILY_MINUTES` | `300` | recognised minutes per day for the whole bot |
-| `DAILY_VIDEOS` | `10` | new videos per user per day; re-renders are free |
+| `DAILY_VIDEOS` | `10` | new videos per user per day; re-renders are free, admins have no limit |
+| `BONUS_VIDEOS` | `10` | videos the admin panel's "+N" button adds to a user's quota for today |
 | `ADMIN_IDS` | empty | Telegram user ids that get errors and `/stats` |
 | `ADMIN_URL` | empty | public address of the admin Mini App (users, videos, OpenRouter balance); `/admin` opens it for `ADMIN_IDS` |
 | `ADMIN_PORT` | `8090` | port of the admin panel's web server |
