@@ -39,6 +39,7 @@ CREATE TABLE IF NOT EXISTS usage (
     user_id INTEGER NOT NULL,
     videos INTEGER NOT NULL DEFAULT 0,
     stt_seconds REAL NOT NULL DEFAULT 0,
+    bonus INTEGER NOT NULL DEFAULT 0,
     PRIMARY KEY (day, user_id)
 );
 CREATE TABLE IF NOT EXISTS support_topics (
@@ -96,6 +97,7 @@ class User:
 MIGRATIONS = {
     "users": {"name": "TEXT", "username": "TEXT"},
     "jobs": {"note": "INTEGER NOT NULL DEFAULT 0"},
+    "usage": {"bonus": "INTEGER NOT NULL DEFAULT 0"},
 }
 
 
@@ -153,11 +155,27 @@ class Db:
         )
         return row["videos"] if row else 0
 
+    async def bonus_today(self, user_id: int) -> int:
+        row = await self._one(
+            "SELECT bonus FROM usage WHERE day = ? AND user_id = ?", self.today(), user_id
+        )
+        return row["bonus"] if row else 0
+
+    async def grant_videos(self, user_id: int, n: int) -> int:
+        """Adds n videos to the user's quota for today only. Returns today's whole bonus."""
+        await self.conn.execute(
+            "INSERT INTO usage (day, user_id, bonus) VALUES (?, ?, ?) "
+            "ON CONFLICT (day, user_id) DO UPDATE SET bonus = bonus + excluded.bonus",
+            (self.today(), user_id, n),
+        )
+        return await self.bonus_today(user_id)
+
     async def submit(
         self, *, user_id: int, chat_id: int, input_path: str | None, text: str | None, style: str,
-        lang: str | None, parent_id: int | None, daily_limit: int, note: bool = False,
+        lang: str | None, parent_id: int | None, daily_limit: int | None, note: bool = False,
     ) -> int:
-        """Queues a job. Re-renders (with parent_id) don't count against the daily quota.
+        """Queues a job. Re-renders (with parent_id) don't count against the daily quota,
+        and daily_limit=None (admins) means no quota, though the video is still counted.
         Without input_path the job stays pending until ready(), so the worker never sees a
         job whose video is still downloading."""
         async with self._transaction():
@@ -167,7 +185,8 @@ class Db:
             if active:
                 raise Busy
             if parent_id is None:
-                if await self.videos_today(user_id) >= daily_limit:
+                limit = None if daily_limit is None else daily_limit + await self.bonus_today(user_id)
+                if limit is not None and await self.videos_today(user_id) >= limit:
                     raise QuotaExceeded
                 await self.conn.execute(
                     "INSERT INTO usage (day, user_id, videos) VALUES (?, ?, 1) "
@@ -306,10 +325,12 @@ class Db:
 
         top = await self._all(
             "SELECT u.id AS user_id, u.name, u.username, t.topic_id AS topic, COUNT(j.id) AS videos,"
-            " SUM(j.status = 'done') AS done, MAX(j.created_at) AS last"
+            " SUM(j.status = 'done') AS done, MAX(j.created_at) AS last,"
+            " COALESCE(d.videos, 0) AS today, COALESCE(d.bonus, 0) AS bonus"
             " FROM users u JOIN jobs j ON j.user_id = u.id AND j.parent_id IS NULL"
             " LEFT JOIN support_topics t ON t.user_id = u.id"
-            " GROUP BY u.id ORDER BY videos DESC, last DESC LIMIT 10"
+            " LEFT JOIN usage d ON d.user_id = u.id AND d.day = ?"
+            " GROUP BY u.id ORDER BY videos DESC, last DESC LIMIT 10", today,
         )
         recent = await self._all(
             "SELECT j.id, j.user_id, u.name, u.username, t.topic_id AS topic, j.status, j.style,"

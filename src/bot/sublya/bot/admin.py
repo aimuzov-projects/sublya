@@ -19,6 +19,7 @@ from aiogram.exceptions import TelegramAPIError
 from aiohttp import web
 
 from .config import Settings
+from . import texts
 from .db import Db
 
 log = logging.getLogger(__name__)
@@ -182,8 +183,28 @@ def make_app(
         data["openrouter"] = await openrouter.balance()
         data["stt_limit"] = settings.stt_daily_minutes
         data["daily_videos"] = settings.daily_videos
+        data["bonus_videos"] = settings.bonus_videos
+        data["admin_ids"] = sorted(settings.admin_ids)
         data["support_chat_id"] = settings.support_chat_id
         return web.json_response(data, headers={"Cache-Control": "no-store"})
+
+    async def bonus(request: web.Request) -> web.Response:
+        """Adds bonus_videos to the user's quota for today and tells them about it."""
+        if refusal := admin_of(request, settings):
+            return refusal
+        try:
+            user_id = int(request.match_info["user_id"])
+        except ValueError:
+            raise web.HTTPNotFound() from None
+        n = settings.bonus_videos
+        total = settings.daily_videos + await db.grant_videos(user_id, n)
+        notified = True
+        try:
+            await profiles.bot.send_message(user_id, texts.BONUS.format(n=n, total=total))
+        except TelegramAPIError:
+            log.warning("could not tell user %d about the bonus", user_id, exc_info=True)
+            notified = False
+        return web.json_response({"limit": total, "notified": notified})
 
     async def avatar(request: web.Request) -> web.StreamResponse:
         if refusal := admin_of(request, settings):
@@ -202,6 +223,7 @@ def make_app(
     app.router.add_get("/admin/", page)
     app.router.add_get("/admin/api/stats", stats)
     app.router.add_get("/admin/api/avatar/{user_id}", avatar)
+    app.router.add_post("/admin/api/users/{user_id}/bonus", bonus)
     return app
 
 
