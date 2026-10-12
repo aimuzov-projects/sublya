@@ -1,8 +1,11 @@
 name: test
 
+# On main the deploy calls the tests before shipping, a separate run there would be a second one.
 on:
   push:
+    branches-ignore: [main]
   pull_request:
+  workflow_call:
 
 jobs:
   test:

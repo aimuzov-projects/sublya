@@ -56,7 +56,8 @@ otherwise the local server can't take it over:
 curl https://api.telegram.org/bot$BOT_TOKEN/logOut
 ```
 
-Production runs behind a SOCKS tunnel on a shared VPS: [docs/deploy.md](docs/deploy.md).
+Production runs on a shared server behind a SOCKS tunnel and deploys on every push to `main`:
+[docs/deploy.md](docs/deploy.md).
 
 ## Configuration
 

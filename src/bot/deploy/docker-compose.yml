@@ -1,10 +1,17 @@
-# Production. Telegram and OpenRouter aren't reachable from the server directly, so the
-# bot and the Bot API server share the network namespace of a tun2socks container that
-# wraps all their outgoing traffic into the host's SOCKS proxy (xray on port 1080).
-# Neither of them knows about the proxy.
+# Production, on the projects server. Telegram and OpenRouter aren't reachable from it
+# directly, so the bot and the Bot API server share the network namespace of a tun2socks
+# container that wraps all their outgoing traffic into the shared VPN exit from
+# aimuzov-projects/server-infra (SOCKS on vpn:1080). Neither of them knows about the proxy.
 #
-# Images arrive prebuilt (docker load), nothing is built here.
-# Start: cd /opt/sublya/bot && docker compose up -d
+# deploy/remote.sh rebuilds the bot on every push to main; secrets live in /srv/sublya-bot/.env.
+
+name: sublya-bot
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: '5m'
+    max-file: '2'
 
 services:
   tunnel:
@@ -16,29 +23,24 @@ services:
     devices:
       - /dev/net/tun:/dev/net/tun
     environment:
-      PROXY: socks5://host.docker.internal:1080
+      PROXY: socks5://vpn:1080
       LOGLEVEL: warn
-    extra_hosts:
-      - 'host.docker.internal:host-gateway'
-    # the skator Caddy reaches the bot's admin panel (port 8090) here; replies to it go out
-    # through the network's own route, not into the tunnel
+    # the shared Caddy reaches the bot's admin panel (port 8090) over edge; replies to it,
+    # like the traffic to vpn, go out through the network's own route, not into the tunnel
     networks:
-      - default
-      - skator
-    logging: &logging
-      driver: json-file
-      options:
-        max-size: '5m'
-        max-file: '2'
+      - vpn
+      - edge
+    logging: *logging
 
   telegram-bot-api:
     image: aiogram/telegram-bot-api:latest
     container_name: sublya-bot-api
     restart: unless-stopped
     network_mode: service:tunnel
+    # TELEGRAM_API_ID and TELEGRAM_API_HASH come from here; the compose file sits in deploy/,
+    # so ${...} would look for its own .env next to it, not at the repository root
+    env_file: ../.env
     environment:
-      TELEGRAM_API_ID: ${TELEGRAM_API_ID:?}
-      TELEGRAM_API_HASH: ${TELEGRAM_API_HASH:?}
       TELEGRAM_LOCAL: '1'
       TELEGRAM_HTTP_IP_ADDRESS: 127.0.0.1
     volumes:
@@ -48,16 +50,18 @@ services:
     logging: *logging
 
   bot:
-    image: sublya-bot:latest
+    build:
+      context: ..
+    image: sublya-bot
     container_name: sublya-bot
     restart: unless-stopped
     network_mode: service:tunnel
-    env_file: .env
+    env_file: ../.env
     environment:
       TELEGRAM_API_URL: http://127.0.0.1:8081
       DATA_DIR: /data
     volumes:
-      - ./data:/data
+      - ../data:/data
       # the same path as in the Bot API container, so its file paths work as is
       - bot-api:/var/lib/telegram-bot-api
     depends_on:
@@ -68,6 +72,9 @@ volumes:
   bot-api:
 
 networks:
-  skator:
-    name: skator_default
+  vpn:
+    name: vpn
+    external: true
+  edge:
+    name: edge
     external: true
