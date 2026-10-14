@@ -252,7 +252,7 @@ export const mirrorOutgoing =
 		const chatId = (payload as { chat_id?: unknown }).chat_id
 
 		if (
-			(method === 'sendMessage' || method === 'sendVideo') &&
+			(method === 'sendMessage' || method === 'sendVideo' || method === 'editMessageMedia') &&
 			typeof chatId === 'number' &&
 			chatId > 0 &&
 			result.ok &&

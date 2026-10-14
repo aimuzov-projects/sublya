@@ -10,6 +10,9 @@
 @custom-media --below-lg (width < 1000px);
 @custom-media --below-xl (width < 1280px);
 
+/* The header fits the logo and the bot button only, without the GitHub icon. */
+@custom-media --below-header (width < 360px);
+
 /* The stage drops its phone column under the text here. */
 @custom-media --below-stage (width <= 860px);
 
