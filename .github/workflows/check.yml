@@ -21,8 +21,8 @@ jobs:
       - uses: aimuzov-projects/infra-site-kit/check@v1
         with:
           apt-packages: ffmpeg
-      # e2e from infra-site-kit: the build in Chromium. The browser is cached by the Playwright
-      # version, its system libraries come from apt on every run.
+      # e2e из infra-site-kit: сборка в Chromium. Браузер кэшируется по версии Playwright,
+      # его системные библиотеки ставятся из apt каждый прогон.
       - id: playwright
         run: echo "version=$(npm ls @playwright/test --json | jq -r '.dependencies["@playwright/test"].version')" >> "$GITHUB_OUTPUT"
       - uses: actions/cache@v4
