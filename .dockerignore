@@ -10,4 +10,4 @@ dist
 docs
 demo
 data
-src/bot
+src/bot/core/fixtures
