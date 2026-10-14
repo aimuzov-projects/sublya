@@ -22,6 +22,13 @@ const MAX_INIT_DATA = 8192
 const BALANCE_TTL = 60
 const AVATAR_TTL = 24 * 3600
 const AVATAR_SIZE = 160
+const HEALTH_TIMEOUT = 10_000
+
+const withTimeout = <T>(promise: Promise<T>, ms: number) =>
+	Promise.race([
+		promise,
+		new Promise<never>((_, reject) => setTimeout(() => reject(new Error(`no answer in ${ms} ms`)), ms).unref()),
+	])
 
 /** The Telegram user id behind a signed initData, or null if the signature doesn't hold or
  * is too old. */
@@ -113,7 +120,7 @@ export class OpenRouter {
 	}
 }
 
-export type ProfilesApi = Pick<Api, 'getChat' | 'getUserProfilePhotos' | 'getFile' | 'sendMessage'>
+export type ProfilesApi = Pick<Api, 'getChat' | 'getUserProfilePhotos' | 'getFile' | 'sendMessage' | 'getMe'>
 type Named = { user_id: unknown; name: unknown; username: unknown }
 
 /** Names and avatars of the users the panel lists. Users who wrote before the bot kept names
@@ -245,6 +252,22 @@ export function makeHandler(db: Db, settings: Settings, openrouter: OpenRouter, 
 				res.end(await readFile(PAGE))
 
 				return
+			}
+
+			// For the hourly check in .github/workflows/monitor.yml: getMe goes through the local
+			// Bot API server and the tunnel, so a dead bot, Bot API or VPN exit all show up here.
+			// No signature needed, and nothing but the verdict comes out.
+			if (route('GET', /^\/admin\/api\/health$/)) {
+				const ok = await withTimeout(profiles.api.getMe(), HEALTH_TIMEOUT).then(
+					() => true,
+					(e) => {
+						console.warn('health check failed', e)
+
+						return false
+					},
+				)
+
+				return json(res, ok ? 200 : 503, { ok }, { 'Cache-Control': 'no-store' })
 			}
 
 			const stats = route('GET', /^\/admin\/api\/stats$/)

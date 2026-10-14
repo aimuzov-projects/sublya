@@ -1,0 +1,38 @@
+name: Monitor
+
+# Once an hour, from outside: the site answers, and the bot reaches Telegram through the local
+# Bot API server and the tunnel. A failed run is the alert: GitHub emails it to whoever last
+# changed the schedule below. GitHub pauses schedules after 60 days without commits, then the
+# workflow has to be re-enabled on the Actions tab.
+on:
+  schedule:
+    - cron: '17 * * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: monitor
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      # three tries a minute apart: a deploy restarts the containers, and that is no outage
+      - name: Site
+        run: |
+          for i in 1 2 3; do
+            curl -fsS -o /dev/null --max-time 20 https://sublya.aimuzov.online/ && exit 0
+            sleep 60
+          done
+          exit 1
+
+      - name: Bot
+        run: |
+          for i in 1 2 3; do
+            curl -fsS --max-time 20 https://sublya.aimuzov.online/admin/api/health && exit 0
+            sleep 60
+          done
+          exit 1

@@ -33,12 +33,12 @@ jobs:
           ssh-key: ${{ secrets.DEPLOY_SSH_KEY }}
           url: https://sublya.aimuzov.online/
 
-      # The bot has no address of its own; the admin panel answering through Caddy means
-      # the container is up and its web server started.
+      # The bot has no address of its own; its health check answers through Caddy and reaches
+      # Telegram through the local Bot API server and the tunnel.
       - name: Check bot
         run: |
           for i in 1 2 3 4 5 6; do
-            curl -fsS -o /dev/null -w "%{http_code}\n" https://sublya.aimuzov.online/admin && exit 0
+            curl -fsS https://sublya.aimuzov.online/admin/api/health && exit 0
             sleep 5
           done
           exit 1
