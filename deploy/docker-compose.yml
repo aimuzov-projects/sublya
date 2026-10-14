@@ -1,0 +1,106 @@
+# Production, on the projects server. Ports 80/443 belong to the shared Caddy from
+# aimuzov-projects/infra-server: it proxies sublya.aimuzov.online to the site and /admin to the
+# bot's admin panel, both over the edge network.
+#
+# Telegram and OpenRouter aren't reachable from the server directly, so the bot and the Bot API
+# server share the network namespace of a tun2socks container that wraps all their outgoing
+# traffic into the shared VPN exit from infra-server (SOCKS on vpn:1080). Neither of them knows
+# about the proxy.
+#
+# deploy/remote.sh rebuilds everything on every push to main; secrets live in /srv/sublya/.env.
+
+name: sublya
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: '5m'
+    max-file: '2'
+
+services:
+  site:
+    build:
+      context: ..
+      dockerfile: deploy/frontend.Dockerfile
+      secrets: [env]
+    image: sublya-site
+    container_name: sublya-site
+    restart: unless-stopped
+    networks:
+      - edge
+    logging: *logging
+
+  tunnel:
+    image: xjasonlyu/tun2socks:v2.6.0
+    container_name: sublya-tunnel
+    restart: unless-stopped
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    environment:
+      PROXY: socks5://vpn:1080
+      LOGLEVEL: warn
+    # the shared Caddy reaches the bot's admin panel (port 8090) over edge; replies to it,
+    # like the traffic to vpn, go out through the network's own route, not into the tunnel
+    networks:
+      - vpn
+      - edge
+    logging: *logging
+
+  telegram-bot-api:
+    image: aiogram/telegram-bot-api:latest
+    container_name: sublya-bot-api
+    restart: unless-stopped
+    network_mode: service:tunnel
+    # TELEGRAM_API_ID and TELEGRAM_API_HASH come from here; the compose file sits in deploy/,
+    # so ${...} would look for its own .env next to it, not at the repository root
+    env_file: ../.env
+    environment:
+      TELEGRAM_LOCAL: '1'
+      TELEGRAM_HTTP_IP_ADDRESS: 127.0.0.1
+    volumes:
+      - bot-api:/var/lib/telegram-bot-api
+    depends_on:
+      - tunnel
+    logging: *logging
+
+  bot:
+    build:
+      context: ..
+      dockerfile: deploy/bot.Dockerfile
+    image: sublya-bot
+    container_name: sublya-bot
+    restart: unless-stopped
+    network_mode: service:tunnel
+    env_file: ../.env
+    environment:
+      TELEGRAM_API_URL: http://127.0.0.1:8081
+      DATA_DIR: /data
+    volumes:
+      - ../data:/data
+      # the same path as in the Bot API container, so its file paths work as is
+      - bot-api:/var/lib/telegram-bot-api
+    depends_on:
+      - telegram-bot-api
+    logging: *logging
+
+# Build variables and the bot's secrets live in /srv/sublya/.env, the sample is .env.example.
+secrets:
+  env:
+    file: ../.env
+
+volumes:
+  # the bot's login on the local Bot API server lives here; the name is from the time the bot
+  # had a repository of its own, kept so the server doesn't have to log it in again
+  bot-api:
+    name: sublya-bot_bot-api
+    external: true
+
+networks:
+  vpn:
+    name: vpn
+    external: true
+  edge:
+    name: edge
+    external: true

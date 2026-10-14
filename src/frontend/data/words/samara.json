@@ -1,0 +1,23 @@
+[
+	{ "text": "Сегодня", "start": 0.86, "end": 1.2, "line_end": false },
+	{ "text": "мы", "start": 1.2, "end": 1.42, "line_end": false },
+	{ "text": "ездили", "start": 1.42, "end": 1.88, "line_end": false },
+	{ "text": "в", "start": 1.88, "end": 2.0, "line_end": false },
+	{ "text": "Самару", "start": 2.0, "end": 2.52, "line_end": false },
+	{ "text": "за", "start": 2.52, "end": 2.9, "line_end": false },
+	{ "text": "рыбой.", "start": 2.9, "end": 3.72, "line_end": true },
+	{ "text": "Простояли", "start": 3.72, "end": 4.18, "line_end": false },
+	{ "text": "тут", "start": 4.18, "end": 4.42, "line_end": false },
+	{ "text": "кучу", "start": 4.42, "end": 4.8, "line_end": false },
+	{ "text": "часов", "start": 4.8, "end": 5.2, "line_end": false },
+	{ "text": "в", "start": 5.2, "end": 5.5, "line_end": false },
+	{ "text": "пробке", "start": 5.5, "end": 6.02, "line_end": true },
+	{ "text": "и", "start": 6.02, "end": 6.58, "line_end": false },
+	{ "text": "приехали", "start": 6.58, "end": 7.22, "line_end": false },
+	{ "text": "в", "start": 7.22, "end": 7.44, "line_end": false },
+	{ "text": "кафе", "start": 7.44, "end": 7.7, "line_end": true },
+	{ "text": "порадовать", "start": 7.7, "end": 8.32, "line_end": false },
+	{ "text": "себя", "start": 8.32, "end": 8.6, "line_end": false },
+	{ "text": "вкусным", "start": 8.6, "end": 9.24, "line_end": false },
+	{ "text": "обедом.", "start": 9.24, "end": 11.24, "line_end": true }
+]

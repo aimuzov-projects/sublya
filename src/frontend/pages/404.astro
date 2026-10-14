@@ -1,0 +1,31 @@
+---
+import Header from '#frontend/components/header.astro'
+import Base from '#frontend/layouts/base.astro'
+---
+
+<Base title="Страница не найдена" description="Такой страницы на сайте нет." index={false}>
+	<Header />
+	<main class="missing">
+		<h1>Такой страницы нет</h1>
+		<p class="missing__text">Возможно, ссылка устарела или в ней опечатка.</p>
+		<a href="/" class="btn">
+			На главную
+		</a>
+	</main>
+</Base>
+
+<style>
+	.missing {
+		display: grid;
+		place-content: center;
+		justify-items: center;
+		min-height: calc(100svh - 64px);
+		padding: 0 16px;
+		text-align: center;
+
+		&__text {
+			margin: 1rem 0 2rem;
+			color: var(--muted);
+		}
+	}
+</style>

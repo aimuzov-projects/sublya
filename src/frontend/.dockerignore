@@ -1,9 +1,0 @@
-.git
-.github
-.astro
-.claude
-.serena
-.DS_Store
-node_modules
-dist
-demo

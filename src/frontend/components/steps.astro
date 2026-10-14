@@ -1,0 +1,10 @@
+---
+import Scenes from '#frontend/components/scenes.svelte'
+import { typographText } from '#shared/typograph.ts'
+import '#frontend/styles/steps.css'
+---
+
+<section class="steps">
+	<h2>Три шага</h2>
+	<Scenes client:visible caption={typographText('Сегодня мы ездили в Самару за рыбой')} />
+</section>

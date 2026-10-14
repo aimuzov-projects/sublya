@@ -1,0 +1,290 @@
+/* Montserrat lives next to the page and is preloaded, so it's usually there before the first
+   paint. Until it is, text is set in Arial stretched to Montserrat's metrics, so lines break
+   the same way and nothing jumps when the real font arrives. */
+@font-face {
+	font-family: Montserrat;
+	font-weight: 500 900;
+	src: url(../assets/fonts/montserrat-cyrillic.woff2) format('woff2');
+	font-display: swap;
+	unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face {
+	font-family: Montserrat;
+	font-weight: 500 900;
+	src: url(../assets/fonts/montserrat-latin.woff2) format('woff2');
+	font-display: swap;
+	unicode-range:
+		U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F,
+		U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+	font-family: 'Montserrat Fallback';
+	src: local('Arial');
+	size-adjust: 113.4%;
+	ascent-override: 85%;
+	descent-override: 22%;
+	line-gap-override: 0%;
+}
+
+:root {
+	--bg: #120a24;
+	--bg-2: #1c1236;
+	--card: #221743;
+	--line: #3a2b66;
+	--text: #f4f1ff;
+	--muted: #b4aad6;
+	--yellow: #ffee00;
+	--pink: #fe2c55;
+	--radius: 22px;
+	color-scheme: dark;
+}
+
+* {
+	box-sizing: border-box;
+}
+
+html {
+	scroll-behavior: smooth;
+}
+
+body {
+	margin: 0;
+	font:
+		500 17px/1.55 Montserrat,
+		'Montserrat Fallback',
+		sans-serif;
+	color: var(--text);
+	background: radial-gradient(1200px 700px at 85% -10%, #3b1d6b 0%, transparent 60%), var(--bg);
+	-webkit-font-smoothing: antialiased;
+}
+/* the teal glow is pinned to the screen; lib/glow.ts circles it as the page scrolls */
+body::before {
+	pointer-events: none;
+	content: '';
+	position: fixed;
+	z-index: -1;
+	inset: 0;
+	background: radial-gradient(
+		1400px 1000px at var(--glow-x, 16.4%) var(--glow-y, 34.2%),
+		#16304a 0%,
+		transparent 60%
+	);
+}
+
+a {
+	color: inherit;
+}
+
+h1,
+h2,
+h3 {
+	margin: 0;
+	font-weight: 900;
+	line-height: 1.1;
+	text-wrap: balance;
+	letter-spacing: -0.02em;
+}
+/* no paragraph ends on a lone word */
+p {
+	text-wrap: pretty;
+}
+h1 {
+	font-size: clamp(2.2rem, 5.5vw, 4rem);
+	text-transform: uppercase;
+
+	/* on the narrowest phones "как в тиктоке —" still fits one line */
+	@media (--below-sm) {
+		font-size: min(2.2rem, 9vw);
+	}
+}
+h2 {
+	margin-bottom: 1rem;
+	font-size: clamp(1.7rem, 3.6vw, 2.6rem);
+	text-transform: uppercase;
+}
+h3 {
+	margin-bottom: 0.5rem;
+	font-size: 1.15rem;
+}
+
+.hl {
+	color: var(--yellow);
+	text-shadow: 0 0 28px rgba(255, 238, 0, 0.35);
+}
+
+.top {
+	position: sticky;
+	z-index: 10;
+	top: 0;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	/* a fixed height: the sticky phone in .stage is centred below it */
+	height: 64px;
+	padding: 0 max(16px, calc((100vw - 1120px) / 2));
+	border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+	background: rgba(18, 10, 36, 0.72);
+	backdrop-filter: blur(12px);
+}
+
+.logo {
+	display: inline-flex;
+	gap: 10px;
+	align-items: center;
+	font-size: 1.25rem;
+	font-weight: 900;
+	text-decoration: none;
+	text-transform: uppercase;
+	letter-spacing: 0.02em;
+}
+/* "саб" as in subtitles: the pun the name is built on */
+.logo .hl {
+	text-shadow: none;
+}
+.logo-mark {
+	display: block;
+	width: 32px;
+	height: 32px;
+}
+
+.btn {
+	display: inline-block;
+	padding: 16px 28px;
+	border-radius: 999px;
+	font-weight: 800;
+	color: #140b26;
+	text-decoration: none;
+	background: var(--yellow);
+	box-shadow: 0 10px 30px rgba(255, 238, 0, 0.25);
+	transition:
+		transform 0.15s ease,
+		box-shadow 0.15s ease;
+}
+.btn:hover {
+	transform: translateY(-2px);
+	box-shadow: 0 14px 36px rgba(255, 238, 0, 0.35);
+}
+.btn-small {
+	padding: 9px 18px;
+	font-size: 0.9rem;
+	box-shadow: none;
+}
+
+.top-links {
+	display: flex;
+	gap: 14px;
+	align-items: center;
+}
+.gh {
+	display: grid;
+	place-items: center;
+	width: 40px;
+	height: 40px;
+	border-radius: 50%;
+	color: var(--muted);
+}
+.gh:hover {
+	color: var(--text);
+	background: rgba(255, 255, 255, 0.06);
+}
+
+.repo-links {
+	margin-top: 12px !important;
+	font-weight: 700;
+}
+.repo-links a {
+	color: var(--yellow);
+	text-decoration: none;
+}
+.repo-links a:hover {
+	text-decoration: underline;
+}
+
+.link {
+	font-weight: 700;
+	color: var(--muted);
+	text-decoration: none;
+}
+.link:hover {
+	color: var(--text);
+}
+
+/* a card thrown off the deck flies past the screen edge; clip, unlike hidden, keeps the deck sticky */
+main {
+	overflow-x: clip;
+}
+
+main > section {
+	max-width: 1120px;
+	margin: 0 auto;
+	padding: 72px 16px;
+}
+
+.icon {
+	flex: none;
+	width: 24px;
+	height: 24px;
+	fill: none;
+	stroke: currentColor;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+	stroke-width: 2;
+}
+.icon-sm {
+	width: 16px;
+	height: 16px;
+	color: var(--yellow);
+}
+.badge {
+	display: grid;
+	place-items: center;
+	width: 48px;
+	height: 48px;
+	margin-bottom: 18px;
+	border-radius: 14px;
+	color: var(--yellow);
+	background: rgba(255, 238, 0, 0.1);
+	box-shadow: inset 0 0 0 1px rgba(255, 238, 0, 0.25);
+}
+
+.sr-only {
+	position: absolute;
+	overflow: hidden;
+	width: 1px;
+	height: 1px;
+	white-space: nowrap;
+	clip-path: inset(50%);
+}
+
+footer {
+	padding: 32px 16px 48px;
+	border-top: 1px solid rgba(255, 255, 255, 0.06);
+	font-size: 0.85rem;
+	color: var(--muted);
+	text-align: center;
+}
+footer p {
+	margin: 0.4rem 0;
+}
+footer a {
+	color: var(--text);
+	text-decoration: none;
+}
+footer a:hover {
+	color: var(--yellow);
+}
+
+@media (--below-stage) {
+	main > section {
+		padding: 48px 16px;
+	}
+}
+
+@media (--reduced-motion) {
+	html {
+		scroll-behavior: auto;
+	}
+	.btn {
+		transition: none;
+	}
+}

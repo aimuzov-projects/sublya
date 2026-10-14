@@ -1,0 +1,17 @@
+---
+// Yandex Metrika. For a site without the counter, remove this component,
+// public/metrika.js, its call in base.astro and the mc.yandex.ru and yastatic.net sources
+// from security.csp in astro.config.mjs.
+---
+
+{/* On mobile the ~85 KB counter script steals bandwidth from fonts and the first photo,
+    so it loads on first interaction or 4 s after load, earlier ym calls are queued.
+    Webvisor is off: on mobile it noticeably raises LCP. The snippet lives in public/metrika.js:
+    Astro doesn't hash is:inline scripts for the CSP it puts into <meta>, so an inline body
+    gets blocked, while a same-origin file passes through 'self'. */}
+<script is:inline src="/metrika.js"></script>
+<noscript>
+	<div>
+		<img src="https://mc.yandex.ru/watch/113179171" style="position:absolute; left:-9999px;" alt="" />
+	</div>
+</noscript>

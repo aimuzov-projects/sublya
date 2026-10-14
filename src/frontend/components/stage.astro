@@ -1,0 +1,73 @@
+---
+import { getCollection } from 'astro:content'
+import Deck from '#frontend/components/deck.svelte'
+import { site } from '#frontend/data/site.ts'
+import type { Word } from '#shared/subtitles.ts'
+import { typographText } from '#shared/typograph.ts'
+import '#frontend/styles/stage.css'
+
+// The deck reads its demos from here, so the page needs no request for them. Its text arrives
+// set: the island prints it itself, past the typograph in the middleware.
+const words: Record<string, Word[]> = import.meta.glob('/src/frontend/data/words/*.json', {
+	eager: true,
+	import: 'default',
+})
+const demos = (await getCollection('demos')).map(({ data }) => {
+	// demo/make-demo.sh writes the timings next to the entry; without them the demo has no subtitles
+	const timings = words[`/src/frontend/data/words/${data.id}.json`]
+	if (!timings) throw new Error(`no src/frontend/data/words/${data.id}.json`)
+	return { ...data, note: typographText(data.note), words: timings }
+})
+
+const styles = [
+	{ id: 'classic', name: 'Классика', hint: 'белый текст, слово жёлтое' },
+	{ id: 'big', name: 'Крупно', hint: 'больше и выше' },
+	{ id: 'box', name: 'Плашка', hint: 'слово на цветной подложке' },
+	{ id: 'single', name: 'По слову', hint: 'одно слово по центру' },
+].map((style) => ({ ...style, name: typographText(style.name), hint: typographText(style.hint) }))
+---
+
+<div class="stage">
+	<section class="hero">
+		<h1>
+			Субтитры как в тиктоке — <span class="hl">одним</span> сообщением
+		</h1>
+		<p class="lead">
+			Пришли видео в Telegram — бот вернёт его с субтитрами: на экране пара слов, произносимое подсвечено. Свой
+			текст? Положи его в подпись.
+		</p>
+		<div class="cta">
+			<a class="btn" href={site.bot}>
+				Попробовать в Telegram
+			</a>
+			<a class="link" href="#demo">
+				Посмотреть примеры ↓
+			</a>
+		</div>
+		<ul class="facts">
+			<li>
+				<svg class="icon icon-sm" viewBox="0 0 24 24" aria-hidden="true">
+					<path d="M20 12v9H4v-9M2 7h20v5H2zM12 21V7M12 7H8a2.5 2.5 0 1 1 2.5-2.5C10.5 6 12 7 12 7zM12 7h4a2.5 2.5 0 1 0-2.5-2.5C13.5 6 12 7 12 7z"></path>
+				</svg>
+				<b>бесплатно</b>
+			</li>
+			<li>
+				<svg class="icon icon-sm" viewBox="0 0 24 24" aria-hidden="true">
+					<path d="M22 2 11 13M22 2l-7 20-4-9-9-4z"></path>
+				</svg>
+				без регистрации и приложений
+			</li>
+			<li>
+				<svg class="icon icon-sm" viewBox="0 0 24 24" aria-hidden="true">
+					<path d="M12 22a10 10 0 1 1 10-10c0 2.5-2 3-3.5 3H16a2 2 0 0 0-1.4 3.4A2 2 0 0 1 12 22z"></path>
+					<circle cx="7.5" cy="10.5" r="1"></circle>
+					<circle cx="12" cy="7.5" r="1"></circle>
+					<circle cx="16.5" cy="10.5" r="1"></circle>
+				</svg>
+				<b>4</b> стиля
+			</li>
+		</ul>
+	</section>
+
+	<Deck client:load {demos} {styles} />
+</div>
