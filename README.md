@@ -137,11 +137,11 @@ The build puts a CSP with hashes of Astro's scripts and styles into every page (
 
 ## Deployment
 
-The projects server from [infra-server](https://github.com/aimuzov-projects/infra-server): a push to `main` runs `deploy.yml`, which runs the checks and logs in over SSH, where the key runs the shared [`deploy/site.sh`](https://github.com/aimuzov-projects/infra-server/blob/main/deploy/site.sh) of infra-server. It pulls `main` into `/srv/sublya` and rebuilds [`deploy/docker-compose.yml`](deploy/docker-compose.yml): the site in nginx, the bot, the local Bot API server and a tun2socks tunnel that takes the bot's traffic to Telegram and OpenRouter out through the shared VPN exit. The domain and TLS are on the shared Caddy, which also sends `/admin` to the bot. Secrets live in `/srv/sublya/.env`, the database and job files in `/srv/sublya/data`. Details and the first deploy: [docs/deploy.md](docs/deploy.md).
+The projects server from [infra-server](https://github.com/aimuzov-projects/infra-server): merging the release PR that release-please keeps open runs `deploy.yml`, which runs the checks and logs in over SSH, where the key runs the shared [`deploy/site.sh`](https://github.com/aimuzov-projects/infra-server/blob/main/deploy/site.sh) of infra-server. It pulls `main` into `/srv/sublya` and rebuilds [`deploy/docker-compose.yml`](deploy/docker-compose.yml): the site in nginx, the bot, the local Bot API server and a tun2socks tunnel that takes the bot's traffic to Telegram and OpenRouter out through the shared VPN exit. The domain and TLS are on the shared Caddy, which also sends `/admin` to the bot. Secrets live in `/srv/sublya/.env`, the database and job files in `/srv/sublya/data`. Details and the first deploy: [docs/deploy.md](docs/deploy.md).
 
 Once an hour [`monitor.yml`](.github/workflows/monitor.yml) checks from outside that the site answers and that `/admin/api/health` does: the bot asks Telegram for `getMe` through the local Bot API server and the tunnel. A failed run is the alert, GitHub emails it.
 
-To roll back, `git revert` the bad commit on `main` and push.
+To roll back fast, run Deploy by hand with the previous tag: `gh workflow run deploy.yml -f tag=v1.2.3`. A fix of the bad commit goes out through the release PR like any change.
 
 ## License
 
