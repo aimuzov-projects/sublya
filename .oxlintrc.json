@@ -1,9 +1,4 @@
 {
 	"$schema": "./node_modules/oxlint/configuration_schema.json",
-	"plugins": ["eslint", "typescript", "unicorn", "oxc", "import"],
-	"rules": {
-		"typescript/consistent-type-definitions": ["error", "type"],
-		"import/no-relative-parent-imports": "error",
-		"unicorn/filename-case": "error"
-	}
+	"extends": ["./node_modules/@aimuzov-projects/infra-site-kit/oxlint.json"]
 }
