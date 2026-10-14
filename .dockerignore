@@ -11,3 +11,7 @@ docs
 demo
 data
 src/bot/core/fixtures
+e2e
+playwright.config.ts
+test-results
+playwright-report
