@@ -42,7 +42,7 @@ cp "$work/words.json" "$root/src/frontend/data/words/$name.json"
 "${bot[@]}" --style classic -o /w/classic.mp4 >/dev/null
 "$ffmpeg" -v error -y -ss 1.6 -i "$work/classic.mp4" -frames:v 1 -q:v 4 "$out/poster.jpg"
 "$ffmpeg" -v error -y -ss 1.6 -i "$out/before.mp4" -frames:v 1 -q:v 4 "$out/before.jpg"
-# the page shows these small: the deck poster at 273 px wide, the steps frame at 72; the JPEGs
+# the page shows these small: the deck poster at most 300 px wide, the steps frame at 92; the JPEGs
 # stay for link previews, where WebP isn't everywhere yet
 "$ffmpeg" -v error -y -i "$out/poster.jpg" -vf scale=540:-2 -c:v libwebp -quality 72 "$out/poster.webp"
 "$ffmpeg" -v error -y -i "$out/before.jpg" -vf scale=400:-2 -c:v libwebp -quality 72 "$out/before.webp"

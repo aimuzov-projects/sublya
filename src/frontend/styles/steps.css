@@ -33,7 +33,7 @@
 	color: var(--text);
 }
 
-/* Each step shows what it means: scripts/scenes.js plays a scene while its card is on screen. */
+/* Each step shows what it means: scenes.svelte plays a scene while its card is on screen. */
 .steps li {
 	position: relative;
 }

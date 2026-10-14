@@ -156,13 +156,14 @@
 	border-radius: 28px;
 }
 .overlay__line {
-	/* the ASS font size; libass draws Montserrat 1.36 times smaller per em, measured on the bot's renders */
+	/* the ASS font size */
 	--size: calc(var(--font) * 100cqw);
 	position: absolute;
 	right: calc(var(--side) * 100cqw);
 	bottom: calc(var(--margin) * 100cqh);
 	left: calc(var(--side) * 100cqw);
 	margin: 0;
+	/* libass draws Montserrat 1.36 times smaller per em, measured on the bot's renders */
 	font-size: calc(var(--size) / 1.36);
 	font-weight: 800;
 	line-height: 1.2;
@@ -196,8 +197,8 @@
 	}
 }
 
-/* the arrows hang on both sides of the deck, halfway down; the layer lets swipes through */
-/* exactly as wide as the deck, so the arrows stay next to the cards on any screen */
+/* the arrows hang on both sides of the deck, halfway down; the layer lets swipes through and is
+   exactly as wide as the deck, so the arrows stay next to the cards on any screen */
 .deck-nav {
 	pointer-events: none;
 	position: absolute;

@@ -10,5 +10,4 @@ export const site = {
 	pitch: 'Пришли видео в Telegram — получи его с субтитрами, где подсвечено произносимое слово.',
 	bot: 'https://t.me/sublyarobot',
 	repo: 'https://github.com/aimuzov-projects/sublya',
-	metrika: 113179171,
 }

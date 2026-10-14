@@ -43,7 +43,6 @@
 	}
 </script>
 
-<!-- caught on the fourth try -->
 <a
 	class="btn"
 	class:caught={tries > dodges.length}

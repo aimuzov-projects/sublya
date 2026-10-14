@@ -1,4 +1,4 @@
-// Yandex Metrika; why it is a separate file, see src/frontend/components/metrika.astro.
+// Yandex Metrika; why this is a file of its own, see src/frontend/components/metrika.astro.
 ;(function (m, e, t, r, i, k, a) {
 	m[i] =
 		m[i] ||

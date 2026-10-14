@@ -65,8 +65,7 @@
 </script>
 
 <div class="player" class:loading bind:this={root}>
-	<video bind:this={video} class="front" muted loop playsinline preload="auto" onplay={follow} onseeked={follow}
-	></video>
+	<video bind:this={video} muted loop playsinline preload="auto" onplay={follow} onseeked={follow}></video>
 	<div
 		class="overlay"
 		class:overlay--middle={preset.middle}
