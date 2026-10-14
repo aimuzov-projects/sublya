@@ -27,7 +27,7 @@
 		"grammy": "1.46.0"
 	},
 	"devDependencies": {
-		"@aimuzov-projects/infra-site-kit": "github:aimuzov-projects/infra-site-kit#d76eb3362a9aaa7b33d631e273bed13dc1d856f2",
+		"@aimuzov-projects/infra-site-kit": "github:aimuzov-projects/infra-site-kit#v1.8.0",
 		"@astrojs/check": "0.9.10",
 		"@astrojs/sitemap": "3.7.4",
 		"@astrojs/svelte": "9.0.1",
