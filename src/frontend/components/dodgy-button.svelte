@@ -18,6 +18,8 @@
 	let enabled = false
 	let tries = $state(0)
 	let transform = $state('')
+	// brings the button back if the cursor doesn't chase it
+	let homing: ReturnType<typeof setTimeout> | undefined
 	const text = $derived(tries > 0 && tries <= dodges.length ? dodges[tries - 1].text : label)
 
 	onMount(() => {
@@ -25,10 +27,14 @@
 		const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches
 
 		enabled = fine && !reduced
+
+		return () => clearTimeout(homing)
 	})
 
 	function dodge(e: PointerEvent) {
 		if (!enabled || e.pointerType !== 'mouse' || tries > dodges.length) return
+
+		clearTimeout(homing)
 
 		if (tries++ === dodges.length) return
 
@@ -47,6 +53,8 @@
 		const y = Math.abs(x) < button.offsetWidth ? 70 : (Math.random() - 0.5) * 60
 
 		transform = `translate(${x | 0}px, ${y | 0}px) rotate(${side * 5}deg)`
+		// only the position goes back, the teasing carries on from where it stopped
+		homing = setTimeout(() => (transform = ''), 3000)
 	}
 </script>
 
