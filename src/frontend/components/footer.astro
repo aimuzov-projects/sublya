@@ -1,4 +1,6 @@
 ---
+import Credit from '@aimuzov-projects/infra-site-kit/credit.astro'
+
 import { site } from '#frontend/data/site.ts'
 ---
 
@@ -6,7 +8,15 @@ import { site } from '#frontend/data/site.ts'
 	<p>
 		Сабля · <a href={site.repo}>код под лицензией MIT</a> · видео хранятся сутки и удаляются
 	</p>
-	<p class="made">
-		Сделано с ❤️ <a href="https://github.com/aimuzov">aimuzov</a>
+	<!-- Код уже по ссылке выше, поэтому подпись автора без repo. -->
+	<p class="credit-line">
+		<Credit />
 	</p>
 </footer>
+
+<style>
+	/* Ссылки подписи из infra-site-kit при наведении желтеют, как остальные ссылки футера. */
+	.credit-line {
+		--credit-hover: var(--yellow);
+	}
+</style>
