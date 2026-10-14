@@ -17,14 +17,21 @@ Try it: [@sublyarobot](https://t.me/sublyarobot) · site: [sublya.aimuzov.online
 - **Cheap to run.** Recognition goes to Whisper through OpenRouter (about $0.0002 per minute),
   rendering is ffmpeg on the CPU. A 1 vCPU box is enough.
 
-Python 3.12, [uv](https://docs.astral.sh/uv/), aiogram 3, SQLite, ffmpeg with libass.
+The bot is Python 3.12, [uv](https://docs.astral.sh/uv/), aiogram 3, SQLite, ffmpeg with libass.
+The landing page is a static [Astro](https://astro.build) site; tooling follows
+[infra-template-site](https://github.com/aimuzov-projects/infra-template-site): Prettier, oxlint,
+stylelint, Node from `mise.toml`.
 
 ```
-sublya/
-  core/     # no Telegram here: audio, speech recognition, word alignment, rendering, CLI
-  bot/      # aiogram handlers, the SQLite job queue, the worker
-tests/
-  fixtures/natasha/   # recognised words, pauses and the reference poem of a real recording
+src/
+  bot/
+    sublya/core/     # no Telegram here: audio, speech recognition, word alignment, rendering, CLI
+    sublya/bot/      # aiogram handlers, the SQLite job queue, the worker, the admin Mini App
+    tests/fixtures/natasha/   # recognised words, pauses and the reference poem of a real recording
+  frontend/          # the landing page: components, scripts, one stylesheet per component
+public/media/<name>/ # one demo: the video as sent and the four styles, with posters
+demo/                # demo texts and the script that renders them
+deploy/              # Dockerfiles, the production compose file, the deploy script
 ```
 
 ## How a video becomes subtitles
@@ -41,7 +48,7 @@ tests/
 The transcript is cached per job, so the "fix text" and "style" buttons re-render without
 calling the recogniser again.
 
-## Run with Docker
+## Run the bot with Docker
 
 ```bash
 cp .env.example .env
@@ -63,30 +70,31 @@ Production runs on a shared server behind a SOCKS tunnel and deploys on every pu
 
 Everything comes from the environment; `.env.example` lists it.
 
-| Variable | Default | Meaning |
-|---|---|---|
-| `BOT_TOKEN` | required | token from @BotFather |
-| `STT_API_KEY` | required | key for the transcription endpoint |
-| `STT_API_URL` | `https://openrouter.ai/api/v1` | any OpenAI-compatible base URL, e.g. Groq |
-| `STT_MODEL` | `openai/whisper-large-v3-turbo` | a Whisper model that returns word timestamps |
-| `STT_LAG` | tuned per timing kind | how late the recogniser places word starts, seconds |
-| `DEFAULT_LANG` | `ru` | speech language for users who never ran `/lang`; empty for autodetect, which can take Russian for English |
-| `STT_DAILY_MINUTES` | `300` | recognised minutes per day for the whole bot |
-| `DAILY_VIDEOS` | `10` | new videos per user per day; re-renders are free, admins have no limit |
-| `BONUS_VIDEOS` | `10` | videos the admin panel's "+N" button adds to a user's quota for today |
-| `ADMIN_IDS` | empty | Telegram user ids that get errors and `/stats` |
-| `ADMIN_URL` | empty | public address of the admin Mini App (users, videos, OpenRouter balance); `/admin` opens it for `ADMIN_IDS` |
-| `ADMIN_PORT` | `8090` | port of the admin panel's web server |
-| `SUPPORT_CHAT_ID` | empty | forum group with the bot as admin: each user's dialogue goes to its own topic, and replies there go to the user |
-| `TELEGRAM_API_URL` | empty | local Bot API server |
-| `TELEGRAM_API_ID`, `TELEGRAM_API_HASH` | | from my.telegram.org, for the local Bot API server |
-| `DATA_DIR` | `data` | SQLite database and job files, removed after 24 hours |
-| `SUBLYA_FFMPEG`, `SUBLYA_FFPROBE` | from `PATH` | ffmpeg must have libass |
-| `SUBLYA_FONTS_DIR` | | where libass looks for Montserrat ExtraBold |
+| Variable                               | Default                         | Meaning                                                                                                         |
+| -------------------------------------- | ------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `BOT_TOKEN`                            | required                        | token from @BotFather                                                                                           |
+| `STT_API_KEY`                          | required                        | key for the transcription endpoint                                                                              |
+| `STT_API_URL`                          | `https://openrouter.ai/api/v1`  | any OpenAI-compatible base URL, e.g. Groq                                                                       |
+| `STT_MODEL`                            | `openai/whisper-large-v3-turbo` | a Whisper model that returns word timestamps                                                                    |
+| `STT_LAG`                              | tuned per timing kind           | how late the recogniser places word starts, seconds                                                             |
+| `DEFAULT_LANG`                         | `ru`                            | speech language for users who never ran `/lang`; empty for autodetect, which can take Russian for English       |
+| `STT_DAILY_MINUTES`                    | `300`                           | recognised minutes per day for the whole bot                                                                    |
+| `DAILY_VIDEOS`                         | `10`                            | new videos per user per day; re-renders are free, admins have no limit                                          |
+| `BONUS_VIDEOS`                         | `10`                            | videos the admin panel's "+N" button adds to a user's quota for today                                           |
+| `ADMIN_IDS`                            | empty                           | Telegram user ids that get errors and `/stats`                                                                  |
+| `ADMIN_URL`                            | empty                           | public address of the admin Mini App (users, videos, OpenRouter balance); `/admin` opens it for `ADMIN_IDS`     |
+| `ADMIN_PORT`                           | `8090`                          | port of the admin panel's web server                                                                            |
+| `SUPPORT_CHAT_ID`                      | empty                           | forum group with the bot as admin: each user's dialogue goes to its own topic, and replies there go to the user |
+| `TELEGRAM_API_URL`                     | empty                           | local Bot API server                                                                                            |
+| `TELEGRAM_API_ID`, `TELEGRAM_API_HASH` |                                 | from my.telegram.org, for the local Bot API server                                                              |
+| `DATA_DIR`                             | `data`                          | SQLite database and job files, removed after 24 hours                                                           |
+| `SUBLYA_FFMPEG`, `SUBLYA_FFPROBE`      | from `PATH`                     | ffmpeg must have libass                                                                                         |
+| `SUBLYA_FONTS_DIR`                     |                                 | where libass looks for Montserrat ExtraBold                                                                     |
 
-## Develop
+## Develop the bot
 
 ```bash
+cd src/bot
 uv sync
 uv run pytest
 ```
@@ -101,7 +109,7 @@ export SUBLYA_FFMPEG=/opt/homebrew/opt/ffmpeg-full/bin/ffmpeg SUBLYA_FFPROBE=/op
 Run the bot without Docker, polling the public Bot API:
 
 ```bash
-uv run --env-file .env sublya-bot
+uv run --env-file ../../.env sublya-bot
 ```
 
 ## CLI
@@ -109,11 +117,37 @@ uv run --env-file .env sublya-bot
 The engine works without Telegram:
 
 ```bash
-uv run --env-file .env python -m sublya.core video.mov --text poem.txt --style big
+uv run --env-file ../../.env python -m sublya.core video.mov --text poem.txt --style big
 ```
 
 The transcript is cached in `work/<video>/transcript.json` next to the video, so trying other
 texts and styles is free. `--retranscribe` asks the recogniser again.
+
+## Site
+
+```bash
+npm ci
+npm run dev
+```
+
+`npm run build` puts the finished site in `dist/`. Before a commit: `npm run format:check`,
+`npm run lint:js`, `npm run lint:css`, `npm run check`.
+
+The demo is a deck of cards: each is a real video as it was sent, plus the same video with
+subtitles in each of the four styles. The page shuffles the deck, and a swipe shows the next
+one. `demo/<name>.txt` is the exact text of a demo; its line breaks are the screen breaks.
+
+To add a demo, write its text, build it, then fill in its note in `src/frontend/data/demos.json`:
+the build fails while a note is empty. Rendering goes through the bot's Docker image, so the
+font and ffmpeg are the same as in production; `STT_API_KEY` comes from the root `.env`:
+
+```bash
+SUBLYA_FFMPEG=/opt/homebrew/opt/ffmpeg-full/bin/ffmpeg demo/make-demo.sh name video.mp4
+# footage shot on the move: SUBLYA_CRF=31 keeps each file around 3 MB
+```
+
+The videos keep their names across rebuilds, so their URLs carry a version from
+`demos.json`; CSS, JS and fonts get hashed names from the build.
 
 ## License
 

@@ -1,16 +1,17 @@
 # Deploy
 
-The production bot runs on the projects server (1 vCPU, 2 GB RAM), which it shares with other
-projects. The repository is cloned to `/srv/sublya-bot` there, and `deploy/docker-compose.yml`
-builds and runs the stack. Ports 80/443 and the domains belong to the shared Caddy from
+The bot and the site run on the projects server (1 vCPU, 2 GB RAM), which they share with
+other projects. The repository is cloned to `/srv/sublya` there, and `deploy/docker-compose.yml`
+builds and runs both: the site in nginx, the bot next to its local Bot API server. Ports 80/443
+and the domains belong to the shared Caddy from
 [infra-server](https://github.com/aimuzov-projects/infra-server).
 
-Every push to `main` deploys it: `.github/workflows/deploy.yml` runs the tests, then logs into
+Every push to `main` deploys it: `.github/workflows/deploy.yml` runs the checks, then logs into
 the server with the `DEPLOY_SSH_KEY` secret. That key is bound to `deploy/remote.sh` in the
 server's `authorized_keys`:
 
 ```
-command="git -C /srv/sublya-bot pull --ff-only --quiet && /srv/sublya-bot/deploy/remote.sh",restrict ssh-ed25519 ... github-actions@sublya-bot
+command="git -C /srv/sublya pull --ff-only --quiet && /srv/sublya/deploy/remote.sh",restrict ssh-ed25519 ... github-actions@sublya
 ```
 
 The script pulls `main` and rebuilds the containers. To deploy without a push:
@@ -36,18 +37,18 @@ docker run --rm --network vpn curlimages/curl -sS -o /dev/null -w '%{http_code}\
 
 ## First deploy
 
-1. `git clone https://github.com/sublya/bot.git /srv/sublya-bot` on the server.
-2. Create `/srv/sublya-bot/.env` from `.env.example`. `TELEGRAM_API_URL` and `DATA_DIR` are set
+1. `git clone https://github.com/aimuzov-projects/sublya.git /srv/sublya` on the server.
+2. Create `/srv/sublya/.env` from `.env.example`. `TELEGRAM_API_URL` and `DATA_DIR` are set
    by the compose file.
 3. If the bot has been polling the public Bot API, log it out once:
    `curl https://api.telegram.org/bot$BOT_TOKEN/logOut`. If it ran against another local
    Bot API server, call `close` on that one instead.
-4. `/srv/sublya-bot/deploy/remote.sh`, then add the Actions key as above.
+4. `/srv/sublya/deploy/remote.sh`, then add the Actions key as above.
 
 ## Files on the server
 
 ```
-/srv/sublya-bot/
+/srv/sublya/
   .env                 # secrets, made by hand
   data/                # SQLite and job files; jobs are removed after 24 hours
 ```
@@ -57,4 +58,9 @@ in is the admin Mini App: `tunnel` also joins the `edge` network, and the shared
 `https://sublya.aimuzov.online/admin` to `sublya-tunnel:8090`. That block lives in
 infra-server's `sites/sublya.caddy`. Set `ADMIN_URL` to that address in the server's `.env`.
 
-The site is served next to it, see [sublya/site](https://github.com/sublya/site).
+The site is the `site` container in the same compose project; Caddy proxies everything but
+`/admin` to `sublya-site:80`.
+
+The Bot API volume is named `sublya-bot_bot-api` and declared external: it holds the bot's
+login on the local Bot API server and outlived the bot's own repository. On a new server create
+it once with `docker volume create sublya-bot_bot-api`.

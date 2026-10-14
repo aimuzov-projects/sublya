@@ -5,12 +5,14 @@ services:
     environment:
       TELEGRAM_API_ID: ${TELEGRAM_API_ID:?}
       TELEGRAM_API_HASH: ${TELEGRAM_API_HASH:?}
-      TELEGRAM_LOCAL: "1"
+      TELEGRAM_LOCAL: '1'
     volumes:
       - bot-api:/var/lib/telegram-bot-api
 
   bot:
-    build: .
+    build:
+      context: src/bot
+      dockerfile: ../../deploy/bot.Dockerfile
     restart: unless-stopped
     env_file: .env
     environment:

@@ -1,11 +1,15 @@
-# Production, on the projects server. Telegram and OpenRouter aren't reachable from it
-# directly, so the bot and the Bot API server share the network namespace of a tun2socks
-# container that wraps all their outgoing traffic into the shared VPN exit from
-# aimuzov-projects/infra-server (SOCKS on vpn:1080). Neither of them knows about the proxy.
+# Production, on the projects server. Ports 80/443 belong to the shared Caddy from
+# aimuzov-projects/infra-server: it proxies sublya.aimuzov.online to the site and /admin to the
+# bot's admin panel, both over the edge network.
 #
-# deploy/remote.sh rebuilds the bot on every push to main; secrets live in /srv/sublya-bot/.env.
+# Telegram and OpenRouter aren't reachable from the server directly, so the bot and the Bot API
+# server share the network namespace of a tun2socks container that wraps all their outgoing
+# traffic into the shared VPN exit from infra-server (SOCKS on vpn:1080). Neither of them knows
+# about the proxy.
+#
+# deploy/remote.sh rebuilds everything on every push to main; secrets live in /srv/sublya/.env.
 
-name: sublya-bot
+name: sublya
 
 x-logging: &logging
   driver: json-file
@@ -14,6 +18,17 @@ x-logging: &logging
     max-file: '2'
 
 services:
+  site:
+    build:
+      context: ..
+      dockerfile: deploy/frontend.Dockerfile
+    image: sublya-site
+    container_name: sublya-site
+    restart: unless-stopped
+    networks:
+      - edge
+    logging: *logging
+
   tunnel:
     image: xjasonlyu/tun2socks:v2.6.0
     container_name: sublya-tunnel
@@ -51,7 +66,8 @@ services:
 
   bot:
     build:
-      context: ..
+      context: ../src/bot
+      dockerfile: ../../deploy/bot.Dockerfile
     image: sublya-bot
     container_name: sublya-bot
     restart: unless-stopped
@@ -69,7 +85,11 @@ services:
     logging: *logging
 
 volumes:
+  # the bot's login on the local Bot API server lives here; the name is from the time the bot
+  # had a repository of its own, kept so the server doesn't have to log it in again
   bot-api:
+    name: sublya-bot_bot-api
+    external: true
 
 networks:
   vpn:

@@ -1,13 +1,40 @@
 {
-  "name": "sublya-site",
-  "private": true,
-  "type": "module",
-  "scripts": {
-    "dev": "astro dev",
-    "build": "astro build",
-    "preview": "astro preview"
-  },
-  "dependencies": {
-    "astro": "7.3.5"
-  }
+	"name": "sublya",
+	"type": "module",
+	"version": "0.1.0",
+	"private": true,
+	"license": "MIT",
+	"engines": {
+		"node": "26.11.1"
+	},
+	"scripts": {
+		"dev": "astro dev",
+		"build": "astro build",
+		"preview": "astro preview",
+		"check": "astro check",
+		"astro": "astro",
+		"format": "prettier --write .",
+		"format:check": "prettier --check .",
+		"lint:css": "stylelint \"src/**/*.{css,astro}\"",
+		"lint:js": "oxlint --deny-warnings"
+	},
+	"dependencies": {
+		"astro": "7.3.7"
+	},
+	"devDependencies": {
+		"@astrojs/check": "0.9.10",
+		"@ianvs/prettier-plugin-sort-imports": "4.7.1",
+		"@types/node": "26.6.5",
+		"oxlint": "1.87.0",
+		"postcss-html": "2.0.0",
+		"prettier": "3.9.9",
+		"prettier-plugin-astro": "1.1.0",
+		"stylelint": "17.16.0",
+		"stylelint-config-clean-order": "10.0.0",
+		"stylelint-order": "8.1.1",
+		"typescript": "6.0.3"
+	},
+	"imports": {
+		"#frontend/*": "./src/frontend/*"
+	}
 }

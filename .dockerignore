@@ -7,3 +7,7 @@
 node_modules
 dist
 demo
+docs
+data
+.env
+src/bot

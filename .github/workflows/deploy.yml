@@ -14,16 +14,16 @@ permissions:
   contents: read
 
 jobs:
-  test:
-    uses: ./.github/workflows/test.yml
+  check:
+    uses: ./.github/workflows/check.yml
 
   deploy:
-    needs: test
+    needs: check
     runs-on: ubuntu-latest
     timeout-minutes: 20
     environment:
       name: production
-      url: https://t.me/sublyarobot
+      url: https://sublya.aimuzov.online
     steps:
       # The server knows what to do: the key in authorized_keys is bound to deploy/remote.sh,
       # so ssh gets no command.
@@ -37,6 +37,14 @@ jobs:
           chmod 600 ~/.ssh/deploy
           printf '%s\n' "$KNOWN_HOST" > ~/.ssh/known_hosts
           ssh -i ~/.ssh/deploy -o IdentitiesOnly=yes -o BatchMode=yes root@185.219.43.208
+
+      - name: Check site
+        run: |
+          for i in 1 2 3 4 5; do
+            curl -fsS -o /dev/null -w "%{http_code}\n" https://sublya.aimuzov.online/ && exit 0
+            sleep 5
+          done
+          exit 1
 
       # The bot has no address of its own; the admin panel answering through Caddy means
       # the container is up and its web server started.

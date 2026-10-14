@@ -2,7 +2,6 @@
 name = "sublya"
 version = "0.1.0"
 description = "Telegram bot that burns TikTok-style word-highlighted subtitles into videos"
-readme = "README.md"
 authors = [
     { name = "Aleksey Imuzov", email = "github@aimuzov.online" }
 ]

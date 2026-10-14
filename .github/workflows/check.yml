@@ -1,17 +1,41 @@
-name: test
+name: check
 
-# On main the deploy calls the tests before shipping, a separate run there would be a second one.
+# On main the deploy calls the checks before shipping, a separate run there would be a second one.
 on:
   push:
     branches-ignore: [main]
   pull_request:
   workflow_call:
 
+permissions:
+  contents: read
+
 jobs:
-  test:
+  site:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: package.json
+          cache: npm
+      - run: npm ci
+      - run: npm run format:check
+      - run: npm run lint:js
+      - run: npm run lint:css
+      - run: npm run check
+      # The site is built on the server, but a broken build had better fail here.
+      - run: npm run build
+
+  bot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: src/bot
+    steps:
+      - uses: actions/checkout@v5
       # Ubuntu's ffmpeg is built with libass, so the render tests run too
       - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg
       - uses: astral-sh/setup-uv@v6

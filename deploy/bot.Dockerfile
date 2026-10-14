@@ -11,7 +11,6 @@ ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy UV_PYTHON_DOWNLOADS=never
 WORKDIR /app
 COPY pyproject.toml uv.lock .python-version ./
 RUN uv sync --frozen --no-dev --no-install-project
-COPY README.md ./
 COPY sublya ./sublya
 RUN uv sync --frozen --no-dev
 

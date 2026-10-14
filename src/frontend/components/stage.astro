@@ -1,65 +1,131 @@
 ---
 import { getCollection } from 'astro:content'
-import '../styles/stage.css'
+import '#frontend/styles/stage.css'
 
 // the deck reads its demos from here, so the page needs no request for them
 const demos = (await getCollection('demos')).map(({ data }) => data)
 
 const styles = [
-  { id: 'classic', name: 'Классика', hint: 'белый текст, слово жёлтое' },
-  { id: 'big', name: 'Крупно', hint: 'больше и выше' },
-  { id: 'box', name: 'Плашка', hint: 'слово на цветной подложке' },
-  { id: 'single', name: 'По слову', hint: 'одно слово по центру' },
+	{ id: 'classic', name: 'Классика', hint: 'белый текст, слово жёлтое' },
+	{ id: 'big', name: 'Крупно', hint: 'больше и выше' },
+	{ id: 'box', name: 'Плашка', hint: 'слово на цветной подложке' },
+	{ id: 'single', name: 'По слову', hint: 'одно слово по центру' },
 ]
 ---
 
 <div class="stage">
-  <section class="hero">
-    <h1>Субтитры как&nbsp;в&nbsp;тиктоке — <span class="hl">одним</span> сообщением</h1>
-    <p class="lead">Пришли видео в Telegram — бот вернёт его с субтитрами: на экране пара слов, произносимое подсвечено. Свой текст? Положи его в подпись.</p>
-    <div class="cta">
-      <a class="btn" href="https://t.me/sublyarobot">Попробовать в Telegram</a>
-      <a class="link" href="#demo">Посмотреть примеры ↓</a>
-    </div>
-    <ul class="facts">
-      <li><svg class="icon icon-sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12v9H4v-9M2 7h20v5H2zM12 21V7M12 7H8a2.5 2.5 0 1 1 2.5-2.5C10.5 6 12 7 12 7zM12 7h4a2.5 2.5 0 1 0-2.5-2.5C13.5 6 12 7 12 7z"></path></svg><b>бесплатно</b></li>
-      <li><svg class="icon icon-sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4z"></path></svg>без регистрации и приложений</li>
-      <li><svg class="icon icon-sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22a10 10 0 1 1 10-10c0 2.5-2 3-3.5 3H16a2 2 0 0 0-1.4 3.4A2 2 0 0 1 12 22z"></path><circle cx="7.5" cy="10.5" r="1"></circle><circle cx="12" cy="7.5" r="1"></circle><circle cx="16.5" cy="10.5" r="1"></circle></svg><b>4</b> стиля</li>
-    </ul>
-  </section>
+	<section class="hero">
+		<h1>
+			Субтитры как&nbsp;в&nbsp;тиктоке — <span class="hl">одним</span> сообщением
+		</h1>
+		<p class="lead">
+			Пришли видео в Telegram — бот вернёт его с субтитрами: на экране пара слов, произносимое подсвечено. Свой
+			текст? Положи его в подпись.
+		</p>
+		<div class="cta">
+			<a class="btn" href="https://t.me/sublyarobot">
+				Попробовать в Telegram
+			</a>
+			<a class="link" href="#demo">
+				Посмотреть примеры ↓
+			</a>
+		</div>
+		<ul class="facts">
+			<li>
+				<svg class="icon icon-sm" viewBox="0 0 24 24" aria-hidden="true">
+					<path d="M20 12v9H4v-9M2 7h20v5H2zM12 21V7M12 7H8a2.5 2.5 0 1 1 2.5-2.5C10.5 6 12 7 12 7zM12 7h4a2.5 2.5 0 1 0-2.5-2.5C13.5 6 12 7 12 7z"></path>
+				</svg>
+				<b>бесплатно</b>
+			</li>
+			<li>
+				<svg class="icon icon-sm" viewBox="0 0 24 24" aria-hidden="true">
+					<path d="M22 2 11 13M22 2l-7 20-4-9-9-4z"></path>
+				</svg>
+				без регистрации и приложений
+			</li>
+			<li>
+				<svg class="icon icon-sm" viewBox="0 0 24 24" aria-hidden="true">
+					<path d="M12 22a10 10 0 1 1 10-10c0 2.5-2 3-3.5 3H16a2 2 0 0 0-1.4 3.4A2 2 0 0 1 12 22z"></path>
+					<circle cx="7.5" cy="10.5" r="1"></circle>
+					<circle cx="12" cy="7.5" r="1"></circle>
+					<circle cx="16.5" cy="10.5" r="1"></circle>
+				</svg>
+				<b>4</b> стиля
+			</li>
+		</ul>
+	</section>
 
-  <div class="rail">
-    <div class="deck-wrap">
-      <div class="deck" id="deck" tabindex="0" aria-roledescription="колода" aria-label="Примеры видео, стрелки влево и вправо листают" data-demos={JSON.stringify(demos)}></div>
-      <div class="deck-nav">
-        <button class="nav" type="button" data-go="-1" aria-label="Предыдущее видео"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg></button>
-        <span id="deck-count" class="sr-only" aria-live="polite"></span>
-        <button class="nav" type="button" data-go="1" aria-label="Следующее видео"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg></button>
-      </div>
-    </div>
-  </div>
+	<div class="rail">
+		<div class="deck-wrap">
+			<div
+				class="deck"
+				id="deck"
+				tabindex="0"
+				aria-roledescription="колода"
+				aria-label="Примеры видео, стрелки влево и вправо листают"
+				data-demos={JSON.stringify(demos)}
+			></div>
+			<div class="deck-nav">
+				<button class="nav" type="button" data-go="-1" aria-label="Предыдущее видео">
+					<svg viewBox="0 0 24 24" aria-hidden="true">
+						<path d="m15 18-6-6 6-6"></path>
+					</svg>
+				</button>
+				<span id="deck-count" class="sr-only" aria-live="polite"></span>
+				<button class="nav" type="button" data-go="1" aria-label="Следующее видео">
+					<svg viewBox="0 0 24 24" aria-hidden="true">
+						<path d="m9 18 6-6-6-6"></path>
+					</svg>
+				</button>
+			</div>
+		</div>
+	</div>
 
-  <section id="demo" class="demo">
-    <h2>Сравни сам</h2>
-    <p class="sub">Смахни карточку, чтобы посмотреть другое видео. «До», «После» и стиль переключаются на ходу, с того же места.</p>
-    <p class="note" id="demo-note"></p>
-    <div class="toggle" role="radiogroup" aria-label="Версия">
-      <button type="button" role="radio" data-src="before" aria-checked="false">До</button>
-      <button type="button" role="radio" data-src="after" aria-checked="true">После</button>
-    </div>
-    <p class="label">Стиль</p>
-    <div class="styles" role="radiogroup" aria-label="Стиль">
-      {styles.map((s, i) => (
-        <button type="button" role="radio" data-style={s.id} aria-checked={String(i === 0)}><b>{s.name}</b><span>{s.hint}</span></button>
-      ))}
-    </div>
-    <p class="hint">Стиль по умолчанию выбирается командой /style, а у готового видео — кнопкой «Стиль», без повторного распознавания.</p>
-  </section>
+	<section id="demo" class="demo">
+		<h2>Сравни сам</h2>
+		<p class="sub">
+			Смахни карточку, чтобы посмотреть другое видео. «До», «После» и стиль переключаются на ходу, с того же
+			места.
+		</p>
+		<p class="note" id="demo-note"></p>
+		<div class="toggle" role="radiogroup" aria-label="Версия">
+			<button type="button" role="radio" data-src="before" aria-checked="false">
+				До
+			</button>
+			<button type="button" role="radio" data-src="after" aria-checked="true">
+				После
+			</button>
+		</div>
+		<p class="label">Стиль</p>
+		<div class="styles" role="radiogroup" aria-label="Стиль">
+			{styles.map((s, i) => (
+				<button type="button" role="radio" data-style={s.id} aria-checked={i === 0 ? 'true' : 'false'}>
+					<b>{s.name}</b>
+					<span>{s.hint}</span>
+				</button>
+			))}
+		</div>
+		<p class="hint">
+			Стиль по умолчанию выбирается командой /style, а у готового видео — кнопкой «Стиль», без повторного
+			распознавания.
+		</p>
+	</section>
 </div>
 
-<template id="sound-button"><button class="sound" type="button" data-muted="true" aria-label="Включить звук"><svg class="i-muted" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4V5z"></path><path d="m23 9-6 6M17 9l6 6"></path></svg><svg class="i-sound" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4V5z"></path><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"></path></svg></button></template>
+<template id="sound-button">
+	<button class="sound" type="button" data-muted="true" aria-label="Включить звук">
+		<svg class="i-muted" viewBox="0 0 24 24" aria-hidden="true">
+			<path d="M11 5 6 9H2v6h4l5 4V5z"></path>
+			<path d="m23 9-6 6M17 9l6 6"></path>
+		</svg>
+		<svg class="i-sound" viewBox="0 0 24 24" aria-hidden="true">
+			<path d="M11 5 6 9H2v6h4l5 4V5z"></path>
+			<path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"></path>
+		</svg>
+	</button>
+</template>
 
 <script>
-  import { deck } from '../scripts/deck.js'
-  deck()
+	import { deck } from '#frontend/scripts/deck.js'
+	deck()
 </script>
