@@ -37,10 +37,13 @@ const phone = /(?:\+7|(?<!\d)8)(?:[\s()-]*\d){10}(?!\d)/g
 /** Typography for plain text, without markup. */
 export function typographText(text: string): string {
 	const parts = split(text.replace(/\.{3}/g, '…'), phone)
+
 	return parts
 		.map((part, i) => {
 			if (i % 2) return part.replace(/\s+/g, NBSP)
+
 			const fixed = words(part)
+
 			// a short word before a phone number dangles just as at a line end
 			return i < parts.length - 1 ? fixed.replace(shortAtEnd, `$1${NBSP}`) : fixed
 		})
@@ -71,16 +74,22 @@ const leadingDash = /^\s+(?=[—·])/
 /** Typography for an HTML page: only the text between tags changes. */
 export function typograph(html: string): string {
 	const parts = html.split(TOKEN)
+
 	for (let i = 0; i < parts.length; i += 3) {
 		if (!parts[i]?.trim()) continue
+
 		let text = typographText(parts[i])
+
 		// a preposition before a link would dangle at the line end, the link going to the next
 		if (inlineOpen.test(parts[i + 1] ?? '')) text = text.replace(shortAtEnd, `$1${NBSP}`)
+
 		// "<b>Сабля</b> — это": the word before the dash lives in the previous node; after
 		// a <br> or a block the dash opens a line on purpose and stays
 		if (i > 0 && inlineClose.test(parts[i - 2])) text = text.replace(leadingDash, NBSP)
+
 		parts[i] = text
 	}
+
 	// the tag name from the second group isn't part of the page
 	return parts.filter((_, i) => i % 3 !== 2).join('')
 }
@@ -89,10 +98,13 @@ export function typograph(html: string): string {
 function split(s: string, re: RegExp): string[] {
 	const out: string[] = []
 	let last = 0
+
 	for (const m of s.matchAll(re)) {
 		out.push(s.slice(last, m.index), m[0])
 		last = m.index + m[0].length
 	}
+
 	out.push(s.slice(last))
+
 	return out
 }

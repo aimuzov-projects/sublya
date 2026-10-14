@@ -29,6 +29,7 @@ for (const [id, styles] of Object.entries(reference)) {
 	for (const [style, sizes] of Object.entries(styles)) {
 		test(`${id} in ${style} splits into the same screens as the bot`, () => {
 			const p = presets[style as 'classic' | 'big']
+
 			assert.deepEqual(
 				paginate(demo(id), p.perPage, p.maxChars).map((page) => page.length),
 				sizes,
@@ -39,6 +40,7 @@ for (const [id, styles] of Object.entries(reference)) {
 
 test('single shows one word per screen', () => {
 	const words = demo('velo')
+
 	assert.equal(screens(words, presets.single).length, words.length)
 })
 
@@ -50,12 +52,14 @@ const words: Word[] = [
 
 test('a word stays lit until the next one starts', () => {
 	const [first] = screens(words, presets.classic)
+
 	assert.deepEqual(first.spans[0], [1, 1.4])
 	assert.equal(at(screens(words, presets.classic), 1.35)?.lit, 0)
 })
 
 test('the last word of a screen lingers, but not into the next screen', () => {
 	const list = screens(words, presets.classic)
+
 	assert.deepEqual(list[0].spans[1], [1.4, 1.8 + TAIL])
 	assert.equal(at(list, 2.5), null)
 	assert.equal(at(list, 3.1)?.screen, list[1])
@@ -63,6 +67,7 @@ test('the last word of a screen lingers, but not into the next screen', () => {
 
 test('a short word stays on the line of the next one', () => {
 	const page: Word[] = ['ездили', 'в', 'Самару'].map((text, i) => ({ text, start: i, end: i + 0.5, line_end: false }))
+
 	assert.deepEqual(screens(page, presets.classic)[0].glue, [false, true, false])
 })
 

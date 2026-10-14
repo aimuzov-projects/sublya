@@ -38,6 +38,7 @@ test('dash, separator, abbreviations, ellipsis', () => {
 
 test('typography is idempotent', () => {
 	const once = typographText('Пришли видео в Telegram — бот вернёт его за 12000 секунд')
+
 	assert.equal(typographText(once), once)
 })
 
@@ -46,10 +47,12 @@ test('HTML: only the text between tags changes', () => {
 		h('<p title="в доме">в доме</p><script>const a = "в доме"</script>'),
 		'<p title="в доме">в_доме</p><script>const a = "в доме"</script>',
 	)
+
 	assert.equal(
 		h('<style>a { margin: 0 в }</style><!-- в доме -->'),
 		'<style>a { margin: 0 в }</style><!-- в доме -->',
 	)
+
 	assert.equal(h('<code>в доме</code><textarea>и я</textarea>'), '<code>в доме</code><textarea>и я</textarea>')
 })
 

@@ -6,9 +6,13 @@ import { typograph } from '#shared/typograph.ts'
 // Island props are attributes, which it doesn't touch: those get typographText in the component.
 export const onRequest = defineMiddleware(async (_, next) => {
 	const response = await next()
+
 	if (!response.headers.get('content-type')?.startsWith('text/html')) return response
+
 	const headers = new Headers(response.headers)
+
 	headers.delete('content-length')
+
 	return new Response(typograph(await response.text()), {
 		status: response.status,
 		statusText: response.statusText,

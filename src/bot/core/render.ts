@@ -17,6 +17,7 @@ import {
 } from '#shared/subtitles.ts'
 
 const FONT = 'Montserrat ExtraBold'
+
 export const HIGHLIGHT = String.raw`{\rHi}` // switches to the Hi style; {\r} switches back
 
 // ASS colours are &HAABBGGRR
@@ -33,6 +34,7 @@ const CAPS_WIDTH = 0.7 // average width of an upper-case Montserrat ExtraBold le
 /** Python's round(): halves go to the even neighbour. The ASS of the Python bot is the reference. */
 export function round(x: number): number {
 	const r = Math.round(x)
+
 	return Math.abs(x % 1) === 0.5 && r % 2 ? r - 1 : r
 }
 
@@ -42,12 +44,14 @@ export function forCircle(p: Preset): Preset {
 	const font = Math.min(p.font, 0.09)
 	const fits = Math.trunc((1 - 2 * CIRCLE_SIDE) / (CAPS_WIDTH * font))
 	const margin = p.alignment === 2 ? Math.max(p.margin, CIRCLE_MARGIN) : p.margin
+
 	return { ...p, font, margin, side: CIRCLE_SIDE, maxChars: Math.min(p.maxChars, fits) }
 }
 
 export function assTime(t: number): string {
 	const cs = round(t * 100)
 	const two = (n: number) => String(n).padStart(2, '0')
+
 	return `${Math.floor(cs / 360000)}:${two(Math.floor(cs / 6000) % 60)}:${two(Math.floor(cs / 100) % 60)}.${two(cs % 100)}`
 }
 
@@ -59,6 +63,7 @@ function styleLine(name: string, p: Preset, [w, h]: [number, number], colour: st
 	const [border, outline, shadow, outlineColour] = box
 		? [3, round(fs * 0.12), 0, PINK]
 		: [1, round(fs * 0.08), round(fs * 0.05), BLACK]
+
 	return (
 		`Style: ${name},${FONT},${fs},${colour},${colour},${outlineColour},${SHADOW},-1,0,0,0,` +
 		`100,100,0,0,${border},${outline},${shadow},${p.alignment},` +
@@ -97,6 +102,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 `
 	const pages = paginate(words, p.perPage, p.maxChars)
 	const lines: string[] = []
+
 	pages.forEach((page, n) => {
 		const nextPageStart = n + 1 < pages.length ? pages[n + 1][0].start : Infinity
 		const texts = page.map((x) => assEscape(x.text.toUpperCase()))
@@ -105,6 +111,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 		// squeezed; \r drops the squeeze, hence it goes after every reset too
 		const length = chars(texts.join(' '))
 		const fit = circle && length > p.maxChars ? `{\\fscx${Math.floor((100 * p.maxChars) / length)}}` : ''
+
 		page.forEach((word, i) => {
 			// each word stays lit until the next one starts, so the page never blinks
 			const end = i + 1 < page.length ? page[i + 1].start : Math.min(word.end + TAIL, nextPageStart)
@@ -115,9 +122,11 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 					.map((t, j) => (j ? spaces[j - 1] + t : t))
 					.join('')
 			const pop = i === 0 ? String.raw`{\fad(80,0)}` : ''
+
 			lines.push(`Dialogue: 0,${assTime(word.start)},${assTime(end)},Word,,0,0,0,,${pop}${body}`)
 		})
 	})
+
 	return header + lines.join('\n') + '\n'
 }
 
@@ -128,7 +137,9 @@ const filterArg = (path: string) =>
 export async function burn(video: string, ass: string, out: string, extra: string[] = []): Promise<void> {
 	let vf = `ass=${filterArg(ass)}`
 	const fonts = process.env.SUBLYA_FONTS_DIR
+
 	if (fonts) vf += `:fontsdir=${filterArg(fonts)}`
+
 	await run(
 		tool('ffmpeg'),
 		'-y',
@@ -165,7 +176,9 @@ export async function render(
 ): Promise<string> {
 	const ass = join(workdir, 'subs.ass')
 	const out = join(workdir, `out-${style}.mp4`)
+
 	await writeFile(ass, buildAss(words, size, style, { circle }), 'utf8')
 	await burn(video, ass, out)
+
 	return out
 }

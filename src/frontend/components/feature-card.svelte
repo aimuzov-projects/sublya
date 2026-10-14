@@ -16,6 +16,7 @@
 	// spaces stay text, every word gets its number
 	const parts = $derived.by(() => {
 		let count = 0
+
 		return text.split(/(\s+)/).map((part) => ({ part, n: part.trim() ? count++ : -1 }))
 	})
 	const words = $derived(parts.filter(({ n }) => n >= 0).map(({ part }) => part))
@@ -29,12 +30,14 @@
 
 	function play(i = 0) {
 		lit = i
+
 		if (i === words.length) timer = setTimeout(play, 700)
 		else timer = setTimeout(() => play(i + 1), 110 + words[i].length * 38)
 	}
 
 	function start() {
 		if (matchMedia('(prefers-reduced-motion: reduce)').matches) return
+
 		stop()
 		play()
 	}

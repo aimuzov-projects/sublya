@@ -59,14 +59,19 @@ export class Worker {
 
 	async run(signal?: AbortSignal): Promise<void> {
 		const requeued = this.db.requeueRunning()
+
 		if (requeued) console.info(`requeued ${requeued} interrupted jobs`)
+
 		while (!signal?.aborted) {
 			const job = this.db.nextJob()
+
 			if (job) {
 				await this.process(job)
 				continue
 			}
+
 			const woken = new Promise<void>((resolve) => (this.wakeUp = resolve))
+
 			await Promise.race([woken, delay(IDLE_POLL, undefined, { signal }).catch(() => {})])
 			this.wakeUp = null
 		}
@@ -91,20 +96,27 @@ export class Worker {
 	private async handle(job: Job): Promise<void> {
 		const work = jobDir(this.settings, job)
 		const video = job.input_path
+
 		if (!video || !existsSync(video)) throw new UserError(texts.EXPIRED)
+
 		const cached = join(work, 'transcript.json')
 
 		let transcript: Transcript
+
 		if (existsSync(cached)) {
 			transcript = fromJson(await readFile(cached, 'utf8'))
 		} else {
 			const { maxDuration, sttDailyMinutes } = this.settings
+
 			// documents come without a duration, so the limit is checked again here
 			if ((await duration(video)) > maxDuration) throw new UserError(texts.TOO_LONG(Math.floor(maxDuration / 60)))
+
 			if (this.db.sttSecondsToday() >= sttDailyMinutes * 60) throw new UserError(texts.STT_LIMIT)
+
 			transcript = await this.stage(job, texts.RECOGNIZING, () =>
 				transcribe(video, work, this.settings.stt, job.lang),
 			)
+
 			await writeFile(cached, toJson(transcript), 'utf8')
 			this.db.addSttSeconds(job.user_id, transcript.duration)
 		}
@@ -114,11 +126,13 @@ export class Worker {
 		const out = await this.stage(job, texts.RENDERING, () =>
 			render(video, words, transcript.size, work, style, Boolean(job.note)),
 		)
+
 		try {
 			await this.send(job, out, transcript)
 		} finally {
 			await unlink(out).catch(() => {})
 		}
+
 		this.db.finish(job.id, 'done')
 		await this.dropProgress(job)
 		// the result carries the buttons and the job folder keeps the input, so the original is
@@ -130,6 +144,7 @@ export class Worker {
 		const [w, h] = transcript.size
 		const seconds = Math.round(transcript.duration)
 		const markup = { reply_markup: resultKeyboard(job.id) }
+
 		if (job.note) {
 			try {
 				await this.api.sendVideoNote(job.chat_id, new InputFile(out, 'sublya.mp4'), {
@@ -137,13 +152,16 @@ export class Worker {
 					duration: seconds,
 					...markup,
 				})
+
 				return
 			} catch (e) {
 				if (!isBadRequest(e)) throw e
+
 				// users who closed voice messages in privacy settings can't get video notes
 				console.warn(`video note for job ${job.id} refused, sending a video`)
 			}
 		}
+
 		await this.api.sendVideo(job.chat_id, new InputFile(out, 'sublya.mp4'), {
 			width: w,
 			height: h,
@@ -156,12 +174,14 @@ export class Worker {
 	private async fail(job: Job, userText: string, error: string, notifyAdmins = false) {
 		this.db.finish(job.id, 'failed', error)
 		await this.dropProgress(job)
+
 		try {
 			await this.api.sendMessage(job.chat_id, userText)
 		} catch (e) {
 			// the user may have blocked the bot; the queue goes on either way
 			console.error(`could not tell user ${job.user_id} about job ${job.id}`, e)
 		}
+
 		if (notifyAdmins) await this.notifyAdmins(texts.ADMIN_ERROR(job.id, job.user_id, error))
 	}
 
@@ -184,12 +204,14 @@ export class Worker {
 		const done = new AbortController()
 		const ticker = (async () => {
 			let i = Math.floor(Math.random() * lines.length)
+
 			while (!done.signal.aborted) {
 				await this.progress(job, lines[i])
 				i = (i + 1) % lines.length
 				await delay(this.progressEvery, undefined, { signal: done.signal }).catch(() => {})
 			}
 		})()
+
 		try {
 			return await work()
 		} finally {
@@ -200,7 +222,9 @@ export class Worker {
 
 	private async progress(job: Job, text: string) {
 		const msgId = this.progressMsg(job)
+
 		if (msgId === null) return
+
 		try {
 			await this.api.editMessageText(job.chat_id, msgId, text)
 		} catch (e) {
@@ -214,6 +238,7 @@ export class Worker {
 
 	private async drop(job: Job, msgId: number | null, what: string) {
 		if (msgId === null) return
+
 		try {
 			await this.api.deleteMessage(job.chat_id, msgId)
 		} catch (e) {
@@ -225,21 +250,27 @@ export class Worker {
 /** Removes job folders idle for ttl seconds. Re-renders touch them, so they live on. */
 export async function cleanup(dir: string, ttl: number, now = Date.now() / 1000): Promise<number> {
 	let removed = 0
+
 	for (const entry of await readdir(dir, { withFileTypes: true }).catch(() => [])) {
 		if (!entry.isDirectory()) continue
+
 		const path = join(dir, entry.name)
+
 		if (now - (await stat(path)).mtimeMs / 1000 > ttl) {
 			await rm(path, { recursive: true, force: true })
 			removed++
 		}
 	}
+
 	return removed
 }
 
 export async function cleanupLoop(settings: Settings, signal?: AbortSignal) {
 	while (!signal?.aborted) {
 		const removed = await cleanup(jobsDir(settings), settings.jobTtl)
+
 		if (removed) console.info(`removed ${removed} old job folders`)
+
 		await delay(CLEANUP_EVERY, undefined, { signal }).catch(() => {})
 	}
 }

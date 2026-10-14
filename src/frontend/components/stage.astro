@@ -15,7 +15,9 @@ const words: Record<string, Word[]> = import.meta.glob('/src/frontend/data/words
 const demos = (await getCollection('demos')).map(({ data }) => {
 	// demo/make-demo.sh writes the timings next to the entry; without them the demo has no subtitles
 	const timings = words[`/src/frontend/data/words/${data.id}.json`]
+
 	if (!timings) throw new Error(`no src/frontend/data/words/${data.id}.json`)
+
 	return { ...data, note: typographText(data.note), words: timings }
 })
 

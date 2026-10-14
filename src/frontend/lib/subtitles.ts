@@ -14,8 +14,10 @@ export type Screen = {
 /** Screens with their timings: each word stays lit until the next one starts. */
 export function screens(words: Word[], preset: Preset): Screen[] {
 	const pages = paginate(words, preset.perPage, preset.maxChars)
+
 	return pages.map((page, n) => {
 		const nextPage = pages[n + 1]?.[0].start ?? Infinity
+
 		return {
 			words: page.map((w) => w.text.toUpperCase()),
 			glue: page.map((w, i) => i + 1 < page.length && glued(w.text, page[i + 1].text)),
@@ -31,7 +33,9 @@ export function screens(words: Word[], preset: Preset): Screen[] {
 export function at(list: Screen[], t: number): { screen: Screen; lit: number } | null {
 	for (const screen of list) {
 		const lit = screen.spans.findIndex(([start, end]) => start <= t && t < end)
+
 		if (lit >= 0) return { screen, lit }
 	}
+
 	return null
 }

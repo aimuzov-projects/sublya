@@ -112,12 +112,15 @@ export class Db {
 
 	constructor(path: string, clock: () => number = () => Date.now() / 1000) {
 		if (path !== ':memory:') mkdirSync(dirname(path), { recursive: true })
+
 		this.conn = new DatabaseSync(path)
 		this.clock = clock
 		this.script('PRAGMA journal_mode=WAL')
 		this.script(SCHEMA)
+
 		for (const [table, columns] of Object.entries(MIGRATIONS)) {
 			const have = new Set(this.all(`PRAGMA table_info(${table})`).map((row) => row.name))
+
 			for (const [column, kind] of Object.entries(columns)) {
 				if (!have.has(column)) this.script(`ALTER TABLE ${table} ADD COLUMN ${column} ${kind}`)
 			}
@@ -139,6 +142,7 @@ export class Db {
 
 	private one(sql: string, ...args: SQLInputValue[]): Row | undefined {
 		const row = this.conn.prepare(sql).get(...args)
+
 		return row && { ...row }
 	}
 
@@ -160,13 +164,16 @@ export class Db {
 			DEFAULT_STYLE,
 			this.clock(),
 		)
+
 		return this.one('SELECT * FROM users WHERE id = ?', userId) as User
 	}
 
 	setUser(userId: number, fields: Partial<Pick<User, 'style' | 'lang' | 'name' | 'username'>>) {
 		this.getUser(userId)
+
 		for (const [name, value] of Object.entries(fields)) {
 			if (!['style', 'lang', 'name', 'username'].includes(name)) throw new Error(name)
+
 			this.run(`UPDATE users SET ${name} = ? WHERE id = ?`, value ?? null, userId)
 		}
 	}
@@ -177,6 +184,7 @@ export class Db {
 
 	private usageToday(userId: number, column: 'videos' | 'bonus'): number {
 		const row = this.one(`SELECT ${column} AS n FROM usage WHERE day = ? AND user_id = ?`, this.today(), userId)
+
 		return (row?.n as number) ?? 0
 	}
 
@@ -197,6 +205,7 @@ export class Db {
 			userId,
 			n,
 		)
+
 		return this.bonusToday(userId)
 	}
 
@@ -212,10 +221,14 @@ export class Db {
 				'queued',
 				'running',
 			)
+
 			if (active) throw new Busy()
+
 			if (s.parentId === null) {
 				const limit = s.dailyLimit === null ? null : s.dailyLimit + this.bonusToday(s.userId)
+
 				if (limit !== null && this.videosToday(s.userId) >= limit) throw new QuotaExceeded()
+
 				this.run(
 					'INSERT INTO usage (day, user_id, videos) VALUES (?, ?, 1) ' +
 						'ON CONFLICT (day, user_id) DO UPDATE SET videos = videos + 1',
@@ -223,6 +236,7 @@ export class Db {
 					s.userId,
 				)
 			}
+
 			const { lastInsertRowid } = this.run(
 				'INSERT INTO jobs (user_id, chat_id, parent_id, status, input_path, text, style,' +
 					' lang, note, source_msg_id, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
@@ -238,6 +252,7 @@ export class Db {
 				s.sourceMsgId ?? null,
 				this.clock(),
 			)
+
 			return Number(lastInsertRowid)
 		})
 	}
@@ -245,10 +260,14 @@ export class Db {
 	nextJob(): Job | null {
 		const id = this.transaction(() => {
 			const row = this.one("SELECT id FROM jobs WHERE status = 'queued' ORDER BY id LIMIT 1")
+
 			if (!row) return null
+
 			this.run("UPDATE jobs SET status = 'running' WHERE id = ?", row.id)
+
 			return row.id as number
 		})
+
 		return id === null ? null : this.getJob(id)
 	}
 
@@ -284,6 +303,7 @@ export class Db {
 			"UPDATE jobs SET status = 'failed', error = 'restarted during download', finished_at = ? WHERE status = 'pending'",
 			this.clock(),
 		)
+
 		return Number(this.run("UPDATE jobs SET status = 'queued' WHERE status = 'running'").changes)
 	}
 
@@ -314,6 +334,7 @@ export class Db {
 			day,
 		)!
 		const total = this.one('SELECT COUNT(*) AS n FROM users')!
+
 		return {
 			users_total: total.n as number,
 			users_today: usage.users as number,
@@ -365,20 +386,26 @@ export class Db {
 		)!
 
 		const byDay = new Map<string, Row>()
+
 		for (let i = days - 1; i >= 0; i--)
 			byDay.set(isoDay(now - i * DAY), { videos: 0, done: 0, failed: 0, new_users: 0 })
+
 		const perDay = this.all(
 			`SELECT ${dayOf} AS day, COUNT(*) AS videos, SUM(status = 'done') AS done,` +
 				` SUM(status = 'failed') AS failed FROM jobs WHERE parent_id IS NULL AND ${dayOf} >= ? GROUP BY day`,
 			first,
 		)
+
 		for (const { day, ...row } of perDay) Object.assign(byDay.get(day as string) ?? {}, row)
+
 		const joined = this.all(
 			`SELECT ${dayOf} AS day, COUNT(*) AS n FROM users WHERE ${dayOf} >= ? GROUP BY day`,
 			first,
 		)
+
 		for (const row of joined) {
 			const entry = byDay.get(row.day as string)
+
 			if (entry) entry.new_users = row.n
 		}
 
@@ -399,6 +426,7 @@ export class Db {
 				' FROM jobs j LEFT JOIN users u ON u.id = j.user_id' +
 				' LEFT JOIN support_topics t ON t.user_id = j.user_id ORDER BY j.id DESC LIMIT 20',
 		)
+
 		return {
 			users: { ...users, active_today: active.today, active_week: active.week } as Row,
 			videos: { ...videos, rerenders: rerenders.n } as Row,
@@ -434,12 +462,16 @@ export class Db {
 	private transaction<T>(body: () => T): T {
 		// BEGIN IMMEDIATE takes the write lock up front, so check-then-insert can't race
 		this.script('BEGIN IMMEDIATE')
+
 		try {
 			const result = body()
+
 			this.script('COMMIT')
+
 			return result
 		} catch (e) {
 			this.script('ROLLBACK')
+
 			throw e
 		}
 	}

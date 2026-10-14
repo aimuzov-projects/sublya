@@ -48,6 +48,7 @@ function setup() {
 	const db = new Db(':memory:')
 	let woken = 0
 	const worker = { wake: () => woken++ } as unknown as Worker
+
 	fake.bot.use(handlers({ db, worker, settings, support: new Support(fake.api, db, null) }))
 	fake.answer('answerCallbackQuery', () => true)
 	fake.answer('editMessageReplyMarkup', () => true)
@@ -68,12 +69,14 @@ function setup() {
 			.named('sendMessage')
 			.filter((m) => m.chat_id === ALICE.id)
 			.map((m) => m.text)
+
 	return { ...fake, settings, db, message, press, replies, woken: () => woken }
 }
 
 test('a video is queued, moved from the Bot API volume and handed to the worker', async () => {
 	const s = setup()
 	const local = join(s.settings.dataDir, 'bot-api', 'video.mp4')
+
 	mkdirSync(join(s.settings.dataDir, 'bot-api'))
 	writeFileSync(local, 'video')
 	s.answer('getFile', () => ({ file_id: 'V', file_unique_id: 'u', file_path: local }))
@@ -84,6 +87,7 @@ test('a video is queued, moved from the Bot API volume and handed to the worker'
 	})
 
 	const job = s.db.getJob(1)!
+
 	assert.deepEqual([job.status, job.text, job.style, job.lang], ['queued', 'стих', 'classic', 'ru'])
 	assert.equal(job.input_path, join(jobsDir(s.settings), '1', 'input.mp4'))
 	assert.equal(readFileSync(job.input_path!, 'utf8'), 'video')
@@ -97,6 +101,7 @@ test('a video is queued, moved from the Bot API volume and handed to the worker'
 
 test('a long video is refused before it downloads', async () => {
 	const s = setup()
+
 	await s.message({ video: { file_id: 'V', file_unique_id: 'u', width: 1, height: 1, duration: 600 } })
 	assert.deepEqual(s.replies(), [texts.TOO_LONG(3)])
 	assert.deepEqual(s.named('getFile'), [])
@@ -104,6 +109,7 @@ test('a long video is refused before it downloads', async () => {
 
 test('a document that is not a video is refused', async () => {
 	const s = setup()
+
 	await s.message({ document: { file_id: 'D', file_unique_id: 'u', mime_type: 'application/pdf' } })
 	assert.deepEqual(s.replies(), [texts.NOT_VIDEO])
 })
@@ -120,28 +126,34 @@ function done(s: ReturnType<typeof setup>) {
 		parentId: null,
 		dailyLimit: 10,
 	})
+
 	s.db.finish(job, 'done')
 	const work = join(jobsDir(s.settings), String(job))
+
 	mkdirSync(work, { recursive: true })
 	writeFileSync(join(work, 'transcript.json'), toJson(markTranscript()))
+
 	return job
 }
 
 test('fixing the text re-renders with the new text', async () => {
 	const s = setup()
 	const job = done(s)
+
 	await s.press(`fix:${job}`)
 	assert.equal(s.replies()[0], texts.FIX_PROMPT)
 	await s.message({ video: { file_id: 'V', file_unique_id: 'u', width: 1, height: 1, duration: 1 } })
 	assert.equal(s.replies().at(-1), texts.FIX_WAITING)
 	await s.message({ text: 'новый текст' })
 	const rerender = s.db.getJob(job + 1)!
+
 	assert.deepEqual([rerender.parent_id, rerender.text, rerender.status], [job, 'новый текст', 'queued'])
 	assert.equal(rerender.source_msg_id, null, "the user's text is not a video to clean up")
 })
 
 test('cancel leaves the fix', async () => {
 	const s = setup()
+
 	await s.press(`fix:${done(s)}`)
 	await s.message({ text: '/cancel', entities: [{ type: 'bot_command', offset: 0, length: 7 }] })
 	await s.message({ text: 'просто текст' })
@@ -151,8 +163,10 @@ test('cancel leaves the fix', async () => {
 test('another style re-renders the same video', async () => {
 	const s = setup()
 	const job = done(s)
+
 	await s.press(`st:${job}:big`)
 	const rerender = s.db.getJob(job + 1)!
+
 	assert.deepEqual([rerender.parent_id, rerender.style, rerender.lang], [job, 'big', 'ru'])
 	assert.equal(rerender.source_msg_id, null)
 })
@@ -169,17 +183,21 @@ test("someone else's video can't be restyled", async () => {
 		parentId: null,
 		dailyLimit: 10,
 	})
+
 	await s.press(`st:${job}:big`)
+
 	assert.deepEqual(s.named('answerCallbackQuery').at(-1), {
 		callback_query_id: 'q',
 		text: texts.NOT_YOURS,
 		show_alert: true,
 	})
+
 	assert.equal(s.db.getJob(job + 1), null)
 })
 
 test('the default style is saved', async () => {
 	const s = setup()
+
 	s.answer('editMessageText', () => true)
 	await s.press('defstyle:box')
 	assert.equal(s.db.getUser(ALICE.id).style, 'box')

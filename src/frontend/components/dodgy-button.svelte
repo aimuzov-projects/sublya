@@ -23,22 +23,29 @@
 	onMount(() => {
 		const fine = matchMedia('(hover: hover) and (pointer: fine)').matches
 		const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches
+
 		enabled = fine && !reduced
 	})
 
 	function dodge(e: PointerEvent) {
 		if (!enabled || e.pointerType !== 'mouse' || tries > dodges.length) return
+
 		if (tries++ === dodges.length) return
+
 		const { side } = dodges[tries - 1]
+
 		if (!side) {
 			transform = ''
+
 			return
 		}
+
 		// as far as the section allows, so it stays in sight
 		const room = button.parentElement!.clientWidth / 2 - button.offsetWidth / 2 - 16
 		const x = side * Math.min(room, 320) * (0.75 + Math.random() * 0.25)
 		// on a narrow screen the side step is short, so it also hops down off the cursor
 		const y = Math.abs(x) < button.offsetWidth ? 70 : (Math.random() - 0.5) * 60
+
 		transform = `translate(${x | 0}px, ${y | 0}px) rotate(${side * 5}deg)`
 	}
 </script>

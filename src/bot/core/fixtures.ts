@@ -12,6 +12,7 @@ export const LAG = 0.15 // whisper.cpp DTW marks tokens a bit late
 
 export function markTranscript(): Transcript {
 	const meta = JSON.parse(read('natasha/silences.json'))
+
 	return {
 		words: JSON.parse(read('natasha/words.json')).map((w: Partial<Word>) => ({
 			...w,

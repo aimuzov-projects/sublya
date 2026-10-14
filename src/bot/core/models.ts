@@ -24,6 +24,7 @@ export const toJson = (t: Transcript) =>
 
 export function fromJson(data: string): Transcript {
 	const d = JSON.parse(data)
+
 	return {
 		words: d.words.map((w: Word) => ({ text: w.text, start: w.start, end: w.end, line_end: w.line_end ?? false })),
 		silences: d.silences,
