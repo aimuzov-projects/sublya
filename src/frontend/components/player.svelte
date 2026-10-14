@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { at, type Preset, type Screen } from '#frontend/lib/subtitles.ts'
+	import { at, type Screen } from '#frontend/lib/subtitles.ts'
+	import type { Preset } from '#shared/subtitles.ts'
 
 	type Props = {
 		/** The screens of the current demo in the chosen style; none shows the video as sent. */
@@ -68,12 +69,12 @@
 	<video bind:this={video} muted loop playsinline preload="auto" onplay={follow} onseeked={follow}></video>
 	<div
 		class="overlay"
-		class:overlay--middle={preset.middle}
+		class:overlay--middle={preset.alignment === 5}
 		class:overlay--box={preset.box}
 		style:--font={preset.font}
 		style:--margin={preset.margin}
 		style:--side={preset.side}
-		style:--hi={preset.hi}
+		style:--hi={preset.hi === 'yellow' ? '#ffff00' : '#ffffff'}
 		aria-hidden="true"
 	>
 		{#if shown}

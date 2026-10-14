@@ -1,6 +1,6 @@
 import { defineMiddleware } from 'astro:middleware'
 
-import { typograph } from '#frontend/lib/typograph.ts'
+import { typograph } from '#shared/typograph.ts'
 
 // Every page goes through the typograph as it's built, so text added later is set right too.
 // Island props are attributes, which it doesn't touch: those get typographText in the component.

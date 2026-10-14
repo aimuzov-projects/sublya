@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 
-import { typograph, typographText } from '#frontend/lib/typograph.ts'
+import { typograph, typographText } from '#shared/typograph.ts'
 
 // In the expectations "_" stands for a no-break space and "^" for a thin one, so they show.
 const show = (s: string) => s.replaceAll(' ', '_').replaceAll(' ', '^')

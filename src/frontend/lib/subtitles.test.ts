@@ -2,13 +2,15 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { test } from 'node:test'
 
-import { at, paginate, presets, screens, TAIL, type Word } from './subtitles.ts'
+import { paginate, presets, TAIL, type Word } from '#shared/subtitles.ts'
+
+import { at, screens } from './subtitles.ts'
 
 const demo = (id: string): Word[] =>
 	JSON.parse(readFileSync(new URL(`../data/words/${id}.json`, import.meta.url), 'utf8'))
 
-// page sizes from paginate() in src/bot/sublya/core/align.py on the same words
-const python: Record<string, Record<string, number[]>> = {
+// page sizes the Python bot's paginate() gave on the same words
+const reference: Record<string, Record<string, number[]>> = {
 	samara: {
 		classic: [3, 3, 1, 3, 3, 3, 1, 3, 1],
 		big: [3, 3, 1, 3, 3, 3, 1, 2, 2],
@@ -23,10 +25,10 @@ const python: Record<string, Record<string, number[]>> = {
 	},
 }
 
-for (const [id, styles] of Object.entries(python)) {
+for (const [id, styles] of Object.entries(reference)) {
 	for (const [style, sizes] of Object.entries(styles)) {
 		test(`${id} in ${style} splits into the same screens as the bot`, () => {
-			const p = presets[style]
+			const p = presets[style as 'classic' | 'big']
 			assert.deepEqual(
 				paginate(demo(id), p.perPage, p.maxChars).map((page) => page.length),
 				sizes,
