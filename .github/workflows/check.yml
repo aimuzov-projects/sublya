@@ -16,18 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
-        with:
-          node-version-file: package.json
-          cache: npm
       # Ubuntu's ffmpeg is built with libass, so the bot's render tests run too.
-      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg
-      - run: npm ci
-      - run: npm run format:check
-      - run: npm run lint:js
-      - run: npm run lint:css
-      - run: npm run check
-      - run: npm test
-      # The site is built on the server, but it's better for the build to fail here.
-      - run: npm run build
+      - uses: aimuzov-projects/infra-site-kit/check@v1
+        with:
+          apt-packages: ffmpeg
