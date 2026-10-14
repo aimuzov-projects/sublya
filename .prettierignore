@@ -5,3 +5,4 @@ package-lock.json
 .claude
 .serena
 src/bot/uv.lock
+src/frontend/data/words

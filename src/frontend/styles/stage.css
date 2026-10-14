@@ -140,54 +140,59 @@
 	position: absolute;
 	inset: 0;
 }
-.player video {
-	opacity: 0;
-}
-.player video.front {
-	opacity: 1;
-}
 /* a new card shows its poster until its video can play */
 .player.loading video {
 	opacity: 0;
 }
-/* shows up only if the switch takes a while, so a cached video doesn't blink it */
-.player.switching::before {
+
+/* The bot's subtitles drawn over the video as sent, in the units of the frame: sizes and
+   margins are shares of its width and height, as in the presets of src/bot/sublya/core/render.py. */
+.overlay {
 	pointer-events: none;
-	content: '';
 	position: absolute;
-	z-index: 1;
 	inset: 10px;
+	container-type: size;
+	overflow: hidden;
 	border-radius: 28px;
-	opacity: 0;
-	background: rgba(0, 0, 0, 0.45);
-	animation: appear 0.2s ease 0.25s forwards;
 }
-.player.switching::after {
-	pointer-events: none;
-	content: '';
+.overlay__line {
+	/* the ASS font size; libass draws Montserrat 1.36 times smaller per em, measured on the bot's renders */
+	--size: calc(var(--font) * 100cqw);
 	position: absolute;
-	z-index: 2;
-	inset: 0;
-	width: 44px;
-	height: 44px;
-	margin: auto;
-	border: 4px solid rgba(255, 255, 255, 0.25);
-	border-top-color: var(--yellow);
-	border-radius: 50%;
-	opacity: 0;
-	filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.5));
-	animation:
-		spin 0.8s linear infinite,
-		appear 0.2s ease 0.25s forwards;
+	right: calc(var(--side) * 100cqw);
+	bottom: calc(var(--margin) * 100cqh);
+	left: calc(var(--side) * 100cqw);
+	margin: 0;
+	font-size: calc(var(--size) / 1.36);
+	font-weight: 800;
+	line-height: 1.2;
+	color: #fff;
+	text-align: center;
+	text-shadow: calc(var(--size) * 0.05) calc(var(--size) * 0.05) 0 rgba(0, 0, 0, 0.5);
+	/* the outline goes under the letters, as libass draws it: 0.08 of the size around each */
+	paint-order: stroke fill;
+	animation: pop 0.08s ease-out;
+	-webkit-text-stroke: calc(var(--size) * 0.16) #000;
 }
-@keyframes spin {
-	to {
-		rotate: 1turn;
-	}
+.overlay--middle .overlay__line {
+	top: 50%;
+	bottom: auto;
+	translate: 0 -50%;
 }
-@keyframes appear {
-	to {
-		opacity: 1;
+.overlay__word--lit {
+	color: var(--hi);
+}
+/* box: the lit word on an opaque pink plate, without the outline */
+.overlay--box .overlay__word--lit {
+	padding: 0 calc(var(--size) * 0.12);
+	text-shadow: none;
+	background: var(--pink);
+	box-decoration-break: clone;
+	-webkit-text-stroke: 0;
+}
+@keyframes pop {
+	from {
+		opacity: 0;
 	}
 }
 

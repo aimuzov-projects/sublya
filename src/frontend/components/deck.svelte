@@ -2,8 +2,9 @@
 	import { onMount, untrack } from 'svelte'
 
 	import Player from '#frontend/components/player.svelte'
+	import { presets, screens, type Word } from '#frontend/lib/subtitles.ts'
 
-	type Demo = { id: string; note: string; v: string; duration: number }
+	type Demo = { id: string; note: string; v: string; duration: number; words: Word[] }
 	type Style = { id: string; name: string; hint: string }
 	type Props = {
 		demos: Demo[]
@@ -41,10 +42,12 @@
 
 	const top = $derived(byId.get(order[0])!)
 	const several = $derived(demos.length > 1)
-	const file = () => (variant === 'before' ? 'before' : style)
+	const preset = $derived(presets[style])
+	// the subtitles of the card on top, in the chosen style, or none for the video as sent
+	const subtitles = $derived(variant === 'after' ? screens(top.words, preset) : null)
 
 	function openTop() {
-		player?.open(url(top, file()))
+		player?.open(url(top, 'before'))
 	}
 
 	function step(dir: number) {
@@ -94,17 +97,10 @@
 		if (e.key === 'ArrowLeft') step(-1)
 	}
 
-	function pickVariant(value: 'before' | 'after') {
-		if (value === variant) return
-		variant = value
-		player?.show(url(top, file()), player.keepsTime())
-	}
-
+	// picking a style shows the subtitles again: that's what the visitor wants to see
 	function pickStyle(value: string) {
-		if (value === style && variant === 'after') return
 		style = value
 		variant = 'after'
-		player?.show(url(top, file()), player.keepsTime())
 	}
 
 	// the player sits in whichever card is on top and moves with it
@@ -184,7 +180,7 @@
 						<img src={url(demo, 'poster', 'webp')} alt="" width="540" height="960" decoding="async" />
 					</div>
 				{/each}
-				<Player bind:this={player} />
+				<Player bind:this={player} screens={subtitles} {preset} />
 			{/if}
 		</div>
 		<div class="deck-nav" hidden={!several}>
@@ -210,10 +206,10 @@
 	</p>
 	<p class="note">{top.note}</p>
 	<div class="toggle" role="radiogroup" aria-label="Версия">
-		<button type="button" role="radio" aria-checked={variant === 'before'} onclick={() => pickVariant('before')}>
+		<button type="button" role="radio" aria-checked={variant === 'before'} onclick={() => (variant = 'before')}>
 			До
 		</button>
-		<button type="button" role="radio" aria-checked={variant === 'after'} onclick={() => pickVariant('after')}>
+		<button type="button" role="radio" aria-checked={variant === 'after'} onclick={() => (variant = 'after')}>
 			После
 		</button>
 	</div>

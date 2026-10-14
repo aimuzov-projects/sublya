@@ -1,0 +1,17 @@
+[
+	{ "text": "Воздух,", "start": 0.86, "end": 1.36, "line_end": false },
+	{ "text": "конечно,", "start": 1.36, "end": 1.9, "line_end": false },
+	{ "text": "такой,", "start": 1.9, "end": 2.22, "line_end": true },
+	{ "text": "что", "start": 2.22, "end": 2.38, "line_end": false },
+	{ "text": "не", "start": 2.38, "end": 3.64, "line_end": false },
+	{ "text": "подышишь.", "start": 3.64, "end": 5.16, "line_end": true },
+	{ "text": "Выхлопов", "start": 5.16, "end": 6.3, "line_end": false },
+	{ "text": "очень", "start": 6.3, "end": 6.62, "line_end": false },
+	{ "text": "много.", "start": 6.62, "end": 7.88, "line_end": true },
+	{ "text": "Кислород", "start": 7.88, "end": 8.76, "line_end": false },
+	{ "text": "закончился.", "start": 8.76, "end": 10.54, "line_end": true },
+	{ "text": "Где-то", "start": 10.54, "end": 11.18, "line_end": false },
+	{ "text": "в", "start": 11.18, "end": 11.32, "line_end": false },
+	{ "text": "8", "start": 11.32, "end": 11.54, "line_end": false },
+	{ "text": "утра.", "start": 11.54, "end": 15.794, "line_end": true }
+]

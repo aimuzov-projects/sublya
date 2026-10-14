@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
-# Builds one demo for the landing page from a video and its exact text: the bot's engine
-# burns subtitles in every style into public/media/<name>/, and src/frontend/data/demos.json
-# gets the entry.
+# Builds one demo for the landing page from a video and its exact text. The page draws the
+# subtitles itself over the video as sent, so the bot's engine only finds the word timings:
+# public/media/<name>/ gets the video and its posters, src/frontend/data/words/<name>.json the
+# timings and src/frontend/data/demos.json the entry.
 # Needs ffmpeg, Docker, python3 and STT_API_KEY in the .env at the repository root.
 # Recognition costs a fraction of a cent.
 #
@@ -29,18 +30,18 @@ mkdir -p "$out"
 cp "$work/demo.mp4" "$out/before.mp4"
 cp "$text" "$work/text.txt"
 
-# the bot image has the same ffmpeg and Montserrat as production, so the demo looks the same
+# the bot image has the same ffmpeg and Montserrat as production, so the timings and the poster
+# come out as the bot would make them; the transcript is cached in $work, so recognition runs once
 docker build -q -t sublya-bot -f "$root/deploy/bot.Dockerfile" "$root/src/bot" >/dev/null
-for style in classic big box single; do
-  docker run --rm --env-file "$root/.env" -v "$work:/w" sublya-bot \
-    python -m sublya.core /w/demo.mp4 --text /w/text.txt --style "$style" -o "/w/$style.mp4" >/dev/null
-  "$ffmpeg" -v error -y -i "$work/$style.mp4" "${web[@]}" -c:a copy "$out/$style.mp4"
-done
+bot=(docker run --rm --env-file "$root/.env" -v "$work:/w" sublya-bot
+  python -m sublya.core /w/demo.mp4 --text /w/text.txt)
+"${bot[@]}" --words /w/words.json >/dev/null
+cp "$work/words.json" "$root/src/frontend/data/words/$name.json"
 
-for file in before classic; do
-  "$ffmpeg" -v error -y -ss 1.6 -i "$out/$file.mp4" -frames:v 1 -q:v 4 "$out/$file.jpg"
-done
-mv "$out/classic.jpg" "$out/poster.jpg"
+# the poster is a frame of the classic style: the deck shows it until the video plays
+"${bot[@]}" --style classic -o /w/classic.mp4 >/dev/null
+"$ffmpeg" -v error -y -ss 1.6 -i "$work/classic.mp4" -frames:v 1 -q:v 4 "$out/poster.jpg"
+"$ffmpeg" -v error -y -ss 1.6 -i "$out/before.mp4" -frames:v 1 -q:v 4 "$out/before.jpg"
 # the page shows these small: the deck poster at 273 px wide, the steps frame at 72; the JPEGs
 # stay for link previews, where WebP isn't everywhere yet
 "$ffmpeg" -v error -y -i "$out/poster.jpg" -vf scale=540:-2 -c:v libwebp -quality 72 "$out/poster.webp"
@@ -60,7 +61,7 @@ if entry is None:
     demos.append(entry)
 entry.update(v=version, duration=round(duration, 1))
 with open(path, "w") as f:
-    json.dump(demos, f, ensure_ascii=False, indent=2)
+    json.dump(demos, f, ensure_ascii=False, indent="\t")
     f.write("\n")
 EOF
 echo "$name: version $version, ${duration}s"

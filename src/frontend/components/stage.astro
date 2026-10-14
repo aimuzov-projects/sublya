@@ -2,12 +2,22 @@
 import { getCollection } from 'astro:content'
 import Deck from '#frontend/components/deck.svelte'
 import { site } from '#frontend/data/site.ts'
+import type { Word } from '#frontend/lib/subtitles.ts'
 import { typographText } from '#frontend/lib/typograph.ts'
 import '#frontend/styles/stage.css'
 
 // The deck reads its demos from here, so the page needs no request for them. Its text arrives
 // set: the island prints it itself, past the typograph in the middleware.
-const demos = (await getCollection('demos')).map(({ data }) => ({ ...data, note: typographText(data.note) }))
+const words: Record<string, Word[]> = import.meta.glob('/src/frontend/data/words/*.json', {
+	eager: true,
+	import: 'default',
+})
+const demos = (await getCollection('demos')).map(({ data }) => {
+	// demo/make-demo.sh writes the timings next to the entry; without them the demo has no subtitles
+	const timings = words[`/src/frontend/data/words/${data.id}.json`]
+	if (!timings) throw new Error(`no src/frontend/data/words/${data.id}.json`)
+	return { ...data, note: typographText(data.note), words: timings }
+})
 
 const styles = [
 	{ id: 'classic', name: 'Классика', hint: 'белый текст, слово жёлтое' },

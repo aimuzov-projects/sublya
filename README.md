@@ -29,8 +29,8 @@ src/
     sublya/bot/      # aiogram handlers, the SQLite job queue, the worker, the admin Mini App
     tests/fixtures/natasha/   # recognised words, pauses and the reference poem of a real recording
   frontend/          # the landing page: components, scripts, one stylesheet per component
-public/media/<name>/ # one demo: the video as sent and the four styles, with posters
-demo/                # demo texts and the script that renders them
+public/media/<name>/ # one demo: the video as sent and its posters
+demo/                # demo texts and the script that builds them
 deploy/              # Dockerfiles, the production compose file, the deploy script
 ```
 
@@ -133,13 +133,16 @@ npm run dev
 `npm run build` puts the finished site in `dist/`. Before a commit: `npm run format:check`,
 `npm run lint:js`, `npm run lint:css`, `npm run check`.
 
-The demo is a deck of cards: each is a real video as it was sent, plus the same video with
-subtitles in each of the four styles. The page shuffles the deck, and a swipe shows the next
-one. `demo/<name>.txt` is the exact text of a demo; its line breaks are the screen breaks.
+The demo is a deck of cards: each is a real video as it was sent. The page draws the subtitles
+over it itself, from the word timings the bot's engine found, with the bot's screen breaks and
+presets ported to `src/frontend/lib/subtitles.ts`, so a style switch is instant and a card
+downloads one video. The page shuffles the deck, and a swipe shows the next one.
+`demo/<name>.txt` is the exact text of a demo; its line breaks are the screen breaks.
 
 To add a demo, write its text, build it, then fill in its note in `src/frontend/data/demos.json`:
-the build fails while a note is empty. Rendering goes through the bot's Docker image, so the
-font and ffmpeg are the same as in production; `STT_API_KEY` comes from the root `.env`:
+the build fails while a note is empty. The timings and the poster come from the bot's Docker
+image, so the font and ffmpeg are the same as in production; `STT_API_KEY` comes from the root
+`.env`:
 
 ```bash
 SUBLYA_FFMPEG=/opt/homebrew/opt/ffmpeg-full/bin/ffmpeg demo/make-demo.sh name video.mp4

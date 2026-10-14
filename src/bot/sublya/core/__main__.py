@@ -10,9 +10,11 @@ Usage:
 
 import argparse
 import asyncio
+import json
 import os
 import shutil
 import sys
+from dataclasses import asdict
 from pathlib import Path
 
 from .align import align
@@ -34,6 +36,8 @@ def main() -> None:
     ap.add_argument("--lag", type=float, default=float(os.environ["STT_LAG"]) if os.environ.get("STT_LAG") else None,
                     help="how late the recogniser places word starts, seconds; default depends on the timing kind")
     ap.add_argument("--retranscribe", action="store_true", help="ignore the cached transcript")
+    ap.add_argument("--words", type=Path,
+                    help="write the aligned words as JSON here instead of rendering; the site draws them itself")
     args = ap.parse_args()
 
     video = args.video.absolute()
@@ -58,6 +62,11 @@ def main() -> None:
         "".join(f"{w.start:.2f}\t{w.end:.2f}\t{w.text}\n" for w in words), encoding="utf-8"
     )
     print("text:", " ".join(w.text for w in words), file=sys.stderr)
+    if args.words:
+        data = [{**asdict(w), "start": round(w.start, 3), "end": round(w.end, 3)} for w in words]
+        args.words.write_text(json.dumps(data, ensure_ascii=False) + "\n", encoding="utf-8")
+        print(args.words)
+        return
     shutil.move(render(video, words, transcript.size, work, args.style, args.circle), out)
     print(out)
 
