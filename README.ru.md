@@ -74,6 +74,8 @@ npm run bot            # бот через публичный Bot API
 npm run format:check && npm run lint:js && npm run lint:css && npm run check && npm test
 ```
 
+E2E-тесты в [`e2e`](e2e) собирают сайт и открывают его в Chromium с общими проверками из [infra-site-kit](https://github.com/aimuzov-projects/infra-site-kit): страницы из sitemap отвечают без ошибок в консоли и проходят axe, Яндекс Метрика ждёт первого действия посетителя. Браузер ставится один раз через `npx playwright install chromium`, дальше `npm run test:e2e`.
+
 Тестам рендера нужен ffmpeg с libass, без него они пропускаются. В `ffmpeg` из Homebrew libass нет, в `ffmpeg-full` есть:
 
 ```sh

@@ -7,3 +7,5 @@ CHANGELOG.md
 .serena
 src/bot/uv.lock
 src/frontend/data/words
+test-results
+playwright-report
