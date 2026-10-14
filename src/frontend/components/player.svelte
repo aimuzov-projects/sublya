@@ -66,7 +66,16 @@
 </script>
 
 <div class="player" class:loading bind:this={root}>
-	<video bind:this={video} muted loop playsinline preload="auto" onplay={follow} onseeked={follow}></video>
+	<video
+		class="player__video"
+		bind:this={video}
+		muted
+		loop
+		playsinline
+		preload="auto"
+		onplay={follow}
+		onseeked={follow}
+	></video>
 	<div
 		class="overlay"
 		class:overlay--middle={preset.alignment === 5}
@@ -97,11 +106,11 @@
 		aria-label={muted ? 'Включить звук' : 'Выключить звук'}
 		onclick={toggleSound}
 	>
-		<svg class="i-muted" viewBox="0 0 24 24" aria-hidden="true">
+		<svg class="sound__icon i-muted" viewBox="0 0 24 24" aria-hidden="true">
 			<path d="M11 5 6 9H2v6h4l5 4V5z"></path>
 			<path d="m23 9-6 6M17 9l6 6"></path>
 		</svg>
-		<svg class="i-sound" viewBox="0 0 24 24" aria-hidden="true">
+		<svg class="sound__icon i-sound" viewBox="0 0 24 24" aria-hidden="true">
 			<path d="M11 5 6 9H2v6h4l5 4V5z"></path>
 			<path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"></path>
 		</svg>

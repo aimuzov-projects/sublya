@@ -1,7 +1,7 @@
 .final {
 	text-align: center;
 }
-.final h2 {
+.final__title {
 	margin-bottom: 1.75rem;
 }
 .final .btn {
