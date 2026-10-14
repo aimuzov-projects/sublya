@@ -4,7 +4,7 @@ import { existsSync } from 'node:fs'
 import { readdir, readFile, rm, stat, unlink, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { setTimeout as delay } from 'node:timers/promises'
-import { InputFile, type Api } from 'grammy'
+import { InputFile, InputMediaBuilder, type Api } from 'grammy'
 import type { InlineKeyboardMarkup } from 'grammy/types'
 
 import { jobsDir, type Settings } from '#bot/config.ts'
@@ -36,7 +36,16 @@ export const resultKeyboard = (jobId: number): InlineKeyboardMarkup => ({
 
 export const jobDir = (settings: Settings, job: Job) => join(jobsDir(settings), String(rootId(job)))
 
-export type WorkerApi = Pick<Api, 'sendVideo' | 'sendVideoNote' | 'sendMessage' | 'editMessageText' | 'deleteMessage'>
+export type WorkerApi = Pick<
+	Api,
+	| 'sendVideo'
+	| 'sendVideoNote'
+	| 'sendMessage'
+	| 'editMessageText'
+	| 'editMessageCaption'
+	| 'editMessageMedia'
+	| 'deleteMessage'
+>
 
 export class Worker {
 	readonly api: WorkerApi
@@ -120,7 +129,7 @@ export class Worker {
 			await unlink(out).catch(() => {})
 		}
 		this.db.finish(job.id, 'done')
-		await this.dropProgress(job)
+		await this.dropProgress(job, true)
 		// the result carries the buttons and the job folder keeps the input, so the original is
 		// clutter; on a failure it stays for the user to send again
 		await this.drop(job, job.source_msg_id, 'source')
@@ -144,18 +153,25 @@ export class Worker {
 				console.warn(`video note for job ${job.id} refused, sending a video`)
 			}
 		}
-		await this.api.sendVideo(job.chat_id, new InputFile(out, 'sublya.mp4'), {
-			width: w,
-			height: h,
-			duration: seconds,
-			supports_streaming: true,
-			...markup,
-		})
+		const video = { width: w, height: h, duration: seconds, supports_streaming: true }
+		// a re-render takes the place of the video it came from, so the chat keeps one result
+		if (job.replace_msg_id !== null) {
+			try {
+				const media = InputMediaBuilder.video(new InputFile(out, 'sublya.mp4'), video)
+				await this.api.editMessageMedia(job.chat_id, job.replace_msg_id, media, markup)
+				return
+			} catch (e) {
+				if (!isBadRequest(e)) throw e
+				// the user deleted that message
+				console.warn(`could not replace the result of job ${job.id}, sending a new one`)
+			}
+		}
+		await this.api.sendVideo(job.chat_id, new InputFile(out, 'sublya.mp4'), { ...video, ...markup })
 	}
 
 	private async fail(job: Job, userText: string, error: string, notifyAdmins = false) {
 		this.db.finish(job.id, 'failed', error)
-		await this.dropProgress(job)
+		await this.dropProgress(job, false)
 		try {
 			await this.api.sendMessage(job.chat_id, userText)
 		} catch (e) {
@@ -177,6 +193,9 @@ export class Worker {
 
 	// the handler records the message right after queueing, so it may land after we start
 	private progressMsg = (job: Job) => this.db.getJob(job.id)?.progress_msg_id ?? null
+
+	// a re-render keeps its progress in the caption of the result it replaces
+	private inCaption = (job: Job, msgId: number) => msgId === job.replace_msg_id
 
 	/** Runs a stage while the progress message cycles through its lines, so a long render
 	 * doesn't look frozen. The last edit lands before the stage returns, never after the result. */
@@ -202,7 +221,8 @@ export class Worker {
 		const msgId = this.progressMsg(job)
 		if (msgId === null) return
 		try {
-			await this.api.editMessageText(job.chat_id, msgId, text)
+			if (this.inCaption(job, msgId)) await this.api.editMessageCaption(job.chat_id, msgId, { caption: text })
+			else await this.api.editMessageText(job.chat_id, msgId, text)
 		} catch (e) {
 			// the progress message is a courtesy: the same text again, a deleted message, a blocked
 			// bot or a network hiccup must not cost the user their video
@@ -210,7 +230,21 @@ export class Worker {
 		}
 	}
 
-	private dropProgress = (job: Job) => this.drop(job, this.progressMsg(job), 'progress')
+	/** A caption goes away with the new video; without one the old result
+	 * gets its caption and buttons back. */
+	private async dropProgress(job: Job, delivered: boolean) {
+		const msgId = this.progressMsg(job)
+		if (msgId === null || !this.inCaption(job, msgId)) return this.drop(job, msgId, 'progress')
+		if (delivered || job.replace_job_id === null) return
+		try {
+			await this.api.editMessageCaption(job.chat_id, msgId, {
+				caption: '',
+				reply_markup: resultKeyboard(job.replace_job_id),
+			})
+		} catch (e) {
+			if (!isBadRequest(e)) console.warn(`could not restore the result of job ${job.id}`, e)
+		}
+	}
 
 	private async drop(job: Job, msgId: number | null, what: string) {
 		if (msgId === null) return

@@ -11,7 +11,7 @@ import { downloadLimit, jobsDir, MB, type Settings } from '#bot/config.ts'
 import { move } from '#bot/core/files.ts'
 import { fromJson, transcriptText } from '#bot/core/models.ts'
 import { Busy, QuotaExceeded, rootId, type Db, type Job } from '#bot/db.ts'
-import { quiet, type Support } from '#bot/support.ts'
+import { isTelegramError, quiet, type Support } from '#bot/support.ts'
 import * as texts from '#bot/texts.ts'
 import { jobDir, resultKeyboard, type Worker } from '#bot/worker.ts'
 import { isStyle, STYLES } from '#shared/subtitles.ts'
@@ -59,6 +59,37 @@ export async function download(api: Api, settings: Settings, fileId: string, des
 	await pipeline(Readable.fromWeb(resp.body as WebStream), createWriteStream(dest))
 }
 
+/** Deletes the bot's chatter; a message that is already gone is fine. */
+async function dropMessages(ctx: Context, ids: number[]) {
+	for (const id of ids) {
+		try {
+			await ctx.api.deleteMessage(ctx.chat!.id, id)
+		} catch (e) {
+			if (!isTelegramError(e)) throw e
+			console.warn(`could not delete message ${id} in chat ${ctx.chat!.id}`, e)
+		}
+	}
+}
+
+/** Puts the progress in the caption of the result and hides its buttons until
+ * the re-render is done. Returns the message id, or null if the result is gone. */
+async function captionProgress(ctx: Context, msgId: number, caption: string): Promise<number | null> {
+	try {
+		await ctx.api.editMessageCaption(ctx.chat!.id, msgId, { caption })
+		return msgId
+	} catch (e) {
+		if (!isTelegramError(e)) throw e
+		return null
+	}
+}
+
+const replaceOf = (ctx: Context, job: Job) => {
+	const msgId = ctx.callbackQuery?.message?.message_id
+	return msgId === undefined ? undefined : { msgId, jobId: job.id }
+}
+
+type Fixing = { jobId: number; replace?: { msgId: number; jobId: number }; promptMsgIds: number[] }
+
 export type Deps = { db: Db; worker: Worker; settings: Settings; support: Support }
 
 export function handlers({ db, worker, settings, support }: Deps) {
@@ -66,20 +97,28 @@ export function handlers({ db, worker, settings, support }: Deps) {
 	// groups belong to the support chat; here the fallback would answer every message there
 	const dm = router.chatType('private')
 	// users waiting to send the corrected text of a job, by user id
-	const fixing = new Map<number, number>()
+	const fixing = new Map<number, Fixing>()
+
+	/** The prompt and the transcript have done their job once the text comes or the user moves on. */
+	async function stopFixing(ctx: Context) {
+		const fix = fixing.get(ctx.from!.id)
+		if (!fix) return
+		fixing.delete(ctx.from!.id)
+		await dropMessages(ctx, fix.promptMsgIds)
+	}
 
 	dm.command('start', async (ctx) => {
-		fixing.delete(ctx.from.id)
+		await stopFixing(ctx)
 		await ctx.reply(texts.START)
 	})
 
 	dm.command('cancel', async (ctx) => {
-		fixing.delete(ctx.from.id)
+		await stopFixing(ctx)
 		await ctx.reply(texts.CANCELLED)
 	})
 
 	dm.command('style', async (ctx) => {
-		fixing.delete(ctx.from.id)
+		await stopFixing(ctx)
 		const user = db.getUser(ctx.from.id)
 		const current = isStyle(user.style) ? texts.STYLE_NAMES[user.style] : user.style
 		await ctx.reply(texts.CHOOSE_STYLE(current), {
@@ -100,7 +139,7 @@ export function handlers({ db, worker, settings, support }: Deps) {
 	})
 
 	dm.command('lang', async (ctx) => {
-		fixing.delete(ctx.from.id)
+		await stopFixing(ctx)
 		const user = db.getUser(ctx.from.id)
 		const buttons = [
 			{ text: texts.BTN_AUTO, callback_data: `lang:${AUTO}` },
@@ -134,7 +173,8 @@ export function handlers({ db, worker, settings, support }: Deps) {
 	})
 
 	/** Queues a job and posts the progress message the worker will keep editing. Re-renders
-	 * keep the parent's shape: a video note comes back as a video note. */
+	 * keep the parent's shape: a video note comes back as a video note. A re-render of a video
+	 * shows its progress in the caption of the result it replaces, so the chat gets nothing new. */
 	async function enqueue(
 		ctx: Context,
 		job: {
@@ -145,9 +185,12 @@ export function handlers({ db, worker, settings, support }: Deps) {
 			parent?: Job
 			note?: boolean
 			sourceMsgId?: number
+			/** The result to replace and the job it shows. */
+			replace?: { msgId: number; jobId: number }
 		},
 	): Promise<number | null> {
-		const { parent } = job
+		const { parent, replace } = job
+		const note = parent ? Boolean(parent.note) : job.note
 		let jobId: number
 		try {
 			jobId = db.submit({
@@ -159,8 +202,10 @@ export function handlers({ db, worker, settings, support }: Deps) {
 				lang: job.lang,
 				parentId: parent ? rootId(parent) : null,
 				dailyLimit: settings.adminIds.has(job.userId) ? null : settings.dailyVideos,
-				note: parent ? Boolean(parent.note) : job.note,
+				note,
 				sourceMsgId: job.sourceMsgId,
+				replaceMsgId: replace?.msgId,
+				replaceJobId: replace?.jobId,
 			})
 		} catch (e) {
 			if (e instanceof Busy) await ctx.reply(texts.BUSY)
@@ -168,9 +213,10 @@ export function handlers({ db, worker, settings, support }: Deps) {
 			else throw e
 			return null
 		}
-		const position = db.position(jobId) || 1
-		const progress = await quiet(() => ctx.api.sendMessage(ctx.chat!.id, texts.QUEUED(position)))
-		db.setProgressMsg(jobId, progress.message_id)
+		const queued = texts.QUEUED(db.position(jobId) || 1)
+		let progress = replace && !note ? await captionProgress(ctx, replace.msgId, queued) : null
+		progress ??= (await quiet(() => ctx.api.sendMessage(ctx.chat!.id, queued))).message_id
+		db.setProgressMsg(jobId, progress)
 		worker.wake()
 		return jobId
 	}
@@ -238,27 +284,43 @@ export function handlers({ db, worker, settings, support }: Deps) {
 		const job = await ownedJob(ctx, Number(ctx.match[1]))
 		if (!job) return
 		const transcript = fromJson(await readFile(join(jobDir(settings, job), 'transcript.json'), 'utf8'))
-		fixing.set(ctx.from.id, job.id)
-		await ctx.reply(texts.FIX_PROMPT)
-		await ctx.reply(transcriptText(transcript).slice(0, 4000))
+		// a second press starts over, the first prompt would only clutter the chat
+		await stopFixing(ctx)
+		const prompt = await ctx.reply(texts.FIX_PROMPT)
+		const heard = await ctx.reply(transcriptText(transcript).slice(0, 4000))
+		const result = ctx.callbackQuery.message?.message_id
+		fixing.set(ctx.from.id, {
+			jobId: job.id,
+			replace: result === undefined ? undefined : { msgId: result, jobId: job.id },
+			promptMsgIds: [prompt.message_id, heard.message_id],
+		})
 		await ctx.answerCallbackQuery()
 	})
 
 	dm.on('message', async (ctx, next) => {
-		const jobId = fixing.get(ctx.from.id)
-		if (jobId === undefined) return next()
+		const fix = fixing.get(ctx.from.id)
+		if (fix === undefined) return next()
 		const text = ctx.msg.text
 		if (!text || text.startsWith('/')) {
-			await ctx.reply(texts.FIX_WAITING)
+			const reminder = await ctx.reply(texts.FIX_WAITING)
+			fix.promptMsgIds.push(reminder.message_id)
 			return
 		}
-		fixing.delete(ctx.from.id)
-		const job = db.getJob(jobId)
+		await stopFixing(ctx)
+		const job = db.getJob(fix.jobId)
 		if (!job || !existsSync(join(jobDir(settings, job), 'transcript.json'))) {
 			await ctx.reply(texts.EXPIRED)
 			return
 		}
-		await enqueue(ctx, { userId: job.user_id, text, style: job.style, lang: job.lang, parent: job })
+		await enqueue(ctx, {
+			userId: job.user_id,
+			text,
+			style: job.style,
+			lang: job.lang,
+			parent: job,
+			sourceMsgId: ctx.msg.message_id,
+			replace: fix.replace,
+		})
 	})
 
 	router.callbackQuery(/^restyle:(\d+)$/, async (ctx) => {
@@ -282,7 +344,14 @@ export function handlers({ db, worker, settings, support }: Deps) {
 		if (!job || !isStyle(style)) return
 		await ctx.editMessageReplyMarkup({ reply_markup: resultKeyboard(job.id) })
 		await ctx.answerCallbackQuery()
-		await enqueue(ctx, { userId: job.user_id, text: job.text, style, lang: job.lang, parent: job })
+		await enqueue(ctx, {
+			userId: job.user_id,
+			text: job.text,
+			style,
+			lang: job.lang,
+			parent: job,
+			replace: replaceOf(ctx, job),
+		})
 	})
 
 	dm.on('message', async (ctx) => {
