@@ -8,8 +8,9 @@ set -euo pipefail
 {
 	cd /srv/sublya
 
-	# Two pushes in a row must not run compose at once: the second waits for the first.
-	exec 9>/tmp/sublya-deploy.lock
+	# One deploy at a time for all the sites: parallel builds choke the small server,
+	# so a deploy of any site waits here for the previous one.
+	exec 9>/tmp/sites-deploy.lock
 	flock 9
 
 	# .env is made once by hand from .env.example and never comes from git
