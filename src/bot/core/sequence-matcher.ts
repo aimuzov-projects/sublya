@@ -1,6 +1,7 @@
-// Python's difflib.SequenceMatcher with autojunk=False and no junk, line for line: the
-// reference text is lined up with what was heard exactly as the Python bot did it.
+// Построчный порт `difflib.SequenceMatcher` из Python с `autojunk=False` и без junk:
+// эталонный текст выравнивается по услышанному ровно так же, как это делал бот на Python.
 
+/** Операция как в difflib: тег и полуинтервалы `a[i1:i2]`, `b[j1:j2]`. */
 export type Opcode = ['replace' | 'delete' | 'insert' | 'equal', number, number, number, number]
 type Block = [number, number, number]
 
@@ -21,6 +22,7 @@ export class SequenceMatcher<T> {
 		})
 	}
 
+	/** Самый длинный общий кусок `a[alo:ahi]` и `b[blo:bhi]`, ответ — `[i, j, size]`. */
 	findLongestMatch(alo: number, ahi: number, blo: number, bhi: number): Block {
 		const { a, b } = this
 		let [besti, bestj, bestsize] = [alo, blo, 0]
@@ -55,6 +57,10 @@ export class SequenceMatcher<T> {
 		return [besti, bestj, bestsize]
 	}
 
+	/**
+	 * Совпадающие куски по порядку, соседние склеены в один.
+	 * Последним всегда идёт пустой блок `[la, lb, 0]`, как в difflib.
+	 */
 	matchingBlocks(): Block[] {
 		const [la, lb] = [this.a.length, this.b.length]
 		const queue: [number, number, number, number][] = [[0, la, 0, lb]]
@@ -95,6 +101,7 @@ export class SequenceMatcher<T> {
 		return merged
 	}
 
+	/** Операции, которые превращают `a` в `b`, подряд и без пропусков. */
 	opcodes(): Opcode[] {
 		let [i, j] = [0, 0]
 		const answer: Opcode[] = []

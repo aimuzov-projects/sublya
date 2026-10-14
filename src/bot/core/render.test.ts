@@ -69,6 +69,7 @@ for (const style of STYLES) {
 		for (const line of ass.split('\n').filter((l) => l.startsWith('Style: '))) {
 			const [marginL, marginR, marginV] = line.split(',').slice(-4, -1).map(Number)
 
+			// 400 * CIRCLE_SIDE и 400 * CIRCLE_MARGIN из render.ts.
 			assert.equal(marginL, 48)
 			assert.equal(marginR, 48)
 
@@ -80,6 +81,7 @@ for (const style of STYLES) {
 
 			assert.ok(shown.length <= p.maxChars || !shown.includes(' '), shown)
 
+			// Сжатие стоит в начале строки, после включения подсветки и после её сброса.
 			if (shown.length > p.maxChars) assert.equal(text.split(String.raw`\fscx`).length - 1, 3)
 		}
 	})

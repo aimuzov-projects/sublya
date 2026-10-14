@@ -3,7 +3,7 @@
 	import type { Preset } from '#shared/subtitles.ts'
 
 	type Props = {
-		/** The screens of the current demo in the chosen style; none shows the video as sent. */
+		/** Экраны текущей демки в выбранном стиле; `null` — видео показываем как прислали. */
 		screens: Screen[] | null
 		preset: Preset
 	}
@@ -13,7 +13,7 @@
 	const once = (el: HTMLElement, event: string, ms = 3000) =>
 		new Promise<void>((resolve) => {
 			el.addEventListener(event, () => resolve(), { once: true })
-			setTimeout(resolve, ms) // a stalled network shouldn't freeze the switch forever
+			setTimeout(resolve, ms) // Подвисшая сеть не должна навсегда заморозить переключение.
 		})
 
 	let root: HTMLDivElement
@@ -26,9 +26,14 @@
 
 	const shown = $derived(screens && !loading ? at(screens, time) : null)
 
+	/** Корневой элемент плеера: колода переносит его в верхнюю карточку. */
 	export const element = () => root
 
-	// a new card shows its poster until its video can play
+	/**
+	 * Переключает плеер на новое видео.
+	 *
+	 * Пока видео не готово к проигрыванию, у новой карточки виден её постер.
+	 */
 	export async function open(src: string) {
 		const current = ++seq
 
@@ -36,6 +41,7 @@
 		video.src = src
 		await once(video, 'loadeddata')
 
+		// Пока ждали, могли открыть другое видео, тогда этот вызов уже не актуален.
 		if (current !== seq) return
 
 		if (active) await video.play().catch(() => {})
@@ -45,6 +51,7 @@
 		loading = false
 	}
 
+	/** Запускает видео и запоминает это, чтобы следующее открытое видео тоже заиграло. */
 	export function play() {
 		active = true
 		video.play().catch(() => {})
@@ -55,7 +62,7 @@
 		video.pause()
 	}
 
-	// the subtitles follow the frames on screen, not the coarse timeupdate events
+	// Субтитры идут за кадрами на экране, а не за редкими событиями `timeupdate`.
 	function follow() {
 		time = video.currentTime
 

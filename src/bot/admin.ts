@@ -1,7 +1,7 @@
-// Admin Mini App: one page and a small JSON API, served from the bot process.
+// Админский Mini App: одна страница и небольшой JSON API, отдаются из процесса бота.
 //
-// Telegram signs the Mini App's initData with the bot token, so the signature is the whole
-// authentication: no sessions, cookies or separate secrets.
+// Telegram подписывает initData Mini App токеном бота, поэтому подпись и есть вся
+// аутентификация: ни сессий, ни кук, ни отдельных секретов.
 
 import { createHmac, timingSafeEqual } from 'node:crypto'
 import { existsSync } from 'node:fs'
@@ -16,7 +16,8 @@ import { isTelegramError } from '#bot/support.ts'
 import * as texts from '#bot/texts.ts'
 
 const PAGE = new URL('admin.html', import.meta.url)
-// how long a signed initData stays valid: the panel is reopened, not kept open for days
+// Сколько живёт подписанный initData.
+// Панель переоткрывают, а не держат открытой сутками.
 const MAX_AGE = 24 * 3600
 const MAX_INIT_DATA = 8192
 const BALANCE_TTL = 60
@@ -30,8 +31,10 @@ const withTimeout = <T>(promise: Promise<T>, ms: number) =>
 		new Promise<never>((_, reject) => setTimeout(() => reject(new Error(`no answer in ${ms} ms`)), ms).unref()),
 	])
 
-/** The Telegram user id behind a signed initData, or null if the signature doesn't hold or
- * is too old. */
+/**
+ * Возвращает id пользователя Telegram из подписанного initData.
+ * `null`, если подпись не сходится или initData слишком старый.
+ */
 export function verifyInitData(initData: string, botToken: string, now = Date.now() / 1000): number | null {
 	if (!initData || initData.length > MAX_INIT_DATA) return null
 
@@ -39,7 +42,7 @@ export function verifyInitData(initData: string, botToken: string, now = Date.no
 	const given = fields.get('hash') ?? ''
 
 	fields.delete('hash')
-	// every field but hash takes part, the Ed25519 signature included
+	// Участвуют все поля, кроме hash, в том числе подпись Ed25519 (`signature`).
 	const check = [...fields]
 		.sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
 		.map(([k, v]) => `${k}=${v}`)
@@ -61,10 +64,15 @@ export function verifyInitData(initData: string, botToken: string, now = Date.no
 	}
 }
 
+/** Цифры по ключу OpenRouter в долларах, `null` там, где OpenRouter их не прислал. */
 export type Balance = Record<string, number | null>
 
-/** Balance and spending of the STT key. Cached: the panel may be refreshed often, and
- * OpenRouter's own numbers lag behind anyway. */
+/**
+ * Баланс и расходы по ключу STT.
+ *
+ * Кешируется, потому что панель могут обновлять часто,
+ * а цифры у самого OpenRouter все равно отстают.
+ */
 export class OpenRouter {
 	readonly baseUrl: string
 	readonly key: string
@@ -100,7 +108,7 @@ export class OpenRouter {
 		}
 	}
 
-	/** null when OpenRouter doesn't answer or the STT endpoint isn't OpenRouter at all. */
+	/** `null`, если OpenRouter не отвечает или STT вообще смотрит не в OpenRouter. */
 	async balance(): Promise<Balance | null> {
 		const now = performance.now() / 1000
 
@@ -123,14 +131,19 @@ export class OpenRouter {
 export type ProfilesApi = Pick<Api, 'getChat' | 'getUserProfilePhotos' | 'getFile' | 'sendMessage' | 'getMe'>
 type Named = { user_id: unknown; name: unknown; username: unknown }
 
-/** Names and avatars of the users the panel lists. Users who wrote before the bot kept names
- * get theirs from getChat once; avatars live on disk for AVATAR_TTL. */
+/**
+ * Имена и аватарки пользователей из списков панели.
+ *
+ * Тем, кто писал боту ещё до того, как он стал сохранять имена, имя один раз
+ * подтягивается через `getChat`. Аватарки лежат на диске `AVATAR_TTL` секунд.
+ */
 export class Profiles {
 	readonly api: ProfilesApi
 	readonly db: Db
 	readonly settings: Settings
 	readonly dir: string
-	// getChat fails for someone who blocked the bot; asking again every refresh is useless
+	// У заблокировавших бота `getChat` падает,
+	// переспрашивать на каждом обновлении бесполезно.
 	private readonly noName = new Set<number>()
 
 	constructor(api: ProfilesApi, db: Db, settings: Settings) {
@@ -190,7 +203,7 @@ export class Profiles {
 			const photos = await this.api.getUserProfilePhotos(userId, { limit: 1 })
 
 			if (!photos.photos.length) {
-				// no photo, or it is hidden from the bot by privacy settings
+				// Фото нет, или оно скрыто от бота настройками приватности.
 				await writeFile(none, '')
 				await unlink(path).catch(() => {})
 
@@ -202,8 +215,8 @@ export class Profiles {
 			const file = await this.api.getFile(size.file_id)
 
 			if (this.settings.apiUrl) {
-				// a local Bot API server hands out a path on the shared volume; copied, not moved,
-				// as it keeps profile photos for itself too
+				// Локальный сервер Bot API отдаёт путь на общем томе. Копируем, а не переносим,
+				// потому что фото профиля он хранит и для себя.
 				await copyFile(file.file_path!, path)
 			} else {
 				const resp = await fetch(`https://api.telegram.org/file/bot${this.settings.botToken}/${file.file_path}`)
@@ -229,8 +242,13 @@ function json(res: ServerResponse, status: number, body: unknown, headers: Recor
 	res.end(JSON.stringify(body))
 }
 
+/**
+ * Обработчик HTTP-запросов админки: страница, health-check и API под подписью initData.
+ *
+ * Тесты поднимают сервер прямо на нём, со своими зависимостями вместо {@link serve}.
+ */
 export function makeHandler(db: Db, settings: Settings, openrouter: OpenRouter, profiles: Profiles) {
-	/** null if the request comes from an admin, otherwise the status to refuse with. */
+	/** `null`, если запрос пришёл от админа, иначе статус, с которым отказываем. */
 	const refusal = (req: IncomingMessage) => {
 		const header = req.headers.authorization ?? ''
 		const userId = verifyInitData(header.startsWith('tma ') ? header.slice(4) : '', settings.botToken)
@@ -254,9 +272,9 @@ export function makeHandler(db: Db, settings: Settings, openrouter: OpenRouter, 
 				return
 			}
 
-			// For the hourly check in .github/workflows/monitor.yml: getMe goes through the local
-			// Bot API server and the tunnel, so a dead bot, Bot API or VPN exit all show up here.
-			// No signature needed, and nothing but the verdict comes out.
+			// Для ежечасной проверки из .github/workflows/monitor.yml: `getMe` идёт через локальный
+			// сервер Bot API и туннель, поэтому здесь видно и упавший бот, и Bot API, и выход VPN.
+			// Подпись не нужна, наружу отдаём только вердикт.
 			if (route('GET', /^\/admin\/api\/health$/)) {
 				const ok = await withTimeout(profiles.api.getMe(), HEALTH_TIMEOUT).then(
 					() => true,
@@ -316,7 +334,7 @@ export function makeHandler(db: Db, settings: Settings, openrouter: OpenRouter, 
 				return
 			}
 
-			// adds bonusVideos to the user's quota for today and tells them about it
+			// Добавляет `bonusVideos` к квоте пользователя на сегодня и сообщает ему об этом.
 			const n = settings.bonusVideos
 			const total = settings.dailyVideos + db.grantVideos(userId, n)
 			let notified = true
@@ -339,6 +357,7 @@ export function makeHandler(db: Db, settings: Settings, openrouter: OpenRouter, 
 	}
 }
 
+/** Поднимает веб-сервер админки на `settings.adminPort`. */
 export async function serve(api: ProfilesApi, db: Db, settings: Settings): Promise<Server> {
 	const openrouter = new OpenRouter(settings.stt.url, settings.stt.key)
 	const server = createServer(makeHandler(db, settings, openrouter, new Profiles(api, db, settings)))

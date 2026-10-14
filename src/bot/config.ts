@@ -3,30 +3,38 @@ import { join } from 'node:path'
 import { sttFromEnv, type SttConfig } from '#bot/core/transcribe.ts'
 
 export const MB = 1024 * 1024
-// the public Bot API refuses to hand out files bigger than this
+// Публичный Bot API не отдаёт файлы больше этого размера.
 const CLOUD_DOWNLOAD_LIMIT = 20 * MB
 
+/** Настройки бота, собранные из переменных окружения (см. {@link fromEnv}). */
 export type Settings = {
 	botToken: string
-	/** Local telegram-bot-api server, e.g. http://telegram-bot-api:8081. */
+	/** Локальный сервер telegram-bot-api, например http://telegram-bot-api:8081. */
 	apiUrl: string | null
 	dataDir: string
 	adminIds: Set<number>
-	/** Forum group where every user gets a topic with their dialogue; null turns support off. */
+	/**
+	 * Группа-форум, где у каждого пользователя свой топик с перепиской.
+	 * `null` выключает поддержку.
+	 */
 	supportChatId: number | null
-	/** Public address of the admin Mini App; null keeps its web server off. */
+	/** Публичный адрес админского Mini App; при `null` его веб-сервер не поднимается. */
 	adminUrl: string | null
 	adminPort: number
 	dailyVideos: number
-	/** What one "+N" press in the admin panel adds for today. */
+	/** Сколько видео на сегодня добавляет одно нажатие "+N" в админке. */
 	bonusVideos: number
+	/** Общий на всех дневной бюджет распознавания, в минутах. */
 	sttDailyMinutes: number
-	/** null: the default for the transcript's timing kind. */
+	/** При `null` берётся значение по умолчанию для вида таймингов транскрипта. */
 	sttLag: number | null
-	/** Recognition language for users who never picked one; null means autodetect. */
+	/** Язык распознавания для тех, кто его ни разу не выбирал; `null` включает автоопределение. */
 	defaultLang: string | null
+	/** Максимальная длительность видео, в секундах. */
 	maxDuration: number
+	/** Максимальный размер видео, в байтах. */
 	maxSize: number
+	/** Через сколько секунд папка задачи считается старой и удаляется. */
 	jobTtl: number
 	stt: SttConfig
 }
@@ -48,7 +56,8 @@ export const defaults = {
 	jobTtl: 24 * 3600,
 } satisfies Partial<Settings>
 
-// a typo must stop the start, not turn into NaN: "123;456" would leave the bot without admins
+// Опечатка должна ронять старт, а не превращаться в NaN:
+// с "123;456" бот остался бы без админов.
 function number(name: string, value: string): number {
 	const n = Number(value)
 
@@ -73,6 +82,12 @@ const ids = (value: string) =>
 			.map((id) => int('ADMIN_IDS', id)),
 	)
 
+/**
+ * Собирает настройки из переменных окружения.
+ *
+ * Бросает исключение, если не заданы `BOT_TOKEN` или `STT_API_KEY`,
+ * а также если в числовой переменной опечатка.
+ */
 export function fromEnv(env = process.env): Settings {
 	const botToken = env.BOT_TOKEN
 
@@ -100,5 +115,10 @@ export function fromEnv(env = process.env): Settings {
 	}
 }
 
+/**
+ * Сколько байт бот может скачать за один файл.
+ * Через публичный Bot API упираемся еще и в его 20 МБ,
+ * у локального сервера такого лимита нет.
+ */
 export const downloadLimit = (s: Settings) => (s.apiUrl ? s.maxSize : Math.min(s.maxSize, CLOUD_DOWNLOAD_LIMIT))
 export const jobsDir = (s: Settings) => join(s.dataDir, 'jobs')

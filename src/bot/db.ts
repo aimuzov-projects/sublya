@@ -1,5 +1,5 @@
-// SQLite state: the job queue, per-user settings and daily usage. The schema is the one the
-// Python bot created, so the production database opens as it is.
+// Состояние в SQLite: очередь задач, настройки пользователей и расход за день. Схема та же,
+// что создавал бот на Python, поэтому боевая база открывается как есть.
 
 import { mkdirSync } from 'node:fs'
 import { dirname } from 'node:path'
@@ -45,7 +45,7 @@ CREATE TABLE IF NOT EXISTS support_topics (
 );
 `
 
-// columns added after the first release: CREATE TABLE IF NOT EXISTS won't add them
+// Колонки, добавленные после первого релиза: CREATE TABLE IF NOT EXISTS их не добавит.
 const MIGRATIONS: Record<string, Record<string, string>> = {
 	users: { name: 'TEXT', username: 'TEXT' },
 	jobs: {
@@ -57,7 +57,10 @@ const MIGRATIONS: Record<string, Record<string, string>> = {
 	usage: { bonus: 'INTEGER NOT NULL DEFAULT 0' },
 }
 
+/** У пользователя уже есть задача, которая ждёт видео, стоит в очереди или в работе. */
 export class Busy extends Error {}
+
+/** Дневной лимит видео (вместе с бонусом за сегодня) исчерпан. */
 export class QuotaExceeded extends Error {}
 
 export type Job = {
@@ -74,18 +77,19 @@ export type Job = {
 	error: string | null
 	created_at: number
 	finished_at: number | null
-	/** The video came as a video note, so the result goes back as one. */
+	/** Видео пришло кружком, поэтому и результат уходит кружком. */
 	note: number
-	/** The user's message the job came from (the video or the corrected text), deleted once the
-	 * result is out. */
+	/** Сообщение пользователя, из которого появилась задача (видео или исправленный текст),
+	 * удаляется, когда результат готов. */
 	source_msg_id: number | null
-	/** The result a re-render takes the place of: the message whose button was pressed. */
+	/** Результат, на место которого встаёт перерендер: сообщение, под которым нажали кнопку. */
 	replace_msg_id: number | null
-	/** The job whose result that message shows, for its buttons if the re-render fails. */
+	/** Задача, чей результат показывает это сообщение.
+	 * Нужна для его кнопок, если перерендер упадёт. */
 	replace_job_id: number | null
 }
 
-/** Re-renders reuse the files of the job that received the video. */
+/** Перерендеры берут файлы той задачи, которая получила видео. */
 export const rootId = (job: Job) => job.parent_id ?? job.id
 
 export type User = {
@@ -107,7 +111,7 @@ export type Submit = {
 	style: string
 	lang: string | null
 	parentId: number | null
-	/** null (admins) means no quota, though the video is still counted. */
+	/** `null` (у админов) — без лимита, но видео всё равно учитывается. */
 	dailyLimit: number | null
 	note?: boolean
 	sourceMsgId?: number | null
@@ -147,7 +151,7 @@ export class Db {
 		return isoDay(this.clock())
 	}
 
-	/** Runs SQL that may hold several statements and takes no parameters. */
+	/** Выполняет SQL из нескольких выражений, параметров не принимает. */
 	private script(sql: string) {
 		this.conn.exec(sql)
 	}
@@ -169,6 +173,7 @@ export class Db {
 		return this.conn.prepare(sql).run(...args)
 	}
 
+	/** Заводит пользователя с настройками по умолчанию при первом обращении. */
 	getUser(userId: number): User {
 		this.run(
 			'INSERT OR IGNORE INTO users (id, style, created_at) VALUES (?, ?, ?)',
@@ -184,6 +189,7 @@ export class Db {
 		this.getUser(userId)
 
 		for (const [name, value] of Object.entries(fields)) {
+			// Имя поля подставляется в SQL как есть, поэтому пускаем только известные колонки.
 			if (!['style', 'lang', 'name', 'username'].includes(name)) throw new Error(name)
 
 			this.run(`UPDATE users SET ${name} = ? WHERE id = ?`, value ?? null, userId)
@@ -208,7 +214,8 @@ export class Db {
 		return this.usageToday(userId, 'bonus')
 	}
 
-	/** Adds n videos to the user's quota for today only. Returns today's whole bonus. */
+	/** Добавляет `n` видео к лимиту пользователя только на сегодня.
+	 * Возвращает весь бонус за сегодня. */
 	grantVideos(userId: number, n: number): number {
 		this.run(
 			'INSERT INTO usage (day, user_id, bonus) VALUES (?, ?, ?) ' +
@@ -221,9 +228,9 @@ export class Db {
 		return this.bonusToday(userId)
 	}
 
-	/** Queues a job. Re-renders (with parentId) don't count against the daily quota. Without
-	 * inputPath the job stays pending until ready(), so the worker never sees a job whose video
-	 * is still downloading. */
+	/** Ставит задачу в очередь. Перерендеры (с `parentId`) в дневной лимит не идут.
+	 * Без `inputPath` задача остаётся `pending` до `ready()`, так что воркер
+	 * никогда не увидит задачу, у которой видео ещё качается. */
 	submit(s: Submit): number {
 		return this.transaction(() => {
 			const active = this.one(
@@ -272,6 +279,7 @@ export class Db {
 		})
 	}
 
+	/** Забирает из очереди следующую задачу и сразу переводит её в `running`. */
 	nextJob(): Job | null {
 		const id = this.transaction(() => {
 			const row = this.one("SELECT id FROM jobs WHERE status = 'queued' ORDER BY id LIMIT 1")
@@ -286,6 +294,8 @@ export class Db {
 		return id === null ? null : this.getJob(id)
 	}
 
+	/** Место задачи в очереди с единицы.
+	 * Для задачи не в `queued` — сколько задач стоит перед ней. */
 	position(jobId: number): number {
 		return this.one("SELECT COUNT(*) AS n FROM jobs WHERE status = 'queued' AND id <= ?", jobId)!.n as number
 	}
@@ -304,6 +314,7 @@ export class Db {
 		)
 	}
 
+	/** Видео скачано: задача из `pending` встаёт в очередь. Остальные статусы не трогает. */
 	ready(jobId: number, inputPath: string) {
 		this.run(
 			"UPDATE jobs SET status = 'queued', input_path = ? WHERE id = ? AND status = 'pending'",
@@ -312,7 +323,7 @@ export class Db {
 		)
 	}
 
-	/** After a restart: interrupted jobs go back to the queue, unfinished downloads fail. */
+	/** После рестарта: прерванные задачи возвращаются в очередь, недокачанные падают. */
 	requeueRunning(): number {
 		this.run(
 			"UPDATE jobs SET status = 'failed', error = 'restarted during download', finished_at = ? WHERE status = 'pending'",
@@ -332,10 +343,12 @@ export class Db {
 		)
 	}
 
+	/** Секунды распознавания за сегодня по всем пользователям. */
 	sttSecondsToday(): number {
 		return this.one('SELECT COALESCE(SUM(stt_seconds), 0) AS s FROM usage WHERE day = ?', this.today())!.s as number
 	}
 
+	/** Сводка за сегодня для `/stats`. */
 	stats() {
 		const day = this.today()
 		const usage = this.one(
@@ -360,8 +373,8 @@ export class Db {
 		}
 	}
 
-	/** Everything the admin panel shows. A video is a job that received one, re-renders are
-	 * counted apart. Days are UTC, like the daily quotas. */
+	/** Всё, что показывает админка. Видео — это задача, которая его получила, перерендеры
+	 * считаются отдельно. Дни по UTC, как и дневные лимиты. */
 	dashboard(days = 14) {
 		const now = this.clock()
 		const today = isoDay(now)
@@ -457,7 +470,7 @@ export class Db {
 		return (this.one('SELECT topic_id FROM support_topics WHERE user_id = ?', userId)?.topic_id as number) ?? null
 	}
 
-	/** null forgets the topic, so the next message opens a new one. */
+	/** `null` забывает тему, и следующее сообщение откроет новую. */
 	setTopic(userId: number, topicId: number | null) {
 		if (topicId === null) this.run('DELETE FROM support_topics WHERE user_id = ?', userId)
 		else {
@@ -475,7 +488,8 @@ export class Db {
 	}
 
 	private transaction<T>(body: () => T): T {
-		// BEGIN IMMEDIATE takes the write lock up front, so check-then-insert can't race
+		// BEGIN IMMEDIATE сразу берёт блокировку на запись, поэтому между проверкой и вставкой
+		// никто не вклинится.
 		this.script('BEGIN IMMEDIATE')
 
 		try {
@@ -492,5 +506,5 @@ export class Db {
 	}
 }
 
-// Python's round(x, 1) of seconds turned into minutes
+// Секунды в минутах с округлением до десятых, как `round(x, 1)` в Python.
 const minutes = (seconds: SQLInputValue) => Math.round((seconds as number) / 6) / 10

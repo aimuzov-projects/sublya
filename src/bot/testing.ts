@@ -1,4 +1,4 @@
-// A bot without a network for the tests: every Bot API call is recorded and answered here.
+// Бот без сети для тестов: каждый вызов Bot API записывается и получает ответ здесь.
 
 import { Bot, GrammyError, HttpError } from 'grammy'
 import type { Update, UserFromGetMe } from 'grammy/types'
@@ -20,19 +20,25 @@ const ME: UserFromGetMe = {
 	allows_users_to_create_topics: false,
 } as UserFromGetMe
 
-/** A Bot API error, for an answer to throw. */
+/** Ошибка Bot API, чтобы бросить её из ответа. */
 export const apiError = (method: string, code: number, description: string) =>
 	new GrammyError(`Call to '${method}' failed!`, { ok: false, error_code: code, description }, method, {})
 
-/** No answer from Telegram at all, as when the tunnel is down. */
+/** Telegram не ответил вовсе, как бывает, когда лежит туннель. */
 export const networkError = (method: string) =>
 	new HttpError(`Network request for '${method}' failed!`, new TypeError('fetch failed'))
 
+/**
+ * Бот с подменённым транспортом: вызовы Bot API не уходят в сеть, а копятся в `calls`.
+ *
+ * Метод без своего ответа из `answer` отвечает сообщением с новым `message_id`.
+ * `fail` роняет только следующий вызов метода, дальше он снова отвечает как обычно.
+ */
 export function fakeBot() {
 	const bot = new Bot('1:token', { botInfo: ME })
 	const calls: Call[] = []
 	const answers = new Map<string, Answer>()
-	// the next call of a method fails with this Bot API error
+	// Следующий вызов метода падает с этой ошибкой Bot API.
 	const failures = new Map<string, { code: number; description: string }>()
 	let messageId = 1000
 

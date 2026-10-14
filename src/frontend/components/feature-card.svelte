@@ -11,9 +11,10 @@
 
 	const { title, text, icon, dotted, children }: Props = $props()
 
-	// A card under the cursor plays its text like the bot's subtitles: one word lit at a time,
-	// longer words longer, then a breath and again from the top.
-	// spaces stay text, every word gets its number
+	// Карточка под курсором проигрывает свой текст как субтитры бота: подсвечено одно слово
+	// за раз, длинные слова дольше, потом пауза и снова с начала.
+	//
+	// Пробелы остаются текстом, а каждое слово получает свой номер.
 	const parts = $derived.by(() => {
 		let count = 0
 

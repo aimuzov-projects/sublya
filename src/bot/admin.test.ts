@@ -50,10 +50,10 @@ for (const [name, initData] of Object.entries(bad)) {
 	test(`bad initData is refused: ${name}`, () => assert.equal(verifyInitData(initData, TOKEN, NOW), null))
 }
 
-/** getChat knows Alice; user 3 blocked the bot. Alice has a photo, nobody else does. */
+/** `getChat` знает Alice, пользователь 3 заблокировал бота. Фото есть только у Alice. */
 function setup() {
 	const dataDir = mkdtempSync(join(tmpdir(), 'sublya-'))
-	// apiUrl: files come as local paths, like from the server's Bot API
+	// С `apiUrl` файлы приходят локальными путями, как от серверного Bot API.
 	const settings: Settings = {
 		...defaults,
 		botToken: TOKEN,

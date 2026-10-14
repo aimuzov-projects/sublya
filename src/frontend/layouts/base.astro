@@ -8,21 +8,21 @@ import { pageTitle } from '#frontend/lib/title.ts'
 import '#frontend/styles/global.css'
 
 type Props = {
-	/** Page name, the site name gets appended to it. Not set on the home page. */
+	/** Название страницы, к нему дописывается название сайта. На главной не задаётся. */
 	title?: string
-	/** `meta description` and `og:description`, `site.description` by default. */
+	/** `meta description` и `og:description`, по умолчанию `site.description`. */
 	description?: string
-	/** `false` for service pages like 404: no canonical and indexing is disallowed. */
+	/** `false` для служебных страниц вроде 404: без canonical и с запретом индексации. */
 	index?: boolean
 }
 
 const { title, description = site.description, index = true } = Astro.props
 const fullTitle = pageTitle(title)
 const canonical = new URL(Astro.url.pathname, Astro.site)
-// a link to the home page is shared the most, so its preview gets the pitch
+// Ссылкой на главную делятся чаще всего, поэтому в её превью идёт `pitch`.
 const ogDescription = title ? description : site.pitch
 
-/** Yandex Metrika counter. */
+/** Счётчик Яндекс Метрики. */
 const metrikaId = 113179171
 ---
 

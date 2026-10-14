@@ -16,7 +16,7 @@ import * as texts from '#bot/texts.ts'
 import type { Worker } from '#bot/worker.ts'
 
 test('users who never chose get the default language', () => {
-	// autodetection took Russian speech for English and translated it
+	// Автоопределение принимало русскую речь за английскую и переводило её.
 	assert.equal(sttLang(null, 'ru'), 'ru')
 })
 
@@ -36,7 +36,7 @@ const chat = { id: ALICE.id, type: 'private' as const, first_name: 'Alice' }
 
 function setup() {
 	const dataDir = mkdtempSync(join(tmpdir(), 'sublya-'))
-	// apiUrl: the file comes as a local path, like from the server's Bot API
+	// С `apiUrl` файл приходит локальным путём, как от собственного Bot API сервера.
 	const settings: Settings = {
 		...defaults,
 		botToken: '1:token',
@@ -114,7 +114,7 @@ test('a document that is not a video is refused', async () => {
 	assert.deepEqual(s.replies(), [texts.NOT_VIDEO])
 })
 
-/** A finished job with its transcript on disk, as the worker leaves it. */
+/** Готовая задача с распознанным текстом на диске, как её оставляет воркер. */
 function done(s: ReturnType<typeof setup>) {
 	const job = s.db.submit({
 		userId: ALICE.id,

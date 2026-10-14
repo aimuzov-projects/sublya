@@ -1,4 +1,4 @@
-// Everything the bot says to users.
+// Всё, что бот говорит пользователям.
 
 import type { Style } from '#shared/subtitles.ts'
 
@@ -30,7 +30,8 @@ export const LANG_NAMES: Record<string, string> = {
 export const LANG_FLAGS: Record<string, string> = { ru: '🇷🇺', en: '🇬🇧', uk: '🇺🇦', kk: '🇰🇿' }
 
 export const QUEUED = (position: number) => `⏳ В очереди, позиция ${position}. Займи место и не толкайся.`
-// the worker shows these in turn while the stage runs, so each one should make sense on its own
+// Воркер показывает их по очереди, пока идёт этап, поэтому каждая строка должна быть
+// понятна сама по себе.
 export const RECOGNIZING = [
 	'👂 Слушаю, что ты там наговорил…',
 	'🎧 Надел наушники, разбираю каждое слово…',

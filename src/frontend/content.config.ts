@@ -2,13 +2,14 @@ import { defineCollection } from 'astro:content'
 import { file } from 'astro/loaders'
 import { z } from 'astro/zod'
 
-// One entry per demo in the deck. demo/make-demo.sh writes the files to public/media/<id>/
-// and this list; the note is written by hand, so the build fails if it's missing.
+// По записи на каждую демку в колоде. demo/make-demo.sh кладёт файлы в public/media/<id>/
+// и дописывает этот список; `note` пишется руками, поэтому без неё сборка падает.
 const demos = defineCollection({
 	loader: file('src/frontend/data/demos.json'),
 	schema: z.object({
 		id: z.string(),
 		note: z.string().min(1),
+		// Версия файлов для `?v=` в URL: новые файлы -- новые адреса, кеш браузера не мешает.
 		v: z.string(),
 		duration: z.number(),
 	}),

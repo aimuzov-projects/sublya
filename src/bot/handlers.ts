@@ -19,8 +19,8 @@ import { isStyle, STYLES } from '#shared/subtitles.ts'
 const AUTO = 'auto'
 const DOWNLOAD_TIMEOUT = 120_000
 
-/** The language hint for recognition. users.lang is null until the user picks one in /lang,
- * and "auto" when they picked autodetection on purpose. */
+/** Подсказка языка для распознавания. `users.lang` равен `null`, пока пользователь не выбрал
+ * язык в /lang, и `"auto"`, если он сознательно выбрал автоопределение. */
 export function sttLang(chosen: string | null, fallback: string | null): string | null {
 	if (chosen === AUTO) return null
 
@@ -47,21 +47,26 @@ const rows = (buttons: InlineKeyboardButton[], ...sizes: number[]) => {
 const styleButtons = (data: (style: string) => string) =>
 	STYLES.map((s) => ({ text: texts.STYLE_NAMES[s], callback_data: data(s) }))
 
+/**
+ * Кладёт файл из Telegram в `dest`.
+ *
+ * С локальным Bot API сервером файл переносится с общего тома, без него — скачивается по HTTP.
+ */
 export async function download(api: Api, settings: Settings, fileId: string, dest: string) {
 	const file = await api.getFile(fileId)
 
 	await mkdir(dirname(dest), { recursive: true })
 
 	if (settings.apiUrl) {
-		// a local Bot API server hands out a path on the shared volume; moving it keeps the
-		// server's cache from growing
+		// Локальный Bot API сервер отдаёт путь на общем томе, переносом файла не даём
+		// разрастаться кешу сервера.
 		await move(file.file_path!, dest)
 
 		return
 	}
 
 	const resp = await fetch(`https://api.telegram.org/file/bot${settings.botToken}/${file.file_path}`, {
-		// a stalled download would keep the job pending and the user busy until a restart
+		// Зависшее скачивание держало бы задачу в `pending`, а пользователя занятым до рестарта.
 		signal: AbortSignal.timeout(DOWNLOAD_TIMEOUT),
 	})
 
@@ -70,7 +75,7 @@ export async function download(api: Api, settings: Settings, fileId: string, des
 	await pipeline(Readable.fromWeb(resp.body as WebStream), createWriteStream(dest))
 }
 
-/** Deletes the bot's chatter; a message that is already gone is fine. */
+/** Удаляет служебные сообщения бота, уже удалённое сообщение — не ошибка. */
 async function dropMessages(ctx: Context, ids: number[]) {
 	for (const id of ids) {
 		try {
@@ -83,8 +88,8 @@ async function dropMessages(ctx: Context, ids: number[]) {
 	}
 }
 
-/** Puts the progress in the caption of the result and hides its buttons until
- * the re-render is done. Returns the message id, or null if the result is gone. */
+/** Пишет прогресс в подпись результата и прячет его кнопки до конца перерендера.
+ * Возвращает id сообщения или `null`, если результата уже нет. */
 async function captionProgress(ctx: Context, msgId: number, caption: string): Promise<number | null> {
 	try {
 		await ctx.api.editMessageCaption(ctx.chat!.id, msgId, { caption })
@@ -107,14 +112,17 @@ type Fixing = { jobId: number; replace?: { msgId: number; jobId: number }; promp
 
 export type Deps = { db: Db; worker: Worker; settings: Settings; support: Support }
 
+/** Команды, приём видео и кнопки под результатом.
+ * Зеркалирование в поддержку подключается отдельно в `main.ts`. */
 export function handlers({ db, worker, settings, support }: Deps) {
 	const router = new Composer<Context>()
-	// groups belong to the support chat; here the fallback would answer every message there
+	// Группы — это чат поддержки, здесь последний обработчик отвечал бы там на каждое сообщение.
 	const dm = router.chatType('private')
-	// users waiting to send the corrected text of a job, by user id
+	// Пользователи, от которых ждём исправленный текст задачи, по id пользователя.
 	const fixing = new Map<number, Fixing>()
 
-	/** The prompt and the transcript have done their job once the text comes or the user moves on. */
+	/** Подсказка и распознанный текст больше не нужны,
+	 * когда текст пришёл или пользователь занялся другим. */
 	async function stopFixing(ctx: Context) {
 		const fix = fixing.get(ctx.from!.id)
 
@@ -198,9 +206,10 @@ export function handlers({ db, worker, settings, support }: Deps) {
 		await ctx.reply(texts.ADMIN_PANEL, { reply_markup: { inline_keyboard: [[button]] } })
 	})
 
-	/** Queues a job and posts the progress message the worker will keep editing. Re-renders
-	 * keep the parent's shape: a video note comes back as a video note. A re-render of a video
-	 * shows its progress in the caption of the result it replaces, so the chat gets nothing new. */
+	/** Ставит задачу в очередь и отправляет сообщение с прогрессом, которое потом правит воркер.
+	 * Перерендеры сохраняют форму родителя: кружок возвращается кружком. Перерендер
+	 * обычного видео пишет прогресс в подпись результата, который заменяет,
+	 * так что в чате ничего нового не появляется. */
 	async function enqueue(
 		ctx: Context,
 		job: {
@@ -211,7 +220,7 @@ export function handlers({ db, worker, settings, support }: Deps) {
 			parent?: Job
 			note?: boolean
 			sourceMsgId?: number
-			/** The result to replace and the job it shows. */
+			/** Результат, который заменяем, и задача, которую он показывает. */
 			replace?: { msgId: number; jobId: number }
 		},
 	): Promise<number | null> {
@@ -242,6 +251,8 @@ export function handlers({ db, worker, settings, support }: Deps) {
 			return null
 		}
 
+		// Задача без скачанного видео ещё `pending` и сама себя в очереди не считает,
+		// отсюда `|| 1`.
 		const queued = texts.QUEUED(db.position(jobId) || 1)
 		let progress = replace && !note ? await captionProgress(ctx, replace.msgId, queued) : null
 
@@ -253,6 +264,7 @@ export function handlers({ db, worker, settings, support }: Deps) {
 	}
 
 	dm.on([':video', ':video_note', ':document'], async (ctx, next) => {
+		// Пока ждём исправленный текст, видео не берём: обработчик ниже напомнит про текст.
 		if (fixing.has(ctx.from.id)) return next()
 
 		const msg: Message = ctx.msg
@@ -279,7 +291,7 @@ export function handlers({ db, worker, settings, support }: Deps) {
 		}
 
 		const user = db.getUser(ctx.from.id)
-		// names are only for the admin panel, so they are refreshed when a video comes
+		// Имена нужны только для админки, поэтому обновляем их, когда приходит видео.
 		const name = [ctx.from.first_name, ctx.from.last_name].filter(Boolean).join(' ')
 
 		db.setUser(user.id, { name, username: ctx.from.username ?? null })
@@ -336,9 +348,10 @@ export function handlers({ db, worker, settings, support }: Deps) {
 
 		const transcript = fromJson(await readFile(join(jobDir(settings, job), 'transcript.json'), 'utf8'))
 
-		// a second press starts over, the first prompt would only clutter the chat
+		// Повторное нажатие начинает заново, первая подсказка только засоряла бы чат.
 		await stopFixing(ctx)
 		const prompt = await ctx.reply(texts.FIX_PROMPT)
+		// Telegram не принимает сообщения длиннее 4096 символов.
 		const heard = await ctx.reply(transcriptText(transcript).slice(0, 4000))
 		const result = ctx.callbackQuery.message?.message_id
 
@@ -425,8 +438,8 @@ export function handlers({ db, worker, settings, support }: Deps) {
 	})
 
 	dm.on('message', async (ctx) => {
-		// with a support chat anything but a video is a message for the team, and it is already
-		// in the user's topic
+		// С чатом поддержки всё, что не видео, — сообщение для команды, и оно уже лежит
+		// в теме пользователя.
 		if (!support.enabled) await ctx.reply(texts.NOT_VIDEO)
 		else if (support.ackDue(ctx.from.id)) await ctx.reply(texts.FORWARDED)
 	})

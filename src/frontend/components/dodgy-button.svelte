@@ -5,9 +5,11 @@
 
 	const { href, label }: Props = $props()
 
-	// The last button teases a mouse: it dodges left, right and left again, and on the fourth try
-	// comes back to the middle and gives in. Touch screens and keyboards get a plain button.
-	// where each dodge goes: -1 left, 1 right
+	// Последняя кнопка дразнит мышь: уворачивается влево, вправо и снова влево,
+	// а на четвёртой попытке возвращается в середину и сдаётся.
+	// На тач-экранах и с клавиатуры это обычная кнопка.
+	//
+	// Куда уходит каждый уворот: -1 влево, 1 вправо.
 	const dodges = [
 		{ side: -1, text: 'Мимо!' },
 		{ side: 1, text: 'Ещё разок' },
@@ -18,7 +20,7 @@
 	let enabled = false
 	let tries = $state(0)
 	let transform = $state('')
-	// brings the button back if the cursor doesn't chase it
+	// Возвращает кнопку на место, если курсор за ней не гонится.
 	let homing: ReturnType<typeof setTimeout> | undefined
 	const text = $derived(tries > 0 && tries <= dodges.length ? dodges[tries - 1].text : label)
 
@@ -44,14 +46,14 @@
 
 		const { side } = dodges[tries - 1]
 
-		// as far as the section allows, so it stays in sight
+		// Так далеко, как позволяет секция, чтобы кнопка оставалась на виду.
 		const room = button.parentElement!.clientWidth / 2 - button.offsetWidth / 2 - 16
 		const x = side * Math.min(room, 320) * (0.75 + Math.random() * 0.25)
-		// on a narrow screen the side step is short, so it also hops down off the cursor
+		// На узком экране шаг вбок короткий, поэтому кнопка ещё и прыгает вниз из-под курсора.
 		const y = Math.abs(x) < button.offsetWidth ? 70 : (Math.random() - 0.5) * 60
 
 		transform = `translate(${x | 0}px, ${y | 0}px) rotate(${side * 5}deg)`
-		// only the position goes back, the teasing carries on from where it stopped
+		// Возвращается только позиция, а дразнилка продолжается с того места, где остановилась.
 		homing = setTimeout(() => (transform = ''), 3000)
 	}
 </script>

@@ -1,9 +1,9 @@
-// Burns TikTok-style subtitles into a video, highlighting the word being spoken.
+// Вжигает в видео субтитры в стиле TikTok с подсветкой произносимого слова.
 //
-// The recognised transcript is cached in work/<video>/transcript.json, so reruns with a
-// different --text or --style skip recognition.
+// Распознанный текст кешируется в `work/<video>/transcript.json`, поэтому перезапуск
+// с другим `--text` или `--style` обходится без распознавания.
 //
-// Usage:
+// Запуск:
 //   node src/bot/core/cli.ts IMG_4476.MOV
 //   node src/bot/core/cli.ts IMG_4476.MOV --text poem.txt --style big
 
@@ -23,19 +23,20 @@ const { values, positionals } = parseArgs({
 	allowPositionals: true,
 	options: {
 		output: { type: 'string', short: 'o' },
-		// reference text; its line breaks become page breaks
+		// Эталонный текст, его переносы строк становятся разрывами экранов.
 		text: { type: 'string' },
 		style: { type: 'string', default: DEFAULT_STYLE },
-		// keep subtitles inside the circle a Telegram video note is cropped to
+		// Держать субтитры внутри круга, по которому Telegram обрезает видеосообщение.
 		circle: { type: 'boolean', default: false },
-		// speech language, or auto
-		// an empty DEFAULT_LANG means autodetect, as in the bot
+		// Язык речи или auto.
+		// Пустой `DEFAULT_LANG` означает автоопределение, как в боте.
 		lang: { type: 'string', default: (process.env.DEFAULT_LANG ?? 'ru') || 'auto' },
-		// how late the recogniser places word starts, seconds; by default depends on the timing kind
+		// Насколько поздно распознавание ставит начала слов, в секундах.
+		// По умолчанию зависит от вида таймингов.
 		lag: { type: 'string', default: process.env.STT_LAG || undefined },
-		// ignore the cached transcript
+		// Не брать закешированный транскрипт.
 		retranscribe: { type: 'boolean', default: false },
-		// write the aligned words as JSON here instead of rendering; the site draws them itself
+		// Записать сюда выровненные слова в JSON вместо рендера, сайт рисует их сам.
 		words: { type: 'string' },
 	},
 })

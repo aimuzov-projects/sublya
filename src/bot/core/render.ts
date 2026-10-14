@@ -1,4 +1,4 @@
-// ASS subtitles with one event per word, and burning them into the video.
+// ASS-субтитры по событию на слово и их вжигание в видео.
 
 import { writeFile } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
@@ -18,32 +18,34 @@ import {
 } from '#shared/subtitles.ts'
 
 const FONT = 'Montserrat ExtraBold'
-// Montserrat 7.222, as Debian packaged it: libass sizes the font by its vertical metrics, and
-// newer versions changed them, so another copy would draw other subtitles
+// Montserrat 7.222 в том виде, как его собрал Debian: libass подбирает размер шрифта по его
+// вертикальным метрикам, а в новых версиях их поменяли, так что другая копия нарисует
+// другие субтитры.
 const FONTS_DIR = fileURLToPath(new URL('../fonts', import.meta.url))
 
-export const HIGHLIGHT = String.raw`{\rHi}` // switches to the Hi style; {\r} switches back
+/** Переключает на стиль `Hi`, а `{\r}` возвращает обратно. */
+export const HIGHLIGHT = String.raw`{\rHi}`
 
-// ASS colours are &HAABBGGRR
+// Цвета в ASS записываются как `&HAABBGGRR`.
 const WHITE = '&H00FFFFFF'
 const BLACK = '&H00000000'
 const YELLOW = '&H0000FFFF'
 const PINK = '&H00552CFE'
 const SHADOW = '&H80000000'
 
-const CIRCLE_MARGIN = 0.2 // the circle's chord 0.3h below the centre is still 0.8w wide
+const CIRCLE_MARGIN = 0.2 // хорда круга на 0.3h ниже центра всё ещё 0.8w в ширину
 const CIRCLE_SIDE = 0.12
-const CAPS_WIDTH = 0.7 // average width of an upper-case Montserrat ExtraBold letter, in font sizes
+const CAPS_WIDTH = 0.7 // средняя ширина заглавной буквы Montserrat ExtraBold в размерах шрифта
 
-/** Python's round(): halves go to the even neighbour. The ASS of the Python bot is the reference. */
+/** `round()` как в Python: половинки уходят к чётному соседу. Эталоном служит ASS Python-бота. */
 export function round(x: number): number {
 	const r = Math.round(x)
 
 	return Math.abs(x % 1) === 0.5 && r % 2 ? r - 1 : r
 }
 
-/** A video note is shown cropped to its inscribed circle, so the corners are gone: bottom
- * lines move up to where the circle is still wide, and pages get fewer letters. */
+/** Видеосообщение показывается обрезанным по вписанному кругу, углов у него нет: нижние строки
+ * поднимаются туда, где круг ещё широкий, а на экран влезает меньше букв. */
 export function forCircle(p: Preset): Preset {
 	const font = Math.min(p.font, 0.09)
 	const fits = Math.trunc((1 - 2 * CIRCLE_SIDE) / (CAPS_WIDTH * font))
@@ -52,6 +54,7 @@ export function forCircle(p: Preset): Preset {
 	return { ...p, font, margin, side: CIRCLE_SIDE, maxChars: Math.min(p.maxChars, fits) }
 }
 
+/** Время в формате ASS: `H:MM:SS.cc`, с точностью до сотых. */
 export function assTime(t: number): string {
 	const cs = round(t * 100)
 	const two = (n: number) => String(n).padStart(2, '0')
@@ -59,11 +62,16 @@ export function assTime(t: number): string {
 	return `${Math.floor(cs / 360000)}:${two(Math.floor(cs / 6000) % 60)}:${two(Math.floor(cs / 100) % 60)}.${two(cs % 100)}`
 }
 
+/**
+ * Убирает `\` и меняет фигурные скобки на круглые,
+ * чтобы текст не превратился в override-теги.
+ */
 export const assEscape = (text: string) => text.replaceAll('\\', '').replaceAll('{', '(').replaceAll('}', ')')
 
 function styleLine(name: string, p: Preset, [w, h]: [number, number], colour: string, box: boolean): string {
 	const fs = round(w * p.font)
-	// BorderStyle 3 draws an opaque box in the outline colour; outline width is its padding
+	// BorderStyle 3 рисует непрозрачную плашку цветом обводки,
+	// а толщина обводки становится её отступом.
 	const [border, outline, shadow, outlineColour] = box
 		? [3, round(fs * 0.12), 0, PINK]
 		: [1, round(fs * 0.08), round(fs * 0.05), BLACK]
@@ -76,11 +84,19 @@ function styleLine(name: string, p: Preset, [w, h]: [number, number], colour: st
 }
 
 export type AssOptions = {
+	/** Субтитры для видеосообщения, см. {@link forCircle}. */
 	circle?: boolean
-	/** A short word and the next one share a line: `\h` is a space libass never breaks. */
+	/**
+	 * Короткое слово и следующее за ним делят строку:
+	 * `\h` это пробел, на котором libass не переносит.
+	 */
 	glue?: boolean
 }
 
+/**
+ * Собирает ASS: экран слов показывается целиком, а на каждое слово приходится
+ * своё событие, где подсвечено только оно.
+ */
 export function buildAss(
 	words: Word[],
 	size: [number, number],
@@ -111,13 +127,13 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 		const nextPageStart = n + 1 < pages.length ? pages[n + 1][0].start : Infinity
 		const texts = page.map((x) => assEscape(x.text.toUpperCase()))
 		const spaces = page.slice(1).map((x, i) => (glue && glued(page[i].text, x.text) ? String.raw`\h` : ' '))
-		// a word longer than a page can't wrap and would stick out of the circle, so it is
-		// squeezed; \r drops the squeeze, hence it goes after every reset too
+		// Слово длиннее экрана не перенесётся и вылезет за круг, поэтому его сжимаем.
+		// `\r` сбрасывает сжатие, поэтому оно повторяется и после каждого сброса.
 		const length = chars(texts.join(' '))
 		const fit = circle && length > p.maxChars ? `{\\fscx${Math.floor((100 * p.maxChars) / length)}}` : ''
 
 		page.forEach((word, i) => {
-			// each word stays lit until the next one starts, so the page never blinks
+			// Слово горит, пока не начнётся следующее, поэтому экран не мигает.
 			const end = i + 1 < page.length ? page[i + 1].start : Math.min(word.end + TAIL, nextPageStart)
 			const body =
 				fit +
@@ -134,10 +150,17 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 	return header + lines.join('\n') + '\n'
 }
 
-// the filter graph parser needs these characters escaped inside a quoted value
+// Парсер графа фильтров требует экранировать эти символы внутри значения в кавычках.
 const filterArg = (path: string) =>
 	`'${resolve(path).replaceAll('\\', '\\\\').replaceAll("'", "\\'").replaceAll(':', '\\:')}'`
 
+/**
+ * Вжигает ASS в видео (H.264, звук копируется как есть).
+ *
+ * Шрифты берутся из `SUBLYA_FONTS_DIR`, иначе из `src/bot/fonts`.
+ *
+ * @param extra Аргументы ffmpeg перед выходным файлом, тесты так рендерят один кадр.
+ */
 export async function burn(video: string, ass: string, out: string, extra: string[] = []): Promise<void> {
 	let vf = `ass=${filterArg(ass)}`
 
@@ -169,6 +192,11 @@ export async function burn(video: string, ass: string, out: string, extra: strin
 	)
 }
 
+/**
+ * Пишет `subs.ass` в `workdir` и рендерит рядом `out-<style>.mp4`.
+ *
+ * @returns путь к готовому видео
+ */
 export async function render(
 	video: string,
 	words: Word[],

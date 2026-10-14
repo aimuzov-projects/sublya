@@ -9,7 +9,7 @@ import { at, screens } from './subtitles.ts'
 const demo = (id: string): Word[] =>
 	JSON.parse(readFileSync(new URL(`../data/words/${id}.json`, import.meta.url), 'utf8'))
 
-// page sizes the Python bot's paginate() gave on the same words
+// Размеры страниц, которые выдавал `paginate()` бота на Python на тех же словах.
 const reference: Record<string, Record<string, number[]>> = {
 	samara: {
 		classic: [3, 3, 1, 3, 3, 3, 1, 3, 1],

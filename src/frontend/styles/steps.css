@@ -33,11 +33,12 @@
 	color: var(--text);
 }
 
-/* Each step shows what it means: scenes.svelte plays a scene while its card is on screen. */
+/* Каждый шаг показывает, что он значит: scenes.svelte играет сцену,
+   пока карточка на экране. */
 .steps__item {
 	position: relative;
 }
-/* the number sits on the card's top edge, clear of the scene */
+/* Номер сидит на верхнем крае карточки, не заезжая на сцену. */
 .steps__item::before {
 	position: absolute;
 	z-index: 2;
@@ -55,7 +56,7 @@
 .steps__list {
 	padding-top: 16px;
 }
-/* on hover the card rises and lights up, and its scene starts over */
+/* При наведении карточка приподнимается и подсвечивается, а сцена начинается заново. */
 .steps__item {
 	transition:
 		transform 0.25s ease,
@@ -82,7 +83,7 @@
 	background: #0e1621;
 }
 
-/* 1: the video flies into the chat, uploads, and gets a tick */
+/* 1: видео влетает в чат, загружается и получает галочку */
 .chat-bubble {
 	position: absolute;
 	right: 16px;
@@ -96,7 +97,7 @@
 	position: relative;
 	height: 96px;
 	border-radius: 9px;
-	/* a frame of the samara demo; CSP blocks style attributes, so it can't come from the markup */
+	/* Кадр из демо samara. CSP блокирует атрибуты style, так что в разметке не задать. */
 	background: #000 url('/media/samara/before.webp') center / cover;
 }
 .clip .play {
@@ -192,7 +193,7 @@
 	}
 }
 
-/* 2: the caption types itself */
+/* 2: подпись печатается сама */
 .field {
 	position: absolute;
 	right: 16px;
@@ -232,7 +233,7 @@
 	}
 }
 
-/* 3: the finished video with the spoken word lit, and the bot's buttons */
+/* 3: готовое видео с подсвеченным произнесённым словом и кнопки бота */
 .frame {
 	position: absolute;
 	top: 12px;

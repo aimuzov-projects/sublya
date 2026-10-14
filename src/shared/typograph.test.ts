@@ -3,7 +3,7 @@ import { test } from 'node:test'
 
 import { typograph, typographText } from '#shared/typograph.ts'
 
-// In the expectations "_" stands for a no-break space and "^" for a thin one, so they show.
+// В ожиданиях "_" -- неразрывный пробел, а "^" -- узкий, чтобы их было видно.
 const show = (s: string) => s.replaceAll(' ', '_').replaceAll(' ', '^')
 const t = (text: string) => show(typographText(text))
 const h = (html: string) => show(typograph(html))

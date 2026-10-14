@@ -1,10 +1,14 @@
-// The teal glow circles the middle of the screen once over the whole page: it starts on the
-// left, goes down, across the bottom, up the right and over the top. It trails the scroll a
-// little, so it glides instead of jumping with the wheel.
+/**
+ * Бирюзовое свечение за всю страницу делает один круг вокруг середины экрана: стартует
+ * слева, идёт вниз, по низу, вверх по правому краю и обратно поверху.
+ *
+ * Немного отстаёт от скролла, поэтому плывёт, а не прыгает вместе с колесом.
+ */
 export function glow() {
 	if (matchMedia('(prefers-reduced-motion: reduce)').matches) return
 
-	// an ellipse around the centre, in percent of the screen; the start matches the CSS
+	// Эллипс вокруг центра в процентах от экрана. Старт совпадает с дефолтными
+	// `--glow-x`/`--glow-y` в global.css.
 	const [rx, ry] = [38, 34]
 	const start = Math.atan2(30 - 50, 12 - 50)
 	const style = document.documentElement.style
@@ -15,12 +19,14 @@ export function glow() {
 		const range = document.documentElement.scrollHeight - innerHeight
 		const target = range > 0 ? Math.min(scrollY / range, 1) : 0
 
+		// За кадр догоняем цель на 8%, отсюда и отставание от скролла.
 		current += (target - current) * 0.08
-		// screen y grows downwards, so a falling angle goes down the left side first
+		// Ось y на экране смотрит вниз, поэтому убывающий угол сначала ведёт вниз по левому краю.
 		const angle = start - current * 2 * Math.PI
 
 		style.setProperty('--glow-x', `${(50 + rx * Math.cos(angle)).toFixed(2)}%`)
 		style.setProperty('--glow-y', `${(50 + ry * Math.sin(angle)).toFixed(2)}%`)
+		// Догнали цель -- цикл останавливаем, следующий запустит скролл.
 		frame = Math.abs(target - current) > 0.0005 ? requestAnimationFrame(tick) : 0
 	}
 

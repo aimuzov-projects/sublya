@@ -25,7 +25,7 @@ const support = new Support(bot.api, db, settings.supportChatId)
 if (support.enabled) {
 	bot.api.config.use(mirrorOutgoing(support))
 	bot.use(mirrorIncoming(support))
-	// the team's messages in a user's topic go to that user
+	// Сообщения команды в теме пользователя уходят этому пользователю.
 	bot.chatType(['group', 'supergroup']).on('message', (ctx) => support.reply(ctx.msg))
 }
 
@@ -37,8 +37,8 @@ let panel = null
 
 if (settings.adminUrl) {
 	panel = await serve(bot.api, db, settings)
-	// the button next to the input field opens the panel. Menus are set per chat, so only
-	// admins get it; Telegram refuses for someone who never wrote to the bot
+	// Кнопка рядом с полем ввода открывает админку. Меню задаётся для каждого чата, поэтому
+	// она есть только у админов. Тому, кто ни разу не писал боту, Telegram её поставить не даст.
 	const button = { type: 'web_app' as const, text: texts.BTN_ADMIN, web_app: { url: settings.adminUrl } }
 
 	for (const admin of settings.adminIds) {
@@ -59,13 +59,14 @@ void [worker.run(stop.signal), cleanupLoop(settings, stop.signal)].map((task) =>
 	}),
 )
 
-// updates are handled concurrently, as in aiogram: a download must not hold up everyone else
+// Апдейты обрабатываются параллельно, как в aiogram:
+// скачивание видео не должно задерживать остальных.
 const runner = run(bot)
 
 console.info('polling')
 
-// Docker kills the container 10 s after SIGTERM, and a render takes longer: the job is left
-// running, and requeueRunning() puts it back in the queue on the next start.
+// Docker убивает контейнер через 10 с после SIGTERM, а рендер идёт дольше: задача остаётся
+// в `running`, и `requeueRunning()` вернёт её в очередь при следующем старте.
 for (const signal of ['SIGINT', 'SIGTERM'] as const) {
 	process.once(signal, async () => {
 		stop.abort()

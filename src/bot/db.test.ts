@@ -33,7 +33,7 @@ test('one active job per user', () => {
 	const job = submit(db, 1)
 
 	assert.throws(() => submit(db, 1), Busy)
-	submit(db, 2) // other users are not affected
+	submit(db, 2) // других пользователей это не касается
 	db.finish(job, 'done')
 	submit(db, 1)
 })

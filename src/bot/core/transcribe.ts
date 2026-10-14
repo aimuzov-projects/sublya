@@ -1,4 +1,4 @@
-// Speech recognition through any OpenAI-compatible audio/transcriptions endpoint.
+// Распознавание речи через любой OpenAI-совместимый эндпоинт audio/transcriptions.
 
 import { readFile } from 'node:fs/promises'
 import { basename, join } from 'node:path'
@@ -14,19 +14,26 @@ export const DEFAULT_MODEL = 'openai/whisper-large-v3-turbo'
 const BACKOFF = [1, 2, 4]
 const TIMEOUT = 120_000
 
+/**
+ * Распознавание не удалось: сервис отказал, не ответил после всех повторов
+ * или прислал ответ без меток слов.
+ */
 export class SttError extends Error {}
+
+/** Речи в записи не нашлось, в том числе если в ней были одни галлюцинации. */
 export class NoSpeech extends SttError {}
 
 export type SttConfig = { url: string; key: string; model: string }
 
+/** Пустые `STT_API_URL` и `STT_MODEL` дают значения по умолчанию, ключ берётся как есть. */
 export const sttFromEnv = (env = process.env): SttConfig => ({
 	url: env.STT_API_URL || DEFAULT_URL,
 	key: env.STT_API_KEY ?? '',
 	model: env.STT_MODEL || DEFAULT_MODEL,
 })
 
-// Whisper learned from subtitle files, and over silence or noise at the start or end of a
-// recording it writes their credits. Nobody says these in a video, unlike "thank you".
+// Whisper учился на файлах субтитров и на тишине или шуме в начале и в конце записи
+// выдаёт их титры. Вслух в видео такого никто не говорит, в отличие от "спасибо".
 const HALLUCINATIONS = [
 	'продолжение следует',
 	'субтитры сделал dimatorzok',
@@ -35,6 +42,7 @@ const HALLUCINATIONS = [
 	'редактор субтитров асемкин корректор аегорова',
 ].map((phrase) => phrase.split(' '))
 
+/** Срезает титры из `HALLUCINATIONS` с краёв записи, пока они там есть. Середину не трогает. */
 export function dropHallucinations(words: Word[]): Word[] {
 	const keys = words.map((w) => normalize(w.text))
 	const same = (from: number, phrase: string[]) => phrase.every((p, i) => keys[from + i] === p)
@@ -58,13 +66,18 @@ export function dropHallucinations(words: Word[]): Word[] {
 
 type Response = { text?: string; words?: { word: string; start: number; end: number }[] }
 
+/**
+ * Слова с метками времени из ответа `verbose_json`, с пунктуацией из полного текста.
+ *
+ * Бросает `NoSpeech`, если после чистки от галлюцинаций слов не осталось.
+ */
 export function parse(data: Response): Word[] {
 	if (!data.words) throw new SttError('the STT response has no word timestamps')
 
 	let heard: Word[] = data.words
 		.filter((w) => w.word.trim())
 		.map((w) => ({ text: w.word.trim(), start: Number(w.start), end: Number(w.end), line_end: false }))
-	// words come without punctuation; the full text has it
+	// Слова приходят без пунктуации, она есть только в полном тексте.
 	const ref = readText(data.text ?? '')
 
 	if (ref.length) {
@@ -102,7 +115,8 @@ async function post(audio: string, cfg: SttConfig, lang: string | null, deps: De
 		let failure: string
 
 		try {
-			// the timeout covers the body too: a response that stalls halfway is retried as well
+			// Таймаут распространяется и на тело ответа,
+			// так что зависший на середине ответ тоже ретраим.
 			const resp = await request(`${cfg.url.replace(/\/+$/, '')}/audio/transcriptions`, {
 				method: 'POST',
 				headers: { Authorization: `Bearer ${cfg.key}` },
@@ -114,11 +128,12 @@ async function post(audio: string, cfg: SttConfig, lang: string | null, deps: De
 
 			failure = `STT returned ${resp.status}: ${(await resp.text()).slice(0, 300)}`
 
+			// Повторяем только 429 и 5xx, остальные ошибки повтором не лечатся.
 			if (resp.status !== 429 && resp.status < 500) throw new SttError(failure)
 		} catch (e) {
 			if (e instanceof SttError) throw e
 
-			// fetch hides the reason in cause: "fetch failed" alone tells the admin nothing
+			// fetch прячет причину в `cause`, а одно "fetch failed" админу ничего не скажет.
 			const cause = e instanceof Error && e.cause ? `: ${e.cause}` : ''
 
 			failure = `STT request failed: ${e}${cause}`
@@ -132,10 +147,15 @@ async function post(audio: string, cfg: SttConfig, lang: string | null, deps: De
 	throw new Error('unreachable')
 }
 
+/** Распознаёт уже извлечённый звук, `lang` равный `null` — автоопределение языка. */
 export async function recognize(audio: string, cfg: SttConfig, lang: string | null = null, deps: Deps = {}) {
 	return parse(await post(audio, cfg, lang, deps))
 }
 
+/**
+ * Достаёт звук из видео в `workdir` и собирает всё для субтитров:
+ * слова, паузы, размер кадра и длительность.
+ */
 export async function transcribe(
 	video: string,
 	workdir: string,

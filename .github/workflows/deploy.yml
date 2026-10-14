@@ -1,8 +1,8 @@
 name: Deploy
 
-# A merge into main only updates the release PR. Merging that PR cuts a release,
-# and the release goes to the server. A manual run deploys any release tag, e.g. to
-# roll back.
+# Мерж в main только обновляет релизный PR. Мерж этого PR выпускает релиз,
+# и релиз уезжает на сервер. Ручной запуск деплоит любой релизный тег, например
+# чтобы откатиться.
 on:
   push:
     branches: [main]
@@ -12,7 +12,7 @@ on:
         description: Release tag to deploy, e.g. v1.2.0. Empty deploys the newest main.
         required: false
 
-# Deploys run one by one, a new one doesn't abort a build that has already started.
+# Деплои идут по одному, новый не прерывает уже начатую сборку.
 concurrency:
   group: deploy
   cancel-in-progress: false
@@ -41,8 +41,8 @@ jobs:
     if: needs.release.outputs.created == 'true'
     uses: ./.github/workflows/check.yml
 
-  # Until the server is ready (key, clone in /srv, site in Caddy), the deploy is skipped.
-  # It's enabled by the repo variable DEPLOY_ENABLED=true.
+  # Пока сервер не готов (ключ, клон в /srv, сайт в Caddy), деплой пропускается.
+  # Включается переменной репозитория DEPLOY_ENABLED=true.
   deploy:
     needs: [release, check]
     if: >-
@@ -60,8 +60,8 @@ jobs:
           url: https://sublya.aimuzov.online/
           ref: ${{ needs.release.outputs.tag || inputs.tag }}
 
-      # The bot has no address of its own; its health check answers through Caddy and reaches
-      # Telegram through the local Bot API server and the tunnel.
+      # Своего адреса у бота нет: его health-check отвечает через Caddy, а до Telegram
+      # достучивается через локальный сервер Bot API и туннель.
       - name: Check bot
         run: |
           for i in 1 2 3 4 5 6; do

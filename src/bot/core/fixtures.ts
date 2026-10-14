@@ -1,5 +1,5 @@
-// The natasha recording for the tests: recognised words, pauses and the reference poem of a
-// real video, plus what the Python bot produced from them (golden/).
+// Запись natasha для тестов: распознанные слова, паузы и эталонное стихотворение настоящего
+// видео, плюс то, что из них сделал Python-бот (`golden/`).
 
 import { readFileSync } from 'node:fs'
 
@@ -8,8 +8,10 @@ import type { Word } from '#shared/subtitles.ts'
 
 const read = (path: string) => readFileSync(new URL(`fixtures/${path}`, import.meta.url), 'utf8')
 
-export const LAG = 0.15 // whisper.cpp DTW marks tokens a bit late
+/** DTW в whisper.cpp ставит метки токенов чуть позже. */
+export const LAG = 0.15
 
+/** Распознавание с одной меткой на слово (`mark`), как от DTW в whisper.cpp. */
 export function markTranscript(): Transcript {
 	const meta = JSON.parse(read('natasha/silences.json'))
 
@@ -26,7 +28,7 @@ export function markTranscript(): Transcript {
 	}
 }
 
-/** The same video recognised by whisper-large-v3-turbo through OpenRouter. */
+/** То же видео, распознанное whisper-large-v3-turbo через OpenRouter. */
 export const apiTranscript = () => fromJson(read('natasha/openrouter.json'))
 
 export const poem = () => read('natasha/poem.txt')

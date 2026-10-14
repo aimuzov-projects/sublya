@@ -88,7 +88,7 @@ test('a failed job keeps the original video', async () => {
 	)
 })
 
-/** A re-render of the result in message 40, with its progress in that message's caption. */
+/** Перерендер результата из сообщения 40, прогресс живёт в подписи этого сообщения. */
 const captioned = (db: Db, inputPath: string) => {
 	const job = db.submit({
 		userId: 1,
@@ -132,7 +132,7 @@ test('the progress of a re-render changes the caption', async () => {
 	assert.deepEqual(named('editMessageText'), [])
 })
 
-/** A job folder with a silent video and its transcript, so a render needs no STT. */
+/** Папка задачи с беззвучным видео и транскриптом, чтобы рендеру не понадобился STT. */
 async function cachedVideo(settings: Settings) {
 	const work = join(jobsDir(settings), '1')
 
@@ -223,7 +223,7 @@ for (const note of [true, false]) {
 		queue(db, video, { note, replaceMsgId: 40 })
 		await worker.process(db.nextJob()!)
 
-		// the old video note goes after the new one, a video is swapped in place
+		// Старый кружок удаляется после нового, а обычное видео заменяется на месте.
 		assert.deepEqual(
 			calls.filter((c) => c.method !== 'editMessageText').map((c) => [c.method, c.payload.message_id]),
 			note
@@ -353,7 +353,7 @@ test('a lost progress message leaves a delivered video done', async () => {
 	const job = db.getJob(queue(db, 'in.mp4'))!
 
 	db.finish(job.id, 'done')
-	// what handle() does after the video went out
+	// Так делает `handle()` после того, как видео ушло.
 	await (worker as unknown as { dropProgress: (j: typeof job, d: boolean) => Promise<void> }).dropProgress(job, true)
 	assert.equal(db.getJob(job.id)!.status, 'done')
 })
