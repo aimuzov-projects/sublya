@@ -5,13 +5,13 @@
 
 	const { href, label }: Props = $props()
 
-	// The last button teases a mouse: it dodges left, then right, then back to the middle, and
-	// gives in on the fourth try. Touch screens and keyboards get a plain button.
-	// where each dodge goes: -1 left, 1 right, 0 home
+	// The last button teases a mouse: it dodges left, right and left again, and on the fourth try
+	// comes back to the middle and gives in. Touch screens and keyboards get a plain button.
+	// where each dodge goes: -1 left, 1 right
 	const dodges = [
 		{ side: -1, text: 'Мимо!' },
 		{ side: 1, text: 'Ещё разок' },
-		{ side: 0, text: 'Почти!' },
+		{ side: -1, text: 'Почти!' },
 	]
 
 	let button: HTMLAnchorElement
@@ -36,15 +36,13 @@
 
 		clearTimeout(homing)
 
-		if (tries++ === dodges.length) return
-
-		const { side } = dodges[tries - 1]
-
-		if (!side) {
+		if (tries++ === dodges.length) {
 			transform = ''
 
 			return
 		}
+
+		const { side } = dodges[tries - 1]
 
 		// as far as the section allows, so it stays in sight
 		const room = button.parentElement!.clientWidth / 2 - button.offsetWidth / 2 - 16
