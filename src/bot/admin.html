@@ -285,7 +285,7 @@
 			}
 			const STYLE = { classic: 'Классика', big: 'Крупно', box: 'Плашка', single: 'По слову' }
 			const nf = new Intl.NumberFormat('ru-RU')
-			// cents are too coarse for a day of Whisper: it costs fractions of a cent
+			// Точности до цента не хватает: день Whisper стоит доли цента.
 			const usd = (v) => (v == null ? '—' : '$' + Number(v).toFixed(v > 0 && v < 0.1 ? 4 : 2))
 			const when = (ts) =>
 				new Date(ts * 1000).toLocaleString('ru-RU', {
@@ -316,7 +316,8 @@
 					.toUpperCase()
 			const auth = () => ({ Authorization: 'tma ' + (tg?.initData || '') })
 
-			// fetched with the signature header, which <img src> can't send; kept across refreshes
+			// Тянем с заголовком подписи, который <img src> отправить не может.
+			// Живут между обновлениями.
 			const avatars = new Map()
 			function avatar(u) {
 				if (!avatars.has(u.user_id)) {
@@ -336,7 +337,7 @@
 			function link(text, url) {
 				const a = el('a', { href: url }, text)
 				a.addEventListener('click', (e) => {
-					// inside Telegram t.me links open in the app itself instead of the browser
+					// Внутри Telegram ссылки t.me открываются в самом приложении, а не в браузере.
 					if (tg?.openTelegramLink) {
 						e.preventDefault()
 						tg.openTelegramLink(url)
@@ -345,7 +346,8 @@
 				return a
 			}
 
-			// a profile link needs a username; without one the support topic is the way to the person
+			// Для ссылки на профиль нужен username,
+			// без него до человека добираемся через топик поддержки.
 			function person(u, prefix = '') {
 				return u.username ? link(prefix + who(u), `https://t.me/${u.username}`) : prefix + who(u)
 			}
@@ -394,7 +396,7 @@
 				const ceil = step * Math.ceil(max / step)
 				const y = (v) => top + (H - top - bottom) * (1 - v / ceil)
 				const slot = (W - left) / days.length
-				const barW = Math.max(4, slot - 2) // 2px gap between neighbours
+				const barW = Math.max(4, slot - 2) // 2px зазор между соседями
 				const ns = 'http://www.w3.org/2000/svg'
 				const svg = document.createElementNS(ns, 'svg')
 				svg.setAttribute('viewBox', `0 0 ${W} ${H}`)
@@ -414,14 +416,15 @@
 				const bars = days.map((d, i) => {
 					const x = left + i * slot + (slot - barW) / 2
 					const h = Math.max(0, y(0) - y(d.videos))
-					// flat bottom on the baseline, 4px rounding on the data end only
+					// Плоское основание на нулевой линии, скругление 4px только у вершины столбца.
 					const r = Math.min(4, barW / 2, h)
 					const path = h
 						? `M${x},${y(0)} v${-(h - r)} q0,${-r} ${r},${-r} h${barW - 2 * r}` +
 							` q${r},0 ${r},${r} v${h - r} z`
 						: ''
 					const bar = add('path', { class: 'bar', d: path })
-					// a label needs about 44px; the last day is always signed, its neighbours give way
+					// Подписи нужно около 44px. Последний день подписан всегда,
+					// соседи уступают ему место.
 					const every = Math.ceil(days.length / Math.max(1, Math.floor((W - left) / 44)))
 					const fromEnd = days.length - 1 - i
 					if (fromEnd % every === 0) {
@@ -595,7 +598,7 @@
 				)
 			}
 
-			// adds n videos to the user's quota for today; the bot tells them about it
+			// Добавляет n видео к квоте пользователя на сегодня, бот сообщает ему об этом.
 			function bonusButton(userId, n) {
 				const button = el('button', { type: 'button', class: 'bonus' }, `+${n}`)
 				button.addEventListener('click', async () => {

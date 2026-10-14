@@ -1,6 +1,6 @@
-/* Breakpoints for @media (--md) and the like. PostCSS injects this file
-   into every style block, it never gets into the bundle by itself.
-   Each --below-* ends exactly where its pair begins. */
+/* Брейкпоинты для `@media (--md)` и подобных. PostCSS подкладывает этот файл
+   в каждый блок стилей, сам по себе в бандл он не попадает.
+   Каждый `--below-*` заканчивается ровно там, где начинается его пара. */
 @custom-media --sm (width >= 600px);
 @custom-media --md (width >= 900px);
 @custom-media --lg (width >= 1000px);
@@ -10,17 +10,18 @@
 @custom-media --below-lg (width < 1000px);
 @custom-media --below-xl (width < 1280px);
 
-/* The header fits the logo and the bot button only, without the GitHub icon. */
+/* В шапку влезают только логотип и кнопка бота, без иконки GitHub. */
 @custom-media --below-header (width < 360px);
 
-/* The stage drops its phone column under the text here. */
+/* Здесь колонка с телефоном в `.stage` уходит под текст. */
 @custom-media --below-stage (width <= 860px);
 
 @custom-media --reduced-motion (prefers-reduced-motion: reduce);
 
-/* A finger instead of a mouse: phones and tablets. */
+/* Палец вместо мыши: телефоны и планшеты. */
 @custom-media --touch (pointer: coarse);
 
-/* Hide what scripts reveal only if scripts run: without them the page shows at once. */
+/* Прячем то, что показывают скрипты, только если скрипты работают,
+   без них страница видна сразу. */
 @custom-media --scripting (scripting: enabled);
 @custom-media --no-scripting (scripting: none);

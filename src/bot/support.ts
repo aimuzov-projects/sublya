@@ -1,5 +1,5 @@
-// Support chat: a forum group where every user has a topic with their whole dialogue, and
-// whatever the team writes in that topic goes back to the user from the bot.
+// Чат поддержки: группа с темами, где у каждого пользователя своя тема со всей перепиской,
+// а всё, что команда пишет в эту тему, уходит пользователю от имени бота.
 
 import { AsyncLocalStorage } from 'node:async_hooks'
 import { GrammyError, HttpError, type Api, type Context, type NextFunction, type Transformer } from 'grammy'
@@ -8,9 +8,10 @@ import type { CallbackQuery, Message, User } from 'grammy/types'
 import type { Db } from '#bot/db.ts'
 import * as texts from '#bot/texts.ts'
 
+// Длиннее название темы Telegram не примет.
 const TOPIC_NAME_LIMIT = 128
 const ACK_EVERY = 3600
-// what the team may send to a user; service messages of the topic itself stay in the group
+// Что команда может отправить пользователю, служебные сообщения самой темы остаются в группе.
 const REPLY_TYPES = [
 	'text',
 	'photo',
@@ -25,24 +26,24 @@ const REPLY_TYPES = [
 
 const quietly = new AsyncLocalStorage<boolean>()
 
-/** Bot messages sent inside stay out of the support chat: the progress message that is edited
- * and then deleted, alerts to admins. */
+/** Сообщения бота, отправленные внутри, не попадают в чат поддержки: прогресс, который
+ * правится и потом удаляется, оповещения админам. */
 export const quiet = <T>(body: () => Promise<T>) => quietly.run(true, body)
 
-/** Anything the Bot API call can fail with: an answer from Telegram or no answer at all. */
+/** Всё, чем может упасть вызов Bot API: ответ Telegram с ошибкой или отсутствие ответа. */
 export const isTelegramError = (e: unknown): e is GrammyError | HttpError =>
 	e instanceof GrammyError || e instanceof HttpError
 export const isBadRequest = (e: unknown): e is GrammyError => e instanceof GrammyError && e.error_code === 400
 export const isForbidden = (e: unknown): e is GrammyError => e instanceof GrammyError && e.error_code === 403
 
-/** The topic was deleted or closed in the group: a reason to open a new one, not a failure. */
+/** Тему удалили или закрыли в группе: это повод открыть новую, а не ошибка. */
 export function threadGone(e: GrammyError): boolean {
 	const text = e.description.toLowerCase()
 
 	return ['thread not found', 'topic_deleted', 'topic deleted', 'topic_closed'].some((s) => text.includes(s))
 }
 
-/** The label of the button the user pressed; callback data if the message is gone. */
+/** Подпись кнопки, которую нажал пользователь, или callback data, если сообщения уже нет. */
 export function pressed(query: CallbackQuery): string {
 	const markup = query.message && 'reply_markup' in query.message ? query.message.reply_markup : undefined
 
@@ -65,7 +66,7 @@ export class Support {
 	readonly api: SupportApi
 	readonly db: Db
 	readonly chatId: number | null
-	// two quick messages from a new user must not open two topics
+	// Два быстрых сообщения от нового пользователя не должны открыть две темы.
 	private readonly opening = new Map<number, Promise<number | null>>()
 	private readonly acked = new Map<number, number>()
 
@@ -79,9 +80,11 @@ export class Support {
 		return this.chatId !== null
 	}
 
-	/** Whether to tell the user their message was passed on. Once an hour at most: in a
-	 * dialogue with the team the same words after every line are just noise. */
+	/** Пора ли сказать пользователю, что его сообщение передано. Не чаще раза в час: в переписке
+	 * с командой одна и та же фраза после каждой реплики — просто шум. */
 	ackDue(userId: number, now = performance.now() / 1000): boolean {
+		// `performance.now()` идёт от старта процесса, без `-ACK_EVERY` в первый час после
+		// рестарта подтверждений бы не было.
 		if (now - (this.acked.get(userId) ?? -ACK_EVERY) < ACK_EVERY) return false
 
 		this.acked.set(userId, now)
@@ -89,6 +92,7 @@ export class Support {
 		return true
 	}
 
+	/** Тема пользователя, при первом обращении открывает новую. `null` — открыть не вышло. */
 	topic(userId: number, who?: User): Promise<number | null> {
 		const known = this.db.getTopic(userId)
 
@@ -109,7 +113,7 @@ export class Support {
 		const chatId = this.chatId!
 
 		if (!who) {
-			// the bot wrote first (a result after a restart), so there is no User at hand
+			// Бот написал первым (результат после рестарта), поэтому `User` под рукой нет.
 			const chat = await this.api.getChat(userId)
 
 			who = {
@@ -144,15 +148,15 @@ export class Support {
 		try {
 			await this.api.sendMessage(chatId, card, { parse_mode: 'HTML', message_thread_id: topicId })
 		} catch (e) {
-			// the card is a courtesy, the dialogue goes on without it
+			// Карточка — любезность, переписка продолжится и без неё.
 			console.error(`could not post the card of topic ${topicId}`, e)
 		}
 
 		return topicId
 	}
 
-	/** Puts something into the user's topic. Support is a side channel, so a failure here is
-	 * logged and never reaches the user's video. */
+	/** Кладёт что-то в тему пользователя. Поддержка — побочный канал, поэтому ошибка здесь
+	 * только пишется в лог и до видео пользователя не доходит. */
 	private async post(userId: number, send: (topicId: number) => Promise<unknown>, who?: User) {
 		if (this.chatId === null) return
 
@@ -171,7 +175,7 @@ export class Support {
 
 					console.warn(`support topic ${topicId} of user ${userId} is gone, opening a new one`)
 
-					// a message sent alongside may have opened the new topic already
+					// Параллельно отправленное сообщение могло уже открыть новую тему.
 					if (this.db.getTopic(userId) === topicId) this.db.setTopic(userId, null)
 				}
 			}
@@ -199,7 +203,8 @@ export class Support {
 		)
 	}
 
-	// sent again instead of copied: a copy would carry the buttons, and they only work for the user
+	// Отправляем заново, а не копируем: копия унесла бы кнопки,
+	// а работают они только у пользователя.
 	async outgoing(userId: number, sent: Pick<Message, 'video' | 'text'>) {
 		if (!sent.video && !sent.text) return
 
@@ -210,11 +215,11 @@ export class Support {
 		)
 	}
 
-	/** A message of the team in a user's topic goes to that user. */
+	/** Сообщение команды в теме пользователя уходит этому пользователю. */
 	async reply(message: Message) {
 		if (message.chat.id !== this.chatId || !message.is_topic_message || !message.message_thread_id) return
 
-		// anonymous admins write as GroupAnonymousBot, but with the group as sender_chat
+		// Анонимные админы пишут от GroupAnonymousBot, но с группой в `sender_chat`.
 		if (message.from?.is_bot && !message.sender_chat) return
 
 		if (!REPLY_TYPES.some((type) => type in message) || message.text?.startsWith('/')) return
@@ -243,8 +248,8 @@ export class Support {
 	}
 }
 
-/** Everything the bot sends to a user shows up in their topic, wherever it was sent from:
- * handlers and the worker alike. */
+/** Всё, что бот отправляет пользователю, появляется в его теме, откуда бы ни отправлялось:
+ * хоть из обработчиков, хоть из воркера. */
 export const mirrorOutgoing =
 	(support: Support): Transformer =>
 	async (prev, method, payload, signal) => {
@@ -254,6 +259,7 @@ export const mirrorOutgoing =
 		if (
 			(method === 'sendMessage' || method === 'sendVideo' || method === 'editMessageMedia') &&
 			typeof chatId === 'number' &&
+			// Положительный `chat_id` — личка, у групп и каналов он отрицательный.
 			chatId > 0 &&
 			result.ok &&
 			!quietly.getStore()
@@ -264,8 +270,8 @@ export const mirrorOutgoing =
 		return result
 	}
 
-/** Middleware for the user-facing part. Mirrors before the handler, so the topic reads in
- * order: the user's message, then the bot's answer. */
+/** Мидлвара для пользовательской части. Зеркалит до обработчика, чтобы тема читалась
+ * по порядку: сначала сообщение пользователя, потом ответ бота. */
 export const mirrorIncoming = (support: Support) => async (ctx: Context, next: NextFunction) => {
 	if (ctx.message && ctx.chat?.type === 'private' && ctx.from) await support.incoming(ctx.message)
 	else if (ctx.callbackQuery) await support.button(ctx.callbackQuery)

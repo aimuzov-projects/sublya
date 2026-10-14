@@ -12,7 +12,7 @@
 	background: linear-gradient(160deg, var(--card), var(--bg-2));
 	transition: border-color 0.25s ease;
 }
-/* a gradient can't be animated, so the hover glow is a layer that fades in */
+/* градиент не анимируется, поэтому подсветка при наведении -- отдельный проявляющийся слой */
 .cards__item::before {
 	content: '';
 	position: absolute;
@@ -37,7 +37,7 @@
 .cards__item:hover .cards__text {
 	color: var(--text);
 }
-/* the word being "spoken", as in the bot's classic style */
+/* слово, которое сейчас "произносится", как в классическом стиле бота */
 .cards .w {
 	transition:
 		color 0.08s ease,

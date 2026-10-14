@@ -20,7 +20,7 @@ services:
       DATA_DIR: /data
     volumes:
       - ./data:/data
-      # mounted at the same path, so file paths from the Bot API server work as is
+      # Монтируем по тому же пути, тогда пути к файлам от сервера Bot API работают как есть.
       - bot-api:/var/lib/telegram-bot-api
     depends_on:
       - telegram-bot-api

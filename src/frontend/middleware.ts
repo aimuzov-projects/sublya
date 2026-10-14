@@ -2,8 +2,9 @@ import { defineMiddleware } from 'astro:middleware'
 
 import { typograph } from '#shared/typograph.ts'
 
-// Every page goes through the typograph as it's built, so text added later is set right too.
-// Island props are attributes, which it doesn't touch: those get typographText in the component.
+// Каждая страница при сборке проходит через типограф, поэтому и текст,
+// добавленный позже, будет оформлен правильно. Пропсы островов -- это атрибуты,
+// их типограф не трогает, для них `typographText` вызывается в самом компоненте.
 export const onRequest = defineMiddleware(async (_, next) => {
 	const response = await next()
 
@@ -11,6 +12,7 @@ export const onRequest = defineMiddleware(async (_, next) => {
 
 	const headers = new Headers(response.headers)
 
+	// После типографа тело другой длины, старый `content-length` уже неверен.
 	headers.delete('content-length')
 
 	return new Response(typograph(await response.text()), {

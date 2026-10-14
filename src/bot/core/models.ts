@@ -1,20 +1,23 @@
 import type { Word } from '#shared/subtitles.ts'
 
-/** What recognition produced for a video. Cached per job, so re-renders skip the STT call. */
+/**
+ * Что распознавание выдало для видео.
+ * Кешируется на задачу, поэтому повторный рендер обходится без STT.
+ */
 export type Transcript = {
 	words: Word[]
 	silences: [number, number][]
 	size: [number, number]
 	duration: number
-	// "span": words come with start and end, as from the Whisper API;
-	// "mark": a single moment per word, as whisper.cpp DTW gives
+	// "span": у слова есть начало и конец, как отдаёт Whisper API;
+	// "mark": у слова одна точка во времени, как даёт DTW в whisper.cpp.
 	timing: 'span' | 'mark'
 	lang: string | null
 }
 
 export const transcriptText = (t: Transcript) => t.words.map((w) => w.text).join(' ')
 
-// the same JSON the Python bot cached, so job folders survive the switch
+/** Тот же JSON, что кешировал Python-бот, поэтому папки задач пережили переезд. */
 export const toJson = (t: Transcript) =>
 	JSON.stringify(
 		{ words: t.words, silences: t.silences, size: t.size, duration: t.duration, timing: t.timing, lang: t.lang },

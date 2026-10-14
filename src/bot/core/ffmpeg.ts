@@ -4,6 +4,7 @@ import { basename, delimiter, join } from 'node:path'
 
 const STDERR_TAIL = 2000
 
+/** Падение ffmpeg или ffprobe. В `stderr` лежит только хвост вывода. */
 export class FFmpegError extends Error {
 	readonly stderr: string
 
@@ -29,7 +30,7 @@ function which(name: string): string | null {
 	return null
 }
 
-/** SUBLYA_FFMPEG/SUBLYA_FFPROBE win over PATH: Homebrew's ffmpeg lacks libass. */
+/** `SUBLYA_FFMPEG`/`SUBLYA_FFPROBE` важнее `PATH`: в ffmpeg из Homebrew нет libass. */
 export function tool(name: 'ffmpeg' | 'ffprobe'): string {
 	const path = process.env[`SUBLYA_${name.toUpperCase()}`] || which(name)
 
@@ -38,6 +39,7 @@ export function tool(name: 'ffmpeg' | 'ffprobe'): string {
 	return path
 }
 
+/** Запускает команду без шелла, при ошибке бросает {@link FFmpegError}. */
 export function run(...cmd: string[]): Promise<{ stdout: string; stderr: string }> {
 	return new Promise((resolve, reject) => {
 		execFile(cmd[0], cmd.slice(1), { maxBuffer: 64 * 1024 * 1024 }, (error, stdout, stderr) => {
@@ -47,6 +49,10 @@ export function run(...cmd: string[]): Promise<{ stdout: string; stderr: string 
 	})
 }
 
+/**
+ * Есть ли в ffmpeg фильтр `name`, например `ass` из libass.
+ * Если ffmpeg не нашёлся, то тоже `false`.
+ */
 export async function hasFilter(name: string): Promise<boolean> {
 	try {
 		const { stdout } = await run(tool('ffmpeg'), '-hide_banner', '-filters')

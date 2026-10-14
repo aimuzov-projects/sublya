@@ -2,6 +2,7 @@ import { run, tool } from '#bot/core/ffmpeg.ts'
 
 const SILENCE = 'silencedetect=n=-35dB:d=0.25'
 
+/** Размер кадра, на который лягут субтитры, с учётом поворота из метаданных. */
 export async function videoSize(video: string): Promise<[number, number]> {
 	const { stdout } = await run(
 		tool('ffprobe'),
@@ -18,10 +19,12 @@ export async function videoSize(video: string): Promise<[number, number]> {
 	const info = JSON.parse(stdout).streams[0]
 	const rotation = info.side_data_list?.[0]?.rotation ?? 0
 
-	// ffmpeg autorotates on decode, so the frame the subtitles land on is swapped
+	// ffmpeg сам поворачивает кадр при декодировании, поэтому у кадра с субтитрами
+	// ширина и высота меняются местами.
 	return Math.abs(rotation) % 180 === 90 ? [info.height, info.width] : [info.width, info.height]
 }
 
+/** Длительность в секундах. Бросает ошибку, если ffprobe её не отдал. */
 export async function duration(media: string): Promise<number> {
 	const { stdout } = await run(
 		tool('ffprobe'),
@@ -33,7 +36,8 @@ export async function duration(media: string): Promise<number> {
 		'csv=p=0',
 		media,
 	)
-	// a container without a duration in its header gives N/A, and NaN would pass any limit
+	// Контейнер без длительности в заголовке отдаёт N/A,
+	// а NaN прошёл бы через любую проверку лимита.
 	const seconds = Number.parseFloat(stdout)
 
 	if (!Number.isFinite(seconds)) throw new Error(`ffprobe gave no duration for ${media}: ${stdout.trim()}`)
@@ -41,6 +45,7 @@ export async function duration(media: string): Promise<number> {
 	return seconds
 }
 
+/** Вытаскивает звук в моно WAV 16 кГц. */
 export async function extractAudio(video: string, audio: string): Promise<void> {
 	await run(
 		tool('ffmpeg'),
@@ -60,6 +65,10 @@ export async function extractAudio(video: string, audio: string): Promise<void> 
 	)
 }
 
+/**
+ * Паузы в звуке как пары `[начало, конец]` в секундах.
+ * Начало паузы, у которого нет конца, отбрасывается.
+ */
 export async function silences(audio: string): Promise<[number, number][]> {
 	const { stderr } = await run(tool('ffmpeg'), '-v', 'info', '-i', audio, '-af', SILENCE, '-f', 'null', '-')
 	const starts = [...stderr.matchAll(/silence_start: ([\d.]+)/g)].map((m) => Number(m[1]))

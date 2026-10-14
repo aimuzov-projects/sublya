@@ -29,10 +29,11 @@
 	}
 
 	const byId = $derived(new Map(demos.map((demo) => [demo.id, demo])))
-	// ids, not the demos: $state wraps objects in proxies, and those never equal the originals
+	// Храним id, а не сами демки: `$state` оборачивает объекты в прокси,
+	// и те никогда не равны оригиналам.
 	// svelte-ignore state_referenced_locally
 	let order = $state(demos.map((demo) => demo.id))
-	// the cards come with the browser, as the server can't know the shuffled order
+	// Карточки появляются только в браузере, так как сервер не знает перемешанный порядок.
 	let mounted = $state(false)
 	let seen = $state(0)
 	let variant = $state<'before' | 'after'>('after')
@@ -41,13 +42,13 @@
 	let drag = $state<{ id: string; x: number; dx: number; pointer: number } | null>(null)
 	let flight = $state<{ id: string; dir: number } | null>(null)
 	let deck: HTMLDivElement
-	// state, so the cards notice when the player shows up after them
+	// Через `$state`, чтобы карточки заметили плеер, если он появится после них.
 	let player = $state<Player>()
 
 	const top = $derived(byId.get(order[0])!)
 	const several = $derived(demos.length > 1)
 	const preset = $derived(presets[isStyle(style) ? style : 'classic'])
-	// the subtitles of the card on top, in the chosen style, or none for the video as sent
+	// Субтитры верхней карточки в выбранном стиле или `null` для видео как его прислали.
 	const subtitles = $derived(variant === 'after' ? screens(top.words, preset) : null)
 
 	function openTop() {
@@ -64,7 +65,7 @@
 		openTop()
 	}
 
-	// the top card flies off to the side it was thrown, then goes under the stack
+	// Верхняя карточка улетает в ту сторону, куда её бросили, и уходит под низ колоды.
 	function fly(dir: number) {
 		drag = null
 		flight = { id: order[0], dir }
@@ -112,20 +113,21 @@
 		if (e.key === 'ArrowLeft') step(-1)
 	}
 
-	// picking a style shows the subtitles again: that's what the visitor wants to see
+	// Выбор стиля снова показывает субтитры: именно их посетитель и хочет увидеть.
 	function pickStyle(value: string) {
 		style = value
 		variant = 'after'
 	}
 
-	// the player sits in whichever card is on top and moves with it
+	// Плеер сидит в той карточке, что сейчас сверху, и переезжает вместе с ней.
 	const holdPlayer = (id: string) => (card: HTMLElement) => {
 		if (player && order[0] === id) card.append(player.element())
 	}
 
-	// The video loads only once the page has and the deck is on screen: on a slow network it
-	// would take the whole channel from the fonts and the text, and on a phone the deck is
-	// below the first screen, so a visitor who never scrolls down never downloads it.
+	// Видео грузится, только когда страница загрузилась и колода на экране.
+	// На медленной сети оно забрало бы весь канал у шрифтов и текста,
+	// а на телефоне колода ниже первого экрана, так что посетитель,
+	// который до неё не долистал, видео и не скачает.
 	let loaded = $state(false)
 	let visible = $state(false)
 	let started = false
@@ -137,7 +139,7 @@
 		untrack(openTop)
 	})
 
-	// the video plays only while on screen
+	// Видео играет, только пока колода на экране.
 	$effect(() => {
 		const on = visible
 
@@ -166,7 +168,7 @@
 
 <div class="rail">
 	<div class="deck-wrap">
-		<!-- a carousel, as in the WAI-ARIA pattern: focused, it pages with the arrow keys -->
+		<!-- Карусель по паттерну WAI-ARIA: в фокусе листается стрелками. -->
 		<!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions -->
 		<div
 			class="deck"
@@ -180,7 +182,7 @@
 			{#if mounted}
 				{#each demos as demo (demo.id)}
 					{@const i = order.indexOf(demo.id)}
-					<!-- swiping is a shortcut: the arrows and the keys do the same -->
+					<!-- Свайп только шорткат: кнопки-стрелки и клавиши делают то же самое. -->
 					<!-- svelte-ignore a11y_no_static_element_interactions -->
 					<div
 						class="card"

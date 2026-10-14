@@ -1,6 +1,9 @@
 import { copyFile, rename, unlink } from 'node:fs/promises'
 
-/** Moves a file, copying it when it sits on another volume: the Bot API files are on theirs. */
+/**
+ * Перемещает файл, а если он на другом томе, то копирует.
+ * Файлы Bot API лежат как раз на своём томе.
+ */
 export async function move(from: string, to: string) {
 	try {
 		await rename(from, to)

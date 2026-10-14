@@ -194,7 +194,8 @@ test('the outgoing mirror hands the result back and mirrors it', async () => {
 	)
 })
 
-/** The bot as main.ts puts it together, with two private texts or one group message fed in. */
+/** Бот в той же сборке, что и в `main.ts`.
+ * Тесты подают в него два текста в личку или одно сообщение в группу. */
 async function wired(chatId: number | null) {
 	const s = setup(chatId)
 	const settings: Settings = {
@@ -258,7 +259,7 @@ test('a topic opened alongside is not thrown away', async () => {
 
 	db.setTopic(ALICE.id, 55)
 	fail('copyMessage', 400, 'Bad Request: message thread not found')
-	// another message already replaced the dead topic with 77
+	// Другое сообщение уже заменило мёртвую тему на 77.
 	const copy = support.api.copyMessage.bind(support.api)
 
 	support.api.copyMessage = (async (...args: Parameters<typeof copy>) => {

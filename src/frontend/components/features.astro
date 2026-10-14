@@ -4,7 +4,8 @@ import { typographText } from '#shared/typograph.ts'
 import FeatureCard from '#frontend/components/feature-card.svelte'
 import '#frontend/styles/features.css'
 
-// the card prints its text word by word itself, past the middleware, so it comes in already set
+// Карточка сама раскладывает текст по словам, в обход типографа в middleware,
+// поэтому текст прогоняем через типограф сразу здесь.
 const cards = [
 	{
 		title: 'Паузы вместо догадок',

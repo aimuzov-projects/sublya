@@ -1,13 +1,14 @@
-# Production, on the projects server. Ports 80/443 belong to the shared Caddy from
-# aimuzov-projects/infra-server: it proxies sublya.aimuzov.online to the site and /admin to the
-# bot's admin panel, both over the edge network.
+# Прод, на сервере проектов. Порты 80/443 принадлежат общему Caddy из
+# aimuzov-projects/infra-server: он проксирует sublya.aimuzov.online на сайт, а
+# /admin -- на админку бота, и то и другое через сеть edge.
 #
-# Telegram and OpenRouter aren't reachable from the server directly, so the bot and the Bot API
-# server share the network namespace of a tun2socks container that wraps all their outgoing
-# traffic into the shared VPN exit from infra-server (SOCKS on vpn:1080). Neither of them knows
-# about the proxy.
+# С сервера напрямую до Telegram и OpenRouter не достучаться, поэтому бот и сервер
+# Bot API делят сетевое пространство имён контейнера tun2socks, который заворачивает
+# весь их исходящий трафик в общий VPN-выход из infra-server (SOCKS на vpn:1080).
+# Ни один из них о прокси не знает.
 #
-# deploy/site.sh of infra-server rebuilds everything on every release; secrets live in /srv/sublya/.env.
+# deploy/site.sh из infra-server пересобирает всё на каждый релиз,
+# секреты лежат в /srv/sublya/.env.
 
 name: sublya
 
@@ -41,8 +42,8 @@ services:
     environment:
       PROXY: socks5://vpn:1080
       LOGLEVEL: warn
-    # the shared Caddy reaches the bot's admin panel (port 8090) over edge; replies to it,
-    # like the traffic to vpn, go out through the network's own route, not into the tunnel
+    # общий Caddy ходит в админку бота (порт 8090) через edge; ответы ему, как и трафик
+    # к vpn, уходят по собственному маршруту сети, а не в туннель
     networks:
       - vpn
       - edge
@@ -53,8 +54,8 @@ services:
     container_name: sublya-bot-api
     restart: unless-stopped
     network_mode: service:tunnel
-    # TELEGRAM_API_ID and TELEGRAM_API_HASH come from here; the compose file sits in deploy/,
-    # so ${...} would look for its own .env next to it, not at the repository root
+    # отсюда берутся TELEGRAM_API_ID и TELEGRAM_API_HASH; compose-файл лежит в deploy/,
+    # поэтому ${...} искал бы свой .env рядом с ним, а не в корне репозитория
     env_file: ../.env
     environment:
       TELEGRAM_LOCAL: '1'
@@ -79,20 +80,22 @@ services:
       DATA_DIR: /data
     volumes:
       - ../data:/data
-      # the same path as in the Bot API container, so its file paths work as is
+      # тот же путь, что и в контейнере Bot API, поэтому его пути к файлам
+      # работают как есть
       - bot-api:/var/lib/telegram-bot-api
     depends_on:
       - telegram-bot-api
     logging: *logging
 
-# Build variables and the bot's secrets live in /srv/sublya/.env, the sample is .env.example.
+# Переменные сборки и секреты бота лежат в /srv/sublya/.env, образец -- .env.example.
 secrets:
   env:
     file: ../.env
 
 volumes:
-  # the bot's login on the local Bot API server lives here; the name is from the time the bot
-  # had a repository of its own, kept so the server doesn't have to log it in again
+  # здесь хранится логин бота на локальном сервере Bot API; имя осталось с тех времён,
+  # когда у бота был свой репозиторий, и сохранено, чтобы серверу не пришлось логинить
+  # его заново
   bot-api:
     name: sublya-bot_bot-api
     external: true

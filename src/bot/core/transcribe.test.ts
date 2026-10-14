@@ -23,7 +23,7 @@ writeFileSync(audio, 'RIFF')
 
 const noSleep = async () => {}
 
-/** A fetch that answers with the given responses in turn and remembers the requests. */
+/** fetch, который по очереди отвечает переданными ответами и запоминает запросы. */
 function server(...responses: Response[]) {
 	const seen: { url: string; init: RequestInit }[] = []
 	const fetch = async (url: string | URL | Request, init?: RequestInit) => {

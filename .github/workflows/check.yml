@@ -1,7 +1,7 @@
 name: Check
 
-# On main the deploy workflow calls these checks before shipping,
-# so a separate run there would be a duplicate.
+# На main эти проверки вызывает деплой перед выкаткой,
+# так что отдельный прогон там был бы дублем.
 on:
   push:
     branches-ignore: [main]
@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      # Ubuntu's ffmpeg is built with libass, so the bot's render tests run too.
+      # ffmpeg в Ubuntu собран с libass, поэтому тесты рендера бота тоже прогоняются.
       - uses: aimuzov-projects/infra-site-kit/check@v1
         with:
           apt-packages: ffmpeg

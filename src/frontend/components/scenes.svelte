@@ -2,7 +2,7 @@
 	import { flushSync, onMount } from 'svelte'
 
 	type Props = {
-		/** The caption the second scene types out. */
+		/** Подпись, которую набирает вторая сцена. */
 		caption: string
 	}
 
@@ -10,8 +10,8 @@
 
 	const words = ['вкусным', 'обедом.']
 
-	// The scenes play only while on screen: the first is pure CSS, the second types its
-	// caption, the third lights its subtitles word by word.
+	// Сцены играют, только пока видны на экране: первая -- чистый CSS, вторая набирает
+	// подпись, третья подсвечивает субтитры по слову.
 	let running = $state([false, false, false])
 	let typed = $state('')
 	let lit = $state(-1)
@@ -37,6 +37,7 @@
 	function lighting() {
 		let i = 0
 		const step = () => {
+			// Лишний шаг (`words.length`) -- пауза, когда не подсвечено ни одно слово.
 			lit = i++ % (words.length + 1)
 			timers[2] = setTimeout(step, 650)
 		}
@@ -44,14 +45,15 @@
 		step()
 	}
 
-	// stops a scene, and starts it from the beginning when asked to
+	// Останавливает сцену, а если попросили -- запускает её с начала.
 	function run(n: number, on: boolean) {
 		running[n] = false
 		clearTimeout(timers[n])
 
 		if (!on) return
 
-		// the class has to leave the DOM and come back for the CSS animations to restart
+		// Чтобы CSS-анимации перезапустились, класс должен уйти из DOM и вернуться:
+		// `flushSync` снимает его сразу, а чтение `offsetWidth` форсирует reflow.
 		flushSync()
 		void scenes[n].offsetWidth
 		running[n] = true

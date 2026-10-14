@@ -1,4 +1,4 @@
-// One background worker, one job at a time: parallel ffmpeg only slows everyone.
+// Один фоновый воркер и одна задача за раз: параллельный ffmpeg только тормозит всех.
 
 import { existsSync } from 'node:fs'
 import { readdir, readFile, rm, stat, unlink, writeFile } from 'node:fs/promises'
@@ -22,7 +22,7 @@ import { isStyle } from '#shared/subtitles.ts'
 const IDLE_POLL = 5000
 const CLEANUP_EVERY = 3600 * 1000
 
-/** A failure the user can understand; the message goes to them as is. */
+/** Ошибка, понятная пользователю: её сообщение уходит ему как есть. */
 export class UserError extends Error {}
 
 export const resultKeyboard = (jobId: number): InlineKeyboardMarkup => ({
@@ -34,6 +34,10 @@ export const resultKeyboard = (jobId: number): InlineKeyboardMarkup => ({
 	],
 })
 
+/**
+ * Папка задачи. Перерендеры работают в папке задачи, получившей видео,
+ * там же лежит кеш распознавания.
+ */
 export const jobDir = (settings: Settings, job: Job) => join(jobsDir(settings), String(rootId(job)))
 
 export type WorkerApi = Pick<
@@ -51,7 +55,7 @@ export class Worker {
 	readonly api: WorkerApi
 	readonly db: Db
 	readonly settings: Settings
-	/** How often the progress message changes its line; Telegram is fine with an edit this rare. */
+	/** Как часто прогресс меняет строку, такие редкие правки Telegram переносит спокойно. */
 	progressEvery = 4000
 	private wakeUp: (() => void) | null = null
 
@@ -61,11 +65,17 @@ export class Worker {
 		this.settings = settings
 	}
 
-	/** A new job is queued: stop waiting for the next poll. */
+	/** В очереди новая задача: не ждём следующего опроса. */
 	wake() {
 		this.wakeUp?.()
 	}
 
+	/**
+	 * Разбирает очередь, пока не придёт `signal`.
+	 *
+	 * Задачи, прерванные рестартом, сначала возвращаются в очередь. Когда очередь пуста,
+	 * ждём `IDLE_POLL` или {@link Worker#wake}, смотря что наступит раньше.
+	 */
 	async run(signal?: AbortSignal): Promise<void> {
 		const requeued = this.db.requeueRunning()
 
@@ -86,6 +96,10 @@ export class Worker {
 		}
 	}
 
+	/**
+	 * Выполняет задачу и не бросает: ошибка уходит пользователю текстом,
+	 * а ошибки STT, ffmpeg и всё неожиданное ещё и админам.
+	 */
 	async process(job: Job): Promise<void> {
 		try {
 			await this.handle(job)
@@ -117,7 +131,7 @@ export class Worker {
 		} else {
 			const { maxDuration, sttDailyMinutes } = this.settings
 
-			// documents come without a duration, so the limit is checked again here
+			// Документы приходят без длительности, поэтому лимит проверяем ещё раз здесь.
 			if ((await duration(video)) > maxDuration) throw new UserError(texts.TOO_LONG(Math.floor(maxDuration / 60)))
 
 			if (this.db.sttSecondsToday() >= sttDailyMinutes * 60) throw new UserError(texts.STT_LIMIT)
@@ -146,15 +160,15 @@ export class Worker {
 
 		this.db.finish(job.id, 'done')
 		await this.dropProgress(job, true)
-		// the result carries the buttons and the job folder keeps the input, so the original is
-		// clutter; on a failure it stays for the user to send again
+		// Кнопки теперь у результата, а входное видео лежит в папке задачи, так что исходник
+		// только мешает. При ошибке он остаётся, чтобы пользователь мог прислать его снова.
 		await this.drop(job, job.source_msg_id, 'source')
 
-		// a video note can't be swapped in place, so the old one goes once the new one is out
+		// Кружок нельзя заменить на месте, поэтому старый удаляем, когда новый уже ушёл.
 		if (!inPlace) await this.drop(job, job.replace_msg_id, 'old result')
 	}
 
-	/** Sends the result; true if it took the place of the old one in the same message. */
+	/** Отправляет результат, `true`, если он встал на место старого в том же сообщении. */
 	async send(job: Job, out: string, transcript: Transcript): Promise<boolean> {
 		const [w, h] = transcript.size
 		const seconds = Math.round(transcript.duration)
@@ -172,14 +186,15 @@ export class Worker {
 			} catch (e) {
 				if (!isBadRequest(e)) throw e
 
-				// users who closed voice messages in privacy settings can't get video notes
+				// Тем, кто закрыл голосовые в настройках приватности, кружки не доставляются.
 				console.warn(`video note for job ${job.id} refused, sending a video`)
 			}
 		}
 
 		const video = { width: w, height: h, duration: seconds, supports_streaming: true }
 
-		// a re-render takes the place of the video it came from, so the chat keeps one result
+		// Перерендер встаёт на место видео, из которого вырос,
+		// чтобы в чате оставался один результат.
 		if (job.replace_msg_id !== null) {
 			try {
 				const media = InputMediaBuilder.video(new InputFile(out, 'sublya.mp4'), video)
@@ -190,7 +205,7 @@ export class Worker {
 			} catch (e) {
 				if (!isBadRequest(e)) throw e
 
-				// the user deleted that message
+				// Пользователь удалил то сообщение.
 				console.warn(`could not replace the result of job ${job.id}, sending a new one`)
 			}
 		}
@@ -207,7 +222,7 @@ export class Worker {
 		try {
 			await this.api.sendMessage(job.chat_id, userText)
 		} catch (e) {
-			// the user may have blocked the bot; the queue goes on either way
+			// Пользователь мог заблокировать бота, очередь в любом случае идёт дальше.
 			console.error(`could not tell user ${job.user_id} about job ${job.id}`, e)
 		}
 
@@ -217,6 +232,7 @@ export class Worker {
 	async notifyAdmins(text: string) {
 		for (const admin of this.settings.adminIds) {
 			try {
+				// Telegram не принимает сообщения длиннее 4096 символов, поэтому шлём хвост.
 				await quiet(() => this.api.sendMessage(admin, text.slice(-4000)))
 			} catch (e) {
 				console.error(`could not notify admin ${admin}`, e)
@@ -224,14 +240,19 @@ export class Worker {
 		}
 	}
 
-	// the handler records the message right after queueing, so it may land after we start
+	// Обработчик записывает сообщение сразу после постановки в очередь,
+	// поэтому оно может появиться уже после того, как мы начали.
 	private progressMsg = (job: Job) => this.db.getJob(job.id)?.progress_msg_id ?? null
 
-	// a re-render keeps its progress in the caption of the result it replaces
+	// Перерендер держит прогресс в подписи результата, который заменяет.
 	private inCaption = (job: Job, msgId: number) => msgId === job.replace_msg_id
 
-	/** Runs a stage while the progress message cycles through its lines, so a long render
-	 * doesn't look frozen. The last edit lands before the stage returns, never after the result. */
+	/**
+	 * Выполняет этап, пока сообщение прогресса перебирает свои строки,
+	 * чтобы долгий рендер не выглядел зависшим.
+	 *
+	 * Последняя правка приходит до возврата из этапа, никогда после результата.
+	 */
 	private async stage<T>(job: Job, lines: readonly string[], work: () => Promise<T>): Promise<T> {
 		const done = new AbortController()
 		const ticker = (async () => {
@@ -261,14 +282,16 @@ export class Worker {
 			if (this.inCaption(job, msgId)) await this.api.editMessageCaption(job.chat_id, msgId, { caption: text })
 			else await this.api.editMessageText(job.chat_id, msgId, text)
 		} catch (e) {
-			// the progress message is a courtesy: the same text again, a deleted message, a blocked
-			// bot or a network hiccup must not cost the user their video
+			// Сообщение прогресса просто любезность: тот же текст ещё раз, удалённое сообщение,
+			// заблокированный бот или сбой сети не должны стоить пользователю его видео.
 			if (!isBadRequest(e)) console.warn(`could not update the progress of job ${job.id}`, e)
 		}
 	}
 
-	/** A caption goes away with the new video; without one the old result
-	 * gets its caption and buttons back. */
+	/**
+	 * Убирает сообщение прогресса. Если прогресс жил в подписи, она уходит
+	 * вместе с новым видео, а без него старому результату возвращаются подпись и кнопки.
+	 */
 	private async dropProgress(job: Job, delivered: boolean) {
 		const msgId = this.progressMsg(job)
 
@@ -297,7 +320,10 @@ export class Worker {
 	}
 }
 
-/** Removes job folders idle for ttl seconds. Re-renders touch them, so they live on. */
+/**
+ * Удаляет папки задач, которые не трогали `ttl` секунд.
+ * Перерендеры их трогают, поэтому такие папки живут дальше.
+ */
 export async function cleanup(dir: string, ttl: number, now = Date.now() / 1000): Promise<number> {
 	let removed = 0
 
@@ -315,6 +341,7 @@ export async function cleanup(dir: string, ttl: number, now = Date.now() / 1000)
 	return removed
 }
 
+/** Раз в час чистит старые папки задач, пока не придёт `signal`. */
 export async function cleanupLoop(settings: Settings, signal?: AbortSignal) {
 	while (!signal?.aborted) {
 		const removed = await cleanup(jobsDir(settings), settings.jobTtl)

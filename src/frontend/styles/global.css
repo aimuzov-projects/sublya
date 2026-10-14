@@ -1,6 +1,7 @@
-/* Montserrat lives next to the page and is preloaded, so it's usually there before the first
-   paint. Until it is, text is set in Arial stretched to Montserrat's metrics, so lines break
-   the same way and nothing jumps when the real font arrives. */
+/* Montserrat лежит рядом со страницей и грузится через preload, поэтому
+   обычно успевает до первой отрисовки. Пока его нет, текст набран Arial,
+   подогнанным под метрики Montserrat, то есть строки переносятся так же
+   и ничего не прыгает, когда приезжает настоящий шрифт. */
 @font-face {
 	font-family: Montserrat;
 	font-weight: 500 900;
@@ -57,7 +58,7 @@ body {
 	background: radial-gradient(1200px 700px at 85% -10%, #3b1d6b 0%, transparent 60%), var(--bg);
 	-webkit-font-smoothing: antialiased;
 }
-/* the teal glow is pinned to the screen; lib/glow.ts circles it as the page scrolls */
+/* бирюзовое свечение прибито к экрану, `lib/glow.ts` крутит его при прокрутке */
 body::before {
 	pointer-events: none;
 	content: '';
@@ -84,7 +85,7 @@ h3 {
 	text-wrap: balance;
 	letter-spacing: -0.02em;
 }
-/* no paragraph ends on a lone word */
+/* чтобы абзац не заканчивался одиноким словом */
 p {
 	text-wrap: pretty;
 }
@@ -92,7 +93,7 @@ h1 {
 	font-size: clamp(2.2rem, 5.5vw, 4rem);
 	text-transform: uppercase;
 
-	/* on the narrowest phones "как в тиктоке —" still fits one line */
+	/* на самых узких телефонах "как в тиктоке —" всё равно влезает в одну строку */
 	@media (--below-sm) {
 		font-size: min(2.2rem, 9vw);
 	}
@@ -119,7 +120,7 @@ h3 {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	/* a fixed height: the sticky phone in .stage is centred below it */
+	/* высота фиксированная, так как под ней центрируется липкий телефон в `.stage` */
 	height: 64px;
 	padding: 0 max(16px, calc((100vw - 1120px) / 2));
 	border-bottom: 1px solid rgba(255, 255, 255, 0.06);
@@ -137,7 +138,7 @@ h3 {
 	text-transform: uppercase;
 	letter-spacing: 0.02em;
 }
-/* "саб" as in subtitles: the pun the name is built on */
+/* "саб" как в субтитрах: на этом каламбуре построено название */
 .logo .hl {
 	text-shadow: none;
 }
@@ -184,7 +185,7 @@ h3 {
 	border-radius: 50%;
 	color: var(--muted);
 
-	/* the code is a click away in the features and the footer, the bot button matters more */
+	/* до кода и так один клик из карточек и подвала, а кнопка бота важнее */
 	@media (--below-header) {
 		display: none;
 	}
@@ -215,7 +216,8 @@ h3 {
 	color: var(--text);
 }
 
-/* a card thrown off the deck flies past the screen edge; clip, unlike hidden, keeps the deck sticky */
+/* сброшенная с колоды карточка улетает за край экрана,
+   clip в отличие от hidden не ломает липкость колоды */
 main {
 	overflow-x: clip;
 }
