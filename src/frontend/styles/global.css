@@ -167,6 +167,7 @@ h3 {
 .btn-small {
 	padding: 9px 18px;
 	font-size: 0.9rem;
+	white-space: nowrap;
 	box-shadow: none;
 }
 
@@ -182,6 +183,11 @@ h3 {
 	height: 40px;
 	border-radius: 50%;
 	color: var(--muted);
+
+	/* the code is a click away in the features and the footer, the bot button matters more */
+	@media (--below-header) {
+		display: none;
+	}
 }
 .gh:hover {
 	color: var(--text);
