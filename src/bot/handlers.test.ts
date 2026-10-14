@@ -137,13 +137,34 @@ test('fixing the text re-renders with the new text', async () => {
 	await s.message({ text: 'новый текст' })
 	const rerender = s.db.getJob(job + 1)!
 	assert.deepEqual([rerender.parent_id, rerender.text, rerender.status], [job, 'новый текст', 'queued'])
-	assert.equal(rerender.source_msg_id, null, "the user's text is not a video to clean up")
+	assert.equal(rerender.source_msg_id, 1, "the user's text goes away with the result")
+	assert.equal(rerender.replace_msg_id, 7, 'the new video takes the place of the old one')
+	assert.equal(s.named('deleteMessage').length, 3, 'the prompt, the transcript and the reminder')
+})
+
+test('the prompt and the transcript go away once the text comes', async () => {
+	const s = setup()
+	await s.press(`fix:${done(s)}`)
+	assert.deepEqual(s.replies().slice(-2)[0], texts.FIX_PROMPT)
+	const before = s.replies().length
+	await s.message({ text: 'новый текст' })
+	assert.equal(s.named('deleteMessage').length, 2)
+	assert.equal(s.replies().length, before, 'the queue goes into the caption, nothing new is posted')
+})
+
+test('a second press on the fix button replaces the first prompt', async () => {
+	const s = setup()
+	const job = done(s)
+	await s.press(`fix:${job}`)
+	await s.press(`fix:${job}`)
+	assert.equal(s.named('deleteMessage').length, 2)
 })
 
 test('cancel leaves the fix', async () => {
 	const s = setup()
 	await s.press(`fix:${done(s)}`)
 	await s.message({ text: '/cancel', entities: [{ type: 'bot_command', offset: 0, length: 7 }] })
+	assert.equal(s.named('deleteMessage').length, 2, 'the prompt is cleaned up')
 	await s.message({ text: 'просто текст' })
 	assert.deepEqual(s.replies().slice(-2), [texts.CANCELLED, texts.NOT_VIDEO])
 })
@@ -155,6 +176,22 @@ test('another style re-renders the same video', async () => {
 	const rerender = s.db.getJob(job + 1)!
 	assert.deepEqual([rerender.parent_id, rerender.style, rerender.lang], [job, 'big', 'ru'])
 	assert.equal(rerender.source_msg_id, null)
+	assert.deepEqual([rerender.replace_msg_id, rerender.replace_job_id], [7, job])
+	assert.equal(rerender.progress_msg_id, 7, 'the progress lives in the caption of the result')
+	assert.deepEqual(
+		s.named('editMessageCaption').map((p) => [p.message_id, p.caption]),
+		[[7, texts.QUEUED(1)]],
+	)
+	assert.deepEqual(s.replies(), [], 'nothing new in the chat')
+})
+
+test('a gone result gets its progress in a new message', async () => {
+	const s = setup()
+	const job = done(s)
+	s.fail('editMessageCaption', 400, 'Bad Request: message to edit not found')
+	await s.press(`st:${job}:big`)
+	assert.deepEqual(s.replies(), [texts.QUEUED(1)])
+	assert.notEqual(s.db.getJob(job + 1)!.progress_msg_id, 7)
 })
 
 test("someone else's video can't be restyled", async () => {

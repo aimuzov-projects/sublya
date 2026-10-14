@@ -12,7 +12,7 @@ import { toJson } from '#bot/core/models.ts'
 import { Db } from '#bot/db.ts'
 import { apiError, fakeBot, networkError } from '#bot/testing.ts'
 import * as texts from '#bot/texts.ts'
-import { cleanup, Worker } from '#bot/worker.ts'
+import { cleanup, resultKeyboard, Worker } from '#bot/worker.ts'
 
 function setup() {
 	const dataDir = mkdtempSync(join(tmpdir(), 'sublya-'))
@@ -32,7 +32,12 @@ function setup() {
 const queue = (
 	db: Db,
 	inputPath: string,
-	{ parentId = null as number | null, note = false, sourceMsgId = null as number | null } = {},
+	{
+		parentId = null as number | null,
+		note = false,
+		sourceMsgId = null as number | null,
+		replaceMsgId = null as number | null,
+	} = {},
 ) => {
 	const job = db.submit({
 		userId: 1,
@@ -45,6 +50,7 @@ const queue = (
 		dailyLimit: 10,
 		note,
 		sourceMsgId,
+		replaceMsgId,
 	})
 	db.setProgressMsg(job, 500)
 	return job
@@ -71,6 +77,44 @@ test('a failed job keeps the original video', async () => {
 		[500],
 		'the user may want to send it again',
 	)
+})
+
+/** A re-render of the result in message 40, with its progress in that message's caption. */
+const captioned = (db: Db, inputPath: string) => {
+	const job = db.submit({
+		userId: 1,
+		chatId: 1,
+		inputPath,
+		text: null,
+		style: 'big',
+		lang: null,
+		parentId: null,
+		dailyLimit: 10,
+		replaceMsgId: 40,
+		replaceJobId: 7,
+	})
+	db.setProgressMsg(job, 40)
+	return job
+}
+
+test('a failed re-render gives the old result its caption and buttons back', async () => {
+	const { db, worker, named, settings } = setup()
+	captioned(db, join(jobsDir(settings), '1', 'input.mp4'))
+	await worker.process(db.nextJob()!)
+	assert.deepEqual(named('deleteMessage'), [], 'the old result stays')
+	assert.deepEqual(named('editMessageCaption'), [
+		{ chat_id: 1, message_id: 40, caption: '', reply_markup: resultKeyboard(7) },
+	])
+})
+
+test('the progress of a re-render changes the caption', async () => {
+	const { db, worker, named } = setup()
+	worker.progressEvery = 5
+	const job = db.getJob(captioned(db, 'in.mp4'))!
+	type Stage = (j: typeof job, lines: readonly string[], work: () => Promise<void>) => Promise<void>
+	await (worker as unknown as { stage: Stage }).stage(job, texts.RENDERING, () => delay(20))
+	assert.ok(named('editMessageCaption').length > 0)
+	assert.deepEqual(named('editMessageText'), [])
 })
 
 /** A job folder with a silent video and its transcript, so a render needs no STT. */
@@ -139,13 +183,36 @@ test('a delivered video drops the original, even when it is already gone', async
 	)
 })
 
-function sent(note: boolean) {
+function sent(note: boolean, replaceMsgId: number | null = null) {
 	const s = setup()
 	const out = join(s.settings.dataDir, 'out.mp4')
 	writeFileSync(out, 'x')
-	const job = s.db.getJob(queue(s.db, 'in.mp4', { note }))!
+	const job = s.db.getJob(queue(s.db, 'in.mp4', { note, replaceMsgId }))!
 	return { ...s, out, job }
 }
+
+test('a re-render replaces the video it came from', async () => {
+	const { worker, job, out, named } = sent(false, 40)
+	await worker.send(job, out, markTranscript())
+	const [edit] = named('editMessageMedia')
+	assert.equal(edit.message_id, 40)
+	assert.equal((edit.media as { type: string }).type, 'video')
+	assert.deepEqual(named('sendVideo'), [])
+})
+
+test('a deleted result gets a new message instead', async () => {
+	const { worker, job, out, named, fail } = sent(false, 40)
+	fail('editMessageMedia', 400, 'Bad Request: message to edit not found')
+	await worker.send(job, out, markTranscript())
+	assert.equal(named('sendVideo').length, 1)
+})
+
+test('a video note is sent anew: Telegram cannot swap one in place', async () => {
+	const { worker, job, out, named } = sent(true, 40)
+	await worker.send(job, out, { ...markTranscript(), size: [384, 384] })
+	assert.deepEqual(named('editMessageMedia'), [])
+	assert.equal(named('sendVideoNote').length, 1)
+})
 
 test('a video note goes back as a video note', async () => {
 	const { worker, job, out, named } = sent(true)
@@ -209,6 +276,6 @@ test('a lost progress message leaves a delivered video done', async () => {
 	const job = db.getJob(queue(db, 'in.mp4'))!
 	db.finish(job.id, 'done')
 	// what handle() does after the video went out
-	await (worker as unknown as { dropProgress: (j: typeof job) => Promise<void> }).dropProgress(job)
+	await (worker as unknown as { dropProgress: (j: typeof job, d: boolean) => Promise<void> }).dropProgress(job, true)
 	assert.equal(db.getJob(job.id)!.status, 'done')
 })
