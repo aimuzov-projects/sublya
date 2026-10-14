@@ -91,6 +91,11 @@ p {
 h1 {
 	font-size: clamp(2.2rem, 5.5vw, 4rem);
 	text-transform: uppercase;
+
+	/* on the narrowest phones "как в тиктоке —" still fits one line */
+	@media (--below-sm) {
+		font-size: min(2.2rem, 9vw);
+	}
 }
 h2 {
 	margin-bottom: 1rem;

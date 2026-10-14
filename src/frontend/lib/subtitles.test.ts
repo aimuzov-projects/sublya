@@ -59,6 +59,11 @@ test('the last word of a screen lingers, but not into the next screen', () => {
 	assert.equal(at(list, 3.1)?.screen, list[1])
 })
 
+test('a short word stays on the line of the next one', () => {
+	const page: Word[] = ['ездили', 'в', 'Самару'].map((text, i) => ({ text, start: i, end: i + 0.5, line_end: false }))
+	assert.deepEqual(screens(page, presets.classic)[0].glue, [false, true, false])
+})
+
 test('words are shown in capitals, as the bot burns them', () => {
 	assert.deepEqual(screens(words, presets.classic)[0].words, ['РАЗ', 'ДВА.'])
 })

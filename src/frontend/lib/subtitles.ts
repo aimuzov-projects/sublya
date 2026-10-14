@@ -1,6 +1,8 @@
 // The bot's subtitle layout, drawn by the page over the original video instead of burning it
 // in: the same screens and the same four styles as src/bot/sublya/core/{align,render}.py.
 
+import { typographText } from '#frontend/lib/typograph.ts'
+
 export type Word = { text: string; start: number; end: number; line_end: boolean }
 
 export type Preset = {
@@ -56,6 +58,8 @@ export function paginate(words: Word[], perPage = PER_PAGE, maxChars = MAX_CHARS
 
 export type Screen = {
 	words: string[]
+	/** Whether the space after each word must not break: a short word stays with the next one. */
+	glue: boolean[]
 	/** When each word lights up and goes out, as the ASS events of the bot. */
 	spans: [number, number][]
 }
@@ -67,6 +71,9 @@ export function screens(words: Word[], preset: Preset): Screen[] {
 		const nextPage = pages[n + 1]?.[0].start ?? Infinity
 		return {
 			words: page.map((w) => w.text.toUpperCase()),
+			glue: page.map(
+				(w, i) => i + 1 < page.length && !typographText(`${w.text} ${page[i + 1].text}`).includes(' '),
+			),
 			spans: page.map((w, i) => [
 				w.start,
 				i + 1 < page.length ? page[i + 1].start : Math.min(w.end + TAIL, nextPage),

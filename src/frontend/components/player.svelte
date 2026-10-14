@@ -80,8 +80,9 @@
 			{#key shown.screen}
 				<p class="overlay__line">
 					{#each shown.screen.words as word, i (i)}
-						{#if i}{' '}{/if}<span class="overlay__word" class:overlay__word--lit={i === shown.lit}
-							>{word}</span
+						{#if i}{shown.screen.glue[i - 1] ? '\u00a0' : ' '}{/if}<span
+							class="overlay__word"
+							class:overlay__word--lit={i === shown.lit}>{word}</span
 						>
 					{/each}
 				</p>
