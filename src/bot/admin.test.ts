@@ -214,3 +214,22 @@ test('a bonus the user never heard of because of the network is still a bonus, s
 test('a signature of non-ASCII letters is refused, not a crash', () => {
 	assert.equal(verifyInitData(`user=%7B%22id%22%3A7%7D&auth_date=${NOW}&hash=${'я'.repeat(64)}`, TOKEN, NOW), null)
 })
+
+test('health answers without a signature while the Bot API does', async () => {
+	const { get } = await client()
+	const r = await get('/admin/api/health')
+
+	assert.deepEqual([r.status, await r.json()], [200, { ok: true }])
+})
+
+test('health fails when the Bot API or the tunnel is down', async () => {
+	const { get, answer } = await client()
+
+	answer('getMe', () => {
+		throw networkError('getMe')
+	})
+
+	const r = await get('/admin/api/health')
+
+	assert.deepEqual([r.status, await r.json()], [503, { ok: false }])
+})

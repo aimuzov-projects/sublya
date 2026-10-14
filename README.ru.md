@@ -137,6 +137,8 @@ SUBLYA_FFMPEG=/opt/homebrew/opt/ffmpeg-full/bin/ffmpeg demo/make-demo.sh name vi
 
 Сервер projects из [infra-server](https://github.com/aimuzov-projects/infra-server): пуш в `main` запускает `deploy.yml`, тот прогоняет проверки и заходит по SSH, где ключ привязан к [`deploy/remote.sh`](deploy/remote.sh). Скрипт подтягивает `main` в `/srv/sublya` и пересобирает [`deploy/docker-compose.yml`](deploy/docker-compose.yml): сайт в nginx, бот, локальный Bot API и туннель tun2socks, который выводит трафик бота к Telegram и OpenRouter через общий VPN-выход. Домен и TLS на общем Caddy, он же отправляет `/admin` боту. Секреты лежат в `/srv/sublya/.env`, база и файлы задач — в `/srv/sublya/data`. Подробности и первый деплой: [docs/deploy.md](docs/deploy.md).
 
+Раз в час [`monitor.yml`](.github/workflows/monitor.yml) снаружи проверяет, что отвечают сайт и `/admin/api/health`: бот запрашивает у Telegram `getMe` через локальный Bot API и туннель. Упавший запуск и есть алерт, GitHub пришлёт о нём письмо.
+
 Откатить: `git revert` плохого коммита в `main` и пуш.
 
 ## Лицензия
