@@ -76,6 +76,8 @@ Before committing, the same checks as in CI:
 npm run format:check && npm run lint:js && npm run lint:css && npm run check && npm test
 ```
 
+The e2e tests in [`e2e`](e2e) build the site and open it in Chromium with the shared checks of [infra-site-kit](https://github.com/aimuzov-projects/infra-site-kit): the sitemap pages answer without console errors and pass axe, Yandex Metrica waits for the first interaction. The browser is installed once with `npx playwright install chromium`, then `npm run test:e2e`.
+
 Render tests need ffmpeg with libass and are skipped otherwise. Homebrew's `ffmpeg` has no libass, `ffmpeg-full` does:
 
 ```sh

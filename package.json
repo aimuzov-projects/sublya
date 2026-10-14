@@ -13,6 +13,7 @@
 		"preview": "astro preview",
 		"check": "astro check && svelte-check",
 		"test": "node --test 'src/**/*.test.ts'",
+		"test:e2e": "playwright test",
 		"bot": "node --watch --env-file-if-exists=.env src/bot/main.ts",
 		"astro": "astro",
 		"format": "oxlint --fix && prettier --write .",
@@ -26,11 +27,12 @@
 		"grammy": "1.46.0"
 	},
 	"devDependencies": {
-		"@aimuzov-projects/infra-site-kit": "github:aimuzov-projects/infra-site-kit#v1.6.1",
+		"@aimuzov-projects/infra-site-kit": "github:aimuzov-projects/infra-site-kit#v1.8.0",
 		"@astrojs/check": "0.9.10",
 		"@astrojs/sitemap": "3.7.4",
 		"@astrojs/svelte": "9.0.1",
 		"@csstools/postcss-global-data": "4.0.0",
+		"@playwright/test": "1.64.0",
 		"@types/node": "26.6.5",
 		"astro": "7.3.7",
 		"oxlint": "1.87.0",
