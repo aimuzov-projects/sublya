@@ -6,7 +6,8 @@ builds and runs both: the site in nginx, the bot next to its local Bot API serve
 and the domains belong to the shared Caddy from
 [infra-server](https://github.com/aimuzov-projects/infra-server).
 
-Every push to `main` deploys it: `.github/workflows/deploy.yml` runs the checks, then logs into
+Every release deploys it: merging the release PR that release-please keeps open runs
+`.github/workflows/deploy.yml`, which runs the checks, then logs into
 the server with the `DEPLOY_SSH_KEY` secret. That key runs [`deploy/site.sh`](https://github.com/aimuzov-projects/infra-server/blob/main/deploy/site.sh) of
 infra-server, the deploy script shared by the sites, through the server's `authorized_keys`:
 
@@ -14,8 +15,8 @@ infra-server, the deploy script shared by the sites, through the server's `autho
 command="/srv/infra-server/deploy/site.sh sublya",restrict ssh-ed25519 ... github-actions@sublya
 ```
 
-The script pulls `main` and rebuilds the containers. To deploy without a push:
-`gh workflow run deploy.yml`.
+The script checks out the release tag and rebuilds the containers. To deploy by hand, e.g. to
+roll back: `gh workflow run deploy.yml -f tag=v1.2.3`.
 
 ## Why there's a tunnel
 

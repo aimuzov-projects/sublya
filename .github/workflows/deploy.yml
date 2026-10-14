@@ -1,9 +1,16 @@
 name: Deploy
 
+# A merge into main only updates the release PR. Merging that PR cuts a release,
+# and the release goes to the server. A manual run deploys any release tag, e.g. to
+# roll back.
 on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to deploy, e.g. v1.2.0. Empty deploys the newest main.
+        required: false
 
 # Deploys run one by one, a new one doesn't abort a build that has already started.
 concurrency:
@@ -14,14 +21,33 @@ permissions:
   contents: read
 
 jobs:
+  release:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: write
+    outputs:
+      created: ${{ steps.release.outputs.created }}
+      tag: ${{ steps.release.outputs.tag }}
+    steps:
+      - id: release
+        uses: aimuzov-projects/infra-site-kit/release@v1
+
   check:
+    needs: release
+    if: needs.release.outputs.created == 'true'
     uses: ./.github/workflows/check.yml
 
   # Until the server is ready (key, clone in /srv, site in Caddy), the deploy is skipped.
   # It's enabled by the repo variable DEPLOY_ENABLED=true.
   deploy:
-    needs: check
-    if: vars.DEPLOY_ENABLED == 'true'
+    needs: [release, check]
+    if: >-
+      always() && vars.DEPLOY_ENABLED == 'true' &&
+      (github.event_name == 'workflow_dispatch' || needs.check.result == 'success')
     runs-on: ubuntu-latest
     timeout-minutes: 20
     environment:
@@ -32,6 +58,7 @@ jobs:
         with:
           ssh-key: ${{ secrets.DEPLOY_SSH_KEY }}
           url: https://sublya.aimuzov.online/
+          ref: ${{ needs.release.outputs.tag || inputs.tag }}
 
       # The bot has no address of its own; its health check answers through Caddy and reaches
       # Telegram through the local Bot API server and the tunnel.
