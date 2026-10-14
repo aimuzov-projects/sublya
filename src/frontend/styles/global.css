@@ -81,7 +81,12 @@ h3 {
 	margin: 0;
 	font-weight: 900;
 	line-height: 1.1;
+	text-wrap: balance;
 	letter-spacing: -0.02em;
+}
+/* no paragraph ends on a lone word */
+p {
+	text-wrap: pretty;
 }
 h1 {
 	font-size: clamp(2.2rem, 5.5vw, 4rem);

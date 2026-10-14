@@ -1,8 +1,10 @@
 ---
 import { site } from '#frontend/data/site.ts'
+import { typographText } from '#frontend/lib/typograph.ts'
 import FeatureCard from '#frontend/components/feature-card.svelte'
 import '#frontend/styles/features.css'
 
+// the card prints its text word by word itself, past the middleware, so it comes in already set
 const cards = [
 	{
 		title: 'Паузы вместо догадок',
@@ -26,7 +28,7 @@ const cards = [
 		icon: ['m16 18 6-6-6-6M8 6l-6 6 6 6'],
 		repos: true,
 	},
-]
+].map((card) => ({ ...card, title: typographText(card.title), text: typographText(card.text) }))
 ---
 
 <section class="features">

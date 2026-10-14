@@ -2,23 +2,25 @@
 import { getCollection } from 'astro:content'
 import Deck from '#frontend/components/deck.svelte'
 import { site } from '#frontend/data/site.ts'
+import { typographText } from '#frontend/lib/typograph.ts'
 import '#frontend/styles/stage.css'
 
-// the deck reads its demos from here, so the page needs no request for them
-const demos = (await getCollection('demos')).map(({ data }) => data)
+// The deck reads its demos from here, so the page needs no request for them. Its text arrives
+// set: the island prints it itself, past the typograph in the middleware.
+const demos = (await getCollection('demos')).map(({ data }) => ({ ...data, note: typographText(data.note) }))
 
 const styles = [
 	{ id: 'classic', name: 'Классика', hint: 'белый текст, слово жёлтое' },
 	{ id: 'big', name: 'Крупно', hint: 'больше и выше' },
 	{ id: 'box', name: 'Плашка', hint: 'слово на цветной подложке' },
 	{ id: 'single', name: 'По слову', hint: 'одно слово по центру' },
-]
+].map((style) => ({ ...style, name: typographText(style.name), hint: typographText(style.hint) }))
 ---
 
 <div class="stage">
 	<section class="hero">
 		<h1>
-			Субтитры как&nbsp;в&nbsp;тиктоке — <span class="hl">одним</span> сообщением
+			Субтитры как в тиктоке — <span class="hl">одним</span> сообщением
 		</h1>
 		<p class="lead">
 			Пришли видео в Telegram — бот вернёт его с субтитрами: на экране пара слов, произносимое подсвечено. Свой
@@ -52,7 +54,7 @@ const styles = [
 					<circle cx="12" cy="7.5" r="1"></circle>
 					<circle cx="16.5" cy="10.5" r="1"></circle>
 				</svg>
-				<b>4</b> стиля
+				<b>4</b> стиля
 			</li>
 		</ul>
 	</section>
