@@ -1,0 +1,16 @@
+name: PR meta
+
+# Assigns the pull request and labels it by its title; the logic lives in aimuzov-projects/.github.
+# pull_request_target gives Renovate's pull requests a token that can write; nothing from the
+# pull request is checked out or run.
+on:
+  pull_request_target:
+    types: [opened, reopened, edited]
+
+permissions:
+  pull-requests: write
+  issues: write
+
+jobs:
+  meta:
+    uses: aimuzov-projects/.github/.github/workflows/pr-meta.yml@main
