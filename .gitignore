@@ -3,7 +3,7 @@ dist/
 .astro/
 .DS_Store
 .env
-data/
+/data/
 .venv/
 __pycache__/
 *.pyc
