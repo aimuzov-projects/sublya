@@ -8,9 +8,8 @@ import { site } from '#frontend/data/site.ts'
 	<p>
 		Сабля · <a href={site.repo}>код под лицензией MIT</a> · видео хранятся сутки и удаляются
 	</p>
-	<!-- Код уже по ссылке выше, поэтому подпись автора без repo. -->
 	<p class="credit-line">
-		<Credit />
+		<Credit repo={site.repo} />
 	</p>
 </footer>
 
