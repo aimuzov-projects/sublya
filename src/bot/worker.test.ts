@@ -213,6 +213,33 @@ test('a delivered video drops the original, even when it is already gone', async
 	)
 })
 
+for (const note of [true, false]) {
+	test(`a re-rendered ${note ? 'video note' : 'video'} leaves one result in the chat`, async (t) => {
+		if (!(await hasFilter('ass'))) return t.skip('ffmpeg without libass (set SUBLYA_FFMPEG)')
+
+		const { db, worker, calls, settings } = setup()
+		const { video } = await cachedVideo(settings)
+
+		queue(db, video, { note, replaceMsgId: 40 })
+		await worker.process(db.nextJob()!)
+
+		// the old video note goes after the new one, a video is swapped in place
+		assert.deepEqual(
+			calls.filter((c) => c.method !== 'editMessageText').map((c) => [c.method, c.payload.message_id]),
+			note
+				? [
+						['sendVideoNote', undefined],
+						['deleteMessage', 500],
+						['deleteMessage', 40],
+					]
+				: [
+						['editMessageMedia', 40],
+						['deleteMessage', 500],
+					],
+		)
+	})
+}
+
 function sent(note: boolean, replaceMsgId: number | null = null) {
 	const s = setup()
 	const out = join(s.settings.dataDir, 'out.mp4')
