@@ -20,7 +20,7 @@ Try it: [@sublyarobot](https://t.me/sublyarobot) · site: [sublya.aimuzov.online
 The bot and the landing page are TypeScript on Node from `mise.toml`. The bot runs without a
 build step: [grammY](https://grammy.dev), the built-in `node:sqlite`, ffmpeg with libass.
 The landing page is a static [Astro](https://astro.build) site; tooling follows
-[infra-template-site](https://github.com/aimuzov-projects/infra-template-site): Prettier, oxlint,
+[infra-site-template](https://github.com/aimuzov-projects/infra-site-template): Prettier, oxlint,
 stylelint, `node --test`.
 
 ```
