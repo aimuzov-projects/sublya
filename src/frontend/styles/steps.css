@@ -1,4 +1,4 @@
-.steps ol {
+.steps__list {
 	counter-reset: step;
 	display: grid;
 	grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -7,7 +7,7 @@
 	padding: 0;
 	list-style: none;
 }
-.steps li {
+.steps__item {
 	counter-increment: step;
 	padding: 28px 24px;
 	border: 1px solid var(--line);
@@ -15,7 +15,7 @@
 	color: var(--muted);
 	background: var(--card);
 }
-.steps li::before {
+.steps__item::before {
 	content: counter(step);
 	display: grid;
 	place-items: center;
@@ -27,18 +27,18 @@
 	color: #fff;
 	background: var(--pink);
 }
-.steps li b {
+.steps__name {
 	display: block;
 	margin-bottom: 6px;
 	color: var(--text);
 }
 
 /* Each step shows what it means: scenes.svelte plays a scene while its card is on screen. */
-.steps li {
+.steps__item {
 	position: relative;
 }
 /* the number sits on the card's top edge, clear of the scene */
-.steps li::before {
+.steps__item::before {
 	position: absolute;
 	z-index: 2;
 	top: -16px;
@@ -52,22 +52,22 @@
 		color 0.25s ease,
 		scale 0.25s ease;
 }
-.steps ol {
+.steps__list {
 	padding-top: 16px;
 }
 /* on hover the card rises and lights up, and its scene starts over */
-.steps li {
+.steps__item {
 	transition:
 		transform 0.25s ease,
 		border-color 0.25s ease,
 		background 0.25s ease;
 }
-.steps li:hover {
+.steps__item:hover {
 	transform: translateY(-4px);
 	border-color: #5a4396;
 	background: #2a1c52;
 }
-.steps li:hover::before {
+.steps__item:hover::before {
 	scale: 1.15;
 	color: #140b26;
 	background: var(--yellow);
@@ -115,7 +115,7 @@
 	border-radius: 2px;
 	background: rgba(255, 255, 255, 0.15);
 }
-.upload i {
+.upload__bar {
 	transform-origin: left;
 	transform: scaleX(0);
 	display: block;
@@ -144,7 +144,7 @@
 .scene-send.running .chat-bubble {
 	animation: fly-in 3.6s ease infinite;
 }
-.scene-send.running .upload i {
+.scene-send.running .upload__bar {
 	animation: upload 3.6s ease infinite;
 }
 .scene-send.running .check {
@@ -210,7 +210,7 @@
 	text-transform: uppercase;
 	letter-spacing: 0.08em;
 }
-.field p {
+.field__text {
 	min-height: 3em;
 	margin: 4px 0 0;
 	font-size: 0.95rem;
@@ -269,7 +269,7 @@
 	display: grid;
 	gap: 6px;
 }
-.scene-result .kb span {
+.scene-result .kb__button {
 	padding: 7px 8px;
 	border-radius: 8px;
 	font-size: 0.75rem;
@@ -278,7 +278,7 @@
 	text-align: center;
 	background: rgba(255, 255, 255, 0.08);
 }
-.scene-result.running .kb span:first-child {
+.scene-result.running .kb__button:first-child {
 	animation: nudge 3.2s ease infinite 1s;
 }
 @keyframes nudge {
@@ -294,7 +294,7 @@
 }
 
 @media (--below-stage) {
-	.steps ol {
+	.steps__list {
 		grid-template-columns: 1fr;
 	}
 }
@@ -303,7 +303,7 @@
 	.scene * {
 		animation: none !important;
 	}
-	.scene-send .upload i {
+	.scene-send .upload__bar {
 		transform: none;
 	}
 	.scene-send .check {

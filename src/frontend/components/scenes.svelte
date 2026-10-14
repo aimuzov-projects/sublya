@@ -90,37 +90,37 @@
 	})
 </script>
 
-<ol>
-	<li onpointerenter={(e) => hover(0, e)}>
+<ol class="steps__list">
+	<li class="steps__item" onpointerenter={(e) => hover(0, e)}>
 		<div class="scene scene-send" class:running={running[0]} aria-hidden="true" bind:this={scenes[0]}>
 			<div class="chat-bubble">
 				<div class="clip">
 					<span class="play"></span>
 				</div>
 				<div class="upload">
-					<i></i>
+					<i class="upload__bar"></i>
 				</div>
 				<svg class="check" viewBox="0 0 24 24" aria-hidden="true">
 					<path d="m5 12 5 5 9-10"></path>
 				</svg>
 			</div>
 		</div>
-		<b>Пришли видео</b>Обычным сообщением, файлом или кружком.
+		<b class="steps__name">Пришли видео</b>Обычным сообщением, файлом или кружком.
 	</li>
-	<li onpointerenter={(e) => hover(1, e)}>
+	<li class="steps__item" onpointerenter={(e) => hover(1, e)}>
 		<div class="scene scene-type" class:running={running[1]} aria-hidden="true" bind:this={scenes[1]}>
 			<div class="field">
 				<span class="label">Подпись</span>
-				<p>
+				<p class="field__text">
 					<span class="typed">{typed}</span>
 					<span class="caret"></span>
 				</p>
 			</div>
 		</div>
-		<b>Добавь текст в подпись</b>Если он есть: стих, сценарий, песня. На экране будут твои слова, а тайминги бот
-		возьмёт из речи. Переносы строк станут сменой экрана.
+		<b class="steps__name">Добавь текст в подпись</b>Если он есть: стих, сценарий, песня. На экране будут твои
+		слова, а тайминги бот возьмёт из речи. Переносы строк станут сменой экрана.
 	</li>
-	<li onpointerenter={(e) => hover(2, e)}>
+	<li class="steps__item" onpointerenter={(e) => hover(2, e)}>
 		<div class="scene scene-result" class:running={running[2]} aria-hidden="true" bind:this={scenes[2]}>
 			<div class="frame">
 				<p class="subs">
@@ -130,10 +130,11 @@
 				</p>
 			</div>
 			<div class="kb">
-				<span>✏️ Текст</span>
-				<span>🎨 Стиль</span>
+				<span class="kb__button">✏️ Текст</span>
+				<span class="kb__button">🎨 Стиль</span>
 			</div>
 		</div>
-		<b>Забери ролик</b>Если бот ослышался, нажми «✏️ Текст» и пришли правильный. Видео пересоберётся за секунды.
+		<b class="steps__name">Забери ролик</b>Если бот ослышался, нажми «✏️ Текст» и пришли правильный. Видео
+		пересоберётся за секунды.
 	</li>
 </ol>

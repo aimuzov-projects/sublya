@@ -125,7 +125,7 @@ SUBLYA_FFMPEG=/opt/homebrew/opt/ffmpeg-full/bin/ffmpeg demo/make-demo.sh name vi
 | `TELEGRAM_API_ID`, `TELEGRAM_API_HASH` |                                 | с my.telegram.org, для локального Bot API                                                                     |
 | `DATA_DIR`                             | `data`                          | база SQLite и файлы задач, удаляются через сутки                                                              |
 | `SUBLYA_FFMPEG`, `SUBLYA_FFPROBE`      | из `PATH`                       | ffmpeg должен быть с libass                                                                                   |
-| `SUBLYA_FONTS_DIR`                     |                                 | где libass ищет Montserrat ExtraBold                                                                          |
+| `SUBLYA_FONTS_DIR`                     |                                 | где libass ищет Montserrat ExtraBold, по умолчанию `src/bot/fonts`                                            |
 
 Опечатка в числе или в `ADMIN_IDS` останавливает запуск, а не превращается в пустую настройку.
 

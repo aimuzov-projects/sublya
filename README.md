@@ -127,7 +127,7 @@ Everything comes from the environment; [`.env.example`](.env.example) lists it.
 | `TELEGRAM_API_ID`, `TELEGRAM_API_HASH` |                                 | from my.telegram.org, for the local Bot API server                                                        |
 | `DATA_DIR`                             | `data`                          | SQLite database and job files, removed after 24 hours                                                     |
 | `SUBLYA_FFMPEG`, `SUBLYA_FFPROBE`      | from `PATH`                     | ffmpeg must have libass                                                                                   |
-| `SUBLYA_FONTS_DIR`                     |                                 | where libass looks for Montserrat ExtraBold                                                               |
+| `SUBLYA_FONTS_DIR`                     |                                 | where libass looks for Montserrat ExtraBold, `src/bot/fonts` by default                                   |
 
 A typo in a number or in `ADMIN_IDS` stops the start instead of turning into an empty setting.
 

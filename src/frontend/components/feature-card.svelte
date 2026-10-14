@@ -43,7 +43,7 @@
 	}
 </script>
 
-<article onpointerenter={start} onpointerleave={stop}>
+<article class="cards__item" onpointerenter={start} onpointerleave={stop}>
 	<span class="badge">
 		<svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
 			{#each icon as d (d)}
@@ -55,7 +55,7 @@
 		</svg>
 	</span>
 	<h3>{title}</h3>
-	<p>
+	<p class="cards__text">
 		{#each parts as { part, n }, i (i)}
 			{#if n >= 0}
 				<span class="w" class:lit={lit === n}>{part}</span>

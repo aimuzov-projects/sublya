@@ -196,7 +196,14 @@
 						onpointercancel={release}
 						{@attach holdPlayer(demo.id)}
 					>
-						<img src={url(demo, 'poster', 'webp')} alt="" width="540" height="960" decoding="async" />
+						<img
+							class="card__poster"
+							src={url(demo, 'poster', 'webp')}
+							alt=""
+							width="540"
+							height="960"
+							decoding="async"
+						/>
 					</div>
 				{/each}
 				<Player bind:this={player} screens={subtitles} {preset} />
@@ -204,13 +211,13 @@
 		</div>
 		<div class="deck-nav" hidden={!several}>
 			<button class="nav" type="button" data-go="-1" aria-label="Предыдущее видео" onclick={() => step(-1)}>
-				<svg viewBox="0 0 24 24" aria-hidden="true">
+				<svg class="nav__icon" viewBox="0 0 24 24" aria-hidden="true">
 					<path d="m15 18-6-6 6-6"></path>
 				</svg>
 			</button>
 			<span class="sr-only" aria-live="polite">{(seen % demos.length) + 1} / {demos.length}</span>
 			<button class="nav" type="button" data-go="1" aria-label="Следующее видео" onclick={() => fly(-1)}>
-				<svg viewBox="0 0 24 24" aria-hidden="true">
+				<svg class="nav__icon" viewBox="0 0 24 24" aria-hidden="true">
 					<path d="m9 18 6-6-6-6"></path>
 				</svg>
 			</button>
@@ -225,19 +232,37 @@
 	</p>
 	<p class="note">{top.note}</p>
 	<div class="toggle" role="radiogroup" aria-label="Версия">
-		<button type="button" role="radio" aria-checked={variant === 'before'} onclick={() => (variant = 'before')}>
+		<button
+			class="toggle__option"
+			type="button"
+			role="radio"
+			aria-checked={variant === 'before'}
+			onclick={() => (variant = 'before')}
+		>
 			До
 		</button>
-		<button type="button" role="radio" aria-checked={variant === 'after'} onclick={() => (variant = 'after')}>
+		<button
+			class="toggle__option"
+			type="button"
+			role="radio"
+			aria-checked={variant === 'after'}
+			onclick={() => (variant = 'after')}
+		>
 			После
 		</button>
 	</div>
 	<p class="label">Стиль</p>
 	<div class="styles" role="radiogroup" aria-label="Стиль" aria-disabled={variant === 'before'}>
 		{#each styles as s (s.id)}
-			<button type="button" role="radio" aria-checked={s.id === style} onclick={() => pickStyle(s.id)}>
+			<button
+				class="styles__option"
+				type="button"
+				role="radio"
+				aria-checked={s.id === style}
+				onclick={() => pickStyle(s.id)}
+			>
 				<b>{s.name}</b>
-				<span>{s.hint}</span>
+				<span class="styles__hint">{s.hint}</span>
 			</button>
 		{/each}
 	</div>
