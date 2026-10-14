@@ -15,17 +15,15 @@ export default defineConfig({
 	// Shiki highlighting is incompatible with CSP.
 	markdown: { syntaxHighlight: false },
 	// Astro puts a CSP with hashes of its own scripts and styles into the page <meta>.
-	// The only external source is Yandex Metrika (mc.yandex.ru, yastatic.net).
+	// The Yandex Metrika component from infra-site-kit adds its hash and sources itself.
 	// frame-ancestors doesn't work in <meta>, Caddy blocks embedding via X-Frame-Options.
 	security: {
 		csp: {
-			scriptDirective: { resources: ["'self'", 'https://mc.yandex.ru', 'https://yastatic.net'] },
+			scriptDirective: { resources: ["'self'"] },
 			directives: [
 				"default-src 'self'",
-				"img-src 'self' data: https://mc.yandex.ru",
-				"connect-src 'self' https://mc.yandex.ru",
-				'frame-src blob: https://mc.yandex.ru',
-				'child-src blob: https://mc.yandex.ru',
+				"img-src 'self' data:",
+				"connect-src 'self'",
 				"object-src 'none'",
 				"base-uri 'self'",
 				"form-action 'self'",
