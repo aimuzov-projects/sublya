@@ -1,0 +1,80 @@
+[Script Info]
+ScriptType: v4.00+
+PlayResX: 400
+PlayResY: 400
+WrapStyle: 0
+ScaledBorderAndShadow: yes
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Word,Montserrat ExtraBold,36,&H00FFFFFF,&H00FFFFFF,&H00000000,&H80000000,-1,0,0,0,100,100,0,0,1,3,2,5,48,48,0,1
+Style: Hi,Montserrat ExtraBold,36,&H00FFFFFF,&H00FFFFFF,&H00000000,&H80000000,-1,0,0,0,100,100,0,0,1,3,2,5,48,48,0,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,0:00:00.11,0:00:00.89,Word,,0,0,0,,{\fad(80,0)}{\rHi}РАСУЛ{\r}
+Dialogue: 0,0:00:00.89,0:00:02.26,Word,,0,0,0,,{\fad(80,0)}{\rHi}ГАМЗАТОВ{\r}
+Dialogue: 0,0:00:02.50,0:00:02.85,Word,,0,0,0,,{\fad(80,0)}{\rHi}Я{\r}
+Dialogue: 0,0:00:02.85,0:00:03.31,Word,,0,0,0,,{\fad(80,0)}{\rHi}ХОЧУ,{\r}
+Dialogue: 0,0:00:03.31,0:00:03.81,Word,,0,0,0,,{\fad(80,0)}{\rHi}ЧТОБЫ{\r}
+Dialogue: 0,0:00:03.81,0:00:04.37,Word,,0,0,0,,{\fad(80,0)}{\rHi}ДЕТЕЙ{\r}
+Dialogue: 0,0:00:04.37,0:00:04.65,Word,,0,0,0,,{\fad(80,0)}{\rHi}БЫЛИ{\r}
+Dialogue: 0,0:00:04.65,0:00:05.71,Word,,0,0,0,,{\fad(80,0)}{\rHi}ВЗРОСЛЫЕ{\r}
+Dialogue: 0,0:00:05.71,0:00:06.84,Word,,0,0,0,,{\fad(80,0)}{\rHi}ДОСТОЙНЫ.{\r}
+Dialogue: 0,0:00:06.93,0:00:07.09,Word,,0,0,0,,{\fad(80,0)}{\rHi}СТАВ{\r}
+Dialogue: 0,0:00:07.09,0:00:08.44,Word,,0,0,0,,{\fad(80,0)}{\rHi}ДРУЖНЕЕ,{\r}
+Dialogue: 0,0:00:08.44,0:00:08.89,Word,,0,0,0,,{\fad(80,0)}{\rHi}СТАВ{\r}
+Dialogue: 0,0:00:08.89,0:00:10.05,Word,,0,0,0,,{\fad(80,0)}{\rHi}УМНЕЙ,{\r}
+Dialogue: 0,0:00:10.05,0:00:10.31,Word,,0,0,0,,{\fad(80,0)}{\rHi}НЕ{\r}
+Dialogue: 0,0:00:10.31,0:00:10.75,Word,,0,0,0,,{\fad(80,0)}{\rHi}ВЕЛИ{\r}
+Dialogue: 0,0:00:10.75,0:00:10.97,Word,,0,0,0,,{\fad(80,0)}{\rHi}ДРУГ{\r}
+Dialogue: 0,0:00:10.97,0:00:11.11,Word,,0,0,0,,{\fad(80,0)}{\rHi}С{\r}
+Dialogue: 0,0:00:11.11,0:00:11.91,Word,,0,0,0,,{\fad(80,0)}{\rHi}ДРУГОМ{\r}
+Dialogue: 0,0:00:11.91,0:00:12.82,Word,,0,0,0,,{\fad(80,0)}{\rHi}ВОЙНЫ.{\r}
+Dialogue: 0,0:00:13.97,0:00:14.70,Word,,0,0,0,,{\fad(80,0)}{\rHi}Я{\r}
+Dialogue: 0,0:00:14.70,0:00:15.44,Word,,0,0,0,,{\fad(80,0)}{\rHi}ХОЧУ,{\r}
+Dialogue: 0,0:00:15.69,0:00:16.58,Word,,0,0,0,,{\fad(80,0)}{\rHi}ЧТОБ{\r}
+Dialogue: 0,0:00:16.86,0:00:18.06,Word,,0,0,0,,{\fad(80,0)}{\rHi}ЛЮДИ{\r}
+Dialogue: 0,0:00:18.06,0:00:19.36,Word,,0,0,0,,{\fad(80,0)}{\rHi}СЛЫЛИ{\r}
+Dialogue: 0,0:00:19.36,0:00:20.55,Word,,0,0,0,,{\fad(80,0)}{\rHi}ДОБРОТОЙ{\r}
+Dialogue: 0,0:00:20.55,0:00:21.02,Word,,0,0,0,,{\fad(80,0)}{\rHi}ВО{\r}
+Dialogue: 0,0:00:21.02,0:00:21.59,Word,,0,0,0,,{\fad(80,0)}{\rHi}ВСЕ{\r}
+Dialogue: 0,0:00:21.59,0:00:22.91,Word,,0,0,0,,{\fad(80,0)}{\rHi}ГОДА,{\r}
+Dialogue: 0,0:00:22.91,0:00:23.51,Word,,0,0,0,,{\fad(80,0)}{\rHi}ЧТОБЫ{\r}
+Dialogue: 0,0:00:23.51,0:00:24.39,Word,,0,0,0,,{\fad(80,0)}{\rHi}ДОБРЫМ{\r}
+Dialogue: 0,0:00:24.39,0:00:24.76,Word,,0,0,0,,{\fad(80,0)}{\rHi}ЛЮДЯМ{\r}
+Dialogue: 0,0:00:24.76,0:00:25.86,Word,,0,0,0,,{\fad(80,0)}{\rHi}ЗЛЫЕ{\r}
+Dialogue: 0,0:00:25.86,0:00:26.19,Word,,0,0,0,,{\fad(80,0)}{\rHi}НЕ{\r}
+Dialogue: 0,0:00:26.19,0:00:27.00,Word,,0,0,0,,{\fad(80,0)}{\rHi}МЕШАЛИ{\r}
+Dialogue: 0,0:00:27.00,0:00:28.46,Word,,0,0,0,,{\fad(80,0)}{\rHi}НИКОГДА.{\r}
+Dialogue: 0,0:00:29.45,0:00:30.59,Word,,0,0,0,,{\fad(80,0)}{\rHi}СЛЫШАТ{\r}
+Dialogue: 0,0:00:30.59,0:00:31.26,Word,,0,0,0,,{\fad(80,0)}{\rHi}РЕКИ,{\r}
+Dialogue: 0,0:00:31.26,0:00:32.09,Word,,0,0,0,,{\fad(80,0)}{\rHi}СЛЫШАТ{\r}
+Dialogue: 0,0:00:32.09,0:00:32.90,Word,,0,0,0,,{\fad(80,0)}{\rHi}ГОРЫ{\r}
+Dialogue: 0,0:00:32.90,0:00:33.21,Word,,0,0,0,,{\fad(80,0)}{\rHi}НАД{\r}
+Dialogue: 0,0:00:33.21,0:00:33.77,Word,,0,0,0,,{\fad(80,0)}{\rHi}ЗЕМЛЕЙ{\r}
+Dialogue: 0,0:00:33.77,0:00:34.54,Word,,0,0,0,,{\fad(80,0)}{\rHi}ГУДЯТ{\r}
+Dialogue: 0,0:00:34.54,0:00:35.80,Word,,0,0,0,,{\fad(80,0)}{\rHi}МОТОРЫ.{\r}
+Dialogue: 0,0:00:36.25,0:00:36.75,Word,,0,0,0,,{\fad(80,0)}{\rHi}ТО{\r}
+Dialogue: 0,0:00:36.75,0:00:37.40,Word,,0,0,0,,{\fad(80,0)}{\rHi}ЛЕТИТ{\r}
+Dialogue: 0,0:00:37.40,0:00:37.71,Word,,0,0,0,,{\fad(80,0)}{\rHi}НЕ{\r}
+Dialogue: 0,0:00:37.71,0:00:38.85,Word,,0,0,0,,{\fad(80,0)}{\rHi}КТО-НИБУДЬ —{\r}
+Dialogue: 0,0:00:38.88,0:00:39.64,Word,,0,0,0,,{\fad(80,0)}{\rHi}ЭТО{\r}
+Dialogue: 0,0:00:39.64,0:00:39.89,Word,,0,0,0,,{\fad(80,0)}{\rHi}НА{\r}
+Dialogue: 0,0:00:39.89,0:00:41.31,Word,,0,0,0,,{\fad(80,0)}{\rHi}ПЕРЕГОВОРЫ{\r}
+Dialogue: 0,0:00:41.34,0:00:42.71,Word,,0,0,0,,{\fad(80,0)}{\rHi}ДИПЛОМАТЫ{\r}
+Dialogue: 0,0:00:42.71,0:00:43.51,Word,,0,0,0,,{\fad(80,0)}{\rHi}ДЕРЖАТ{\r}
+Dialogue: 0,0:00:43.51,0:00:44.12,Word,,0,0,0,,{\fad(80,0)}{\rHi}ПУТЬ.{\r}
+Dialogue: 0,0:00:44.34,0:00:44.51,Word,,0,0,0,,{\fad(80,0)}{\rHi}И{\r}
+Dialogue: 0,0:00:44.51,0:00:44.64,Word,,0,0,0,,{\fad(80,0)}{\rHi}О{\r}
+Dialogue: 0,0:00:44.64,0:00:45.55,Word,,0,0,0,,{\fad(80,0)}{\rHi}ДЕВОЧКЕ{\r}
+Dialogue: 0,0:00:45.55,0:00:46.59,Word,,0,0,0,,{\fad(80,0)}{\rHi}УМЕРШЕЙ{\r}
+Dialogue: 0,0:00:46.59,0:00:46.85,Word,,0,0,0,,{\fad(80,0)}{\rHi}НЕ{\r}
+Dialogue: 0,0:00:46.85,0:00:47.54,Word,,0,0,0,,{\fad(80,0)}{\rHi}ХОТЕВШЕЙ{\r}
+Dialogue: 0,0:00:47.54,0:00:48.63,Word,,0,0,0,,{\fad(80,0)}{\rHi}УМИРАТЬ{\r}
+Dialogue: 0,0:00:49.95,0:00:50.11,Word,,0,0,0,,{\fad(80,0)}{\rHi}И{\r}
+Dialogue: 0,0:00:50.11,0:00:51.31,Word,,0,0,0,,{\fad(80,0)}{\rHi}ЖУРАВЛИКОВ{\r}
+Dialogue: 0,0:00:51.31,0:00:52.20,Word,,0,0,0,,{\fad(80,0)}{\rHi}УМЕВШЕЙ{\r}
+Dialogue: 0,0:00:52.29,0:00:52.57,Word,,0,0,0,,{\fad(80,0)}{\rHi}ИЗ{\r}
+Dialogue: 0,0:00:52.57,0:00:53.17,Word,,0,0,0,,{\fad(80,0)}{\rHi}БУМАГИ{\r}
+Dialogue: 0,0:00:53.17,0:00:54.28,Word,,0,0,0,,{\fad(80,0)}{\rHi}ВЫРЕЗАТЬ{\r}

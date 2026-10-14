@@ -2,8 +2,8 @@
 import { getCollection } from 'astro:content'
 import Deck from '#frontend/components/deck.svelte'
 import { site } from '#frontend/data/site.ts'
-import type { Word } from '#frontend/lib/subtitles.ts'
-import { typographText } from '#frontend/lib/typograph.ts'
+import type { Word } from '#shared/subtitles.ts'
+import { typographText } from '#shared/typograph.ts'
 import '#frontend/styles/stage.css'
 
 // The deck reads its demos from here, so the page needs no request for them. Its text arrives

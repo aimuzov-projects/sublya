@@ -17,18 +17,20 @@ Try it: [@sublyarobot](https://t.me/sublyarobot) · site: [sublya.aimuzov.online
 - **Cheap to run.** Recognition goes to Whisper through OpenRouter (about $0.0002 per minute),
   rendering is ffmpeg on the CPU. A 1 vCPU box is enough.
 
-The bot is Python 3.12, [uv](https://docs.astral.sh/uv/), aiogram 3, SQLite, ffmpeg with libass.
+The bot and the landing page are TypeScript on Node from `mise.toml`. The bot runs without a
+build step: [grammY](https://grammy.dev), the built-in `node:sqlite`, ffmpeg with libass.
 The landing page is a static [Astro](https://astro.build) site; tooling follows
 [infra-template-site](https://github.com/aimuzov-projects/infra-template-site): Prettier, oxlint,
-stylelint, Node from `mise.toml`.
+stylelint, `node --test`.
 
 ```
 src/
   bot/
-    sublya/core/     # no Telegram here: audio, speech recognition, word alignment, rendering, CLI
-    sublya/bot/      # aiogram handlers, the SQLite job queue, the worker, the admin Mini App
-    tests/fixtures/natasha/   # recognised words, pauses and the reference poem of a real recording
-  frontend/          # the landing page: components, scripts, one stylesheet per component
+    core/            # no Telegram here: audio, speech recognition, word alignment, rendering, CLI
+    core/fixtures/   # a real recording: words, pauses, the poem, and what the Python bot made of it
+    *.ts             # grammY handlers, the SQLite job queue, the worker, support, the admin Mini App
+  frontend/          # the landing page: components, islands, one stylesheet per component
+  shared/            # screens and styles of the subtitles, the typograph: the bot and the site alike
 public/media/<name>/ # one demo: the video as sent and its posters
 demo/                # demo texts and the script that builds them
 deploy/              # Dockerfiles, the production compose file, the deploy script
@@ -94,9 +96,8 @@ Everything comes from the environment; `.env.example` lists it.
 ## Develop the bot
 
 ```bash
-cd src/bot
-uv sync
-uv run pytest
+npm ci
+npm test
 ```
 
 Render tests need ffmpeg with libass and are skipped otherwise. Homebrew's `ffmpeg` has no
@@ -109,7 +110,7 @@ export SUBLYA_FFMPEG=/opt/homebrew/opt/ffmpeg-full/bin/ffmpeg SUBLYA_FFPROBE=/op
 Run the bot without Docker, polling the public Bot API:
 
 ```bash
-uv run --env-file ../../.env sublya-bot
+npm run bot
 ```
 
 ## CLI
@@ -117,7 +118,7 @@ uv run --env-file ../../.env sublya-bot
 The engine works without Telegram:
 
 ```bash
-uv run --env-file ../../.env python -m sublya.core video.mov --text poem.txt --style big
+node --env-file=.env src/bot/core/cli.ts video.mov --text poem.txt --style big
 ```
 
 The transcript is cached in `work/<video>/transcript.json` next to the video, so trying other

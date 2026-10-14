@@ -11,8 +11,8 @@ services:
 
   bot:
     build:
-      context: src/bot
-      dockerfile: ../../deploy/bot.Dockerfile
+      context: .
+      dockerfile: deploy/bot.Dockerfile
     restart: unless-stopped
     env_file: .env
     environment:

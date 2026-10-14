@@ -146,7 +146,7 @@
 }
 
 /* The bot's subtitles drawn over the video as sent, in the units of the frame: sizes and
-   margins are shares of its width and height, as in the presets of src/bot/sublya/core/render.py. */
+   margins are shares of its width and height, as in the presets of src/shared/subtitles.ts. */
 .overlay {
 	pointer-events: none;
 	position: absolute;

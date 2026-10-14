@@ -32,9 +32,9 @@ cp "$text" "$work/text.txt"
 
 # the bot image has the same ffmpeg and Montserrat as production, so the timings and the poster
 # come out as the bot would make them; the transcript is cached in $work, so recognition runs once
-docker build -q -t sublya-bot -f "$root/deploy/bot.Dockerfile" "$root/src/bot" >/dev/null
+docker build -q -t sublya-bot -f "$root/deploy/bot.Dockerfile" "$root" >/dev/null
 bot=(docker run --rm --env-file "$root/.env" -v "$work:/w" sublya-bot
-  python -m sublya.core /w/demo.mp4 --text /w/text.txt)
+  node src/bot/core/cli.ts /w/demo.mp4 --text /w/text.txt)
 "${bot[@]}" --words /w/words.json >/dev/null
 cp "$work/words.json" "$root/src/frontend/data/words/$name.json"
 

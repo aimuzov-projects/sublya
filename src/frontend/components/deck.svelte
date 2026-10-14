@@ -2,7 +2,8 @@
 	import { onMount, untrack } from 'svelte'
 
 	import Player from '#frontend/components/player.svelte'
-	import { presets, screens, type Word } from '#frontend/lib/subtitles.ts'
+	import { screens } from '#frontend/lib/subtitles.ts'
+	import { isStyle, presets, type Word } from '#shared/subtitles.ts'
 
 	type Demo = { id: string; note: string; v: string; duration: number; words: Word[] }
 	type Style = { id: string; name: string; hint: string }
@@ -42,7 +43,7 @@
 
 	const top = $derived(byId.get(order[0])!)
 	const several = $derived(demos.length > 1)
-	const preset = $derived(presets[style])
+	const preset = $derived(presets[isStyle(style) ? style : 'classic'])
 	// the subtitles of the card on top, in the chosen style, or none for the video as sent
 	const subtitles = $derived(variant === 'after' ? screens(top.words, preset) : null)
 
