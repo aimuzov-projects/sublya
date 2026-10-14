@@ -37,7 +37,7 @@ const cards = [
 		{cards.map(({ repos, ...card }) => (
 			<FeatureCard client:visible {...card}>
 				{repos && (
-					<p class="repo-links">
+					<p class="cards__text repo-links">
 						<a href={site.repo}>код на GitHub</a>
 					</p>
 				)}

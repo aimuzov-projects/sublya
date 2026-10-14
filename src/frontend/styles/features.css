@@ -3,7 +3,7 @@
 	grid-template-columns: repeat(2, minmax(0, 1fr));
 	gap: 20px;
 }
-.cards article {
+.cards__item {
 	isolation: isolate;
 	position: relative;
 	padding: 28px;
@@ -13,7 +13,7 @@
 	transition: border-color 0.25s ease;
 }
 /* a gradient can't be animated, so the hover glow is a layer that fades in */
-.cards article::before {
+.cards__item::before {
 	content: '';
 	position: absolute;
 	z-index: -1;
@@ -23,18 +23,18 @@
 	background: linear-gradient(160deg, #33215f, #1f1440);
 	transition: opacity 0.25s ease;
 }
-.cards article:hover {
+.cards__item:hover {
 	border-color: #5a4396;
 }
-.cards article:hover::before {
+.cards__item:hover::before {
 	opacity: 1;
 }
-.cards p {
+.cards__text {
 	margin: 0;
 	color: var(--muted);
 	transition: color 0.25s ease;
 }
-.cards article:hover p {
+.cards__item:hover .cards__text {
 	color: var(--text);
 }
 /* the word being "spoken", as in the bot's classic style */
