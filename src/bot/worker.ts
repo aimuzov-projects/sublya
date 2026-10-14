@@ -42,6 +42,8 @@ export class Worker {
 	readonly api: WorkerApi
 	readonly db: Db
 	readonly settings: Settings
+	/** How often the progress message changes its line; Telegram is fine with an edit this rare. */
+	progressEvery = 4000
 	private wakeUp: (() => void) | null = null
 
 	constructor(api: WorkerApi, db: Db, settings: Settings) {
@@ -100,16 +102,18 @@ export class Worker {
 			// documents come without a duration, so the limit is checked again here
 			if ((await duration(video)) > maxDuration) throw new UserError(texts.TOO_LONG(Math.floor(maxDuration / 60)))
 			if (this.db.sttSecondsToday() >= sttDailyMinutes * 60) throw new UserError(texts.STT_LIMIT)
-			await this.progress(job, texts.RECOGNIZING)
-			transcript = await transcribe(video, work, this.settings.stt, job.lang)
+			transcript = await this.stage(job, texts.RECOGNIZING, () =>
+				transcribe(video, work, this.settings.stt, job.lang),
+			)
 			await writeFile(cached, toJson(transcript), 'utf8')
 			this.db.addSttSeconds(job.user_id, transcript.duration)
 		}
 
-		await this.progress(job, texts.RENDERING)
 		const words = align(transcript, job.text, this.settings.sttLag)
 		const style = isStyle(job.style) ? job.style : 'classic'
-		const out = await render(video, words, transcript.size, work, style, Boolean(job.note))
+		const out = await this.stage(job, texts.RENDERING, () =>
+			render(video, words, transcript.size, work, style, Boolean(job.note)),
+		)
 		try {
 			await this.send(job, out, transcript)
 		} finally {
@@ -173,6 +177,26 @@ export class Worker {
 
 	// the handler records the message right after queueing, so it may land after we start
 	private progressMsg = (job: Job) => this.db.getJob(job.id)?.progress_msg_id ?? null
+
+	/** Runs a stage while the progress message cycles through its lines, so a long render
+	 * doesn't look frozen. The last edit lands before the stage returns, never after the result. */
+	private async stage<T>(job: Job, lines: readonly string[], work: () => Promise<T>): Promise<T> {
+		const done = new AbortController()
+		const ticker = (async () => {
+			let i = Math.floor(Math.random() * lines.length)
+			while (!done.signal.aborted) {
+				await this.progress(job, lines[i])
+				i = (i + 1) % lines.length
+				await delay(this.progressEvery, undefined, { signal: done.signal }).catch(() => {})
+			}
+		})()
+		try {
+			return await work()
+		} finally {
+			done.abort()
+			await ticker
+		}
+	}
 
 	private async progress(job: Job, text: string) {
 		const msgId = this.progressMsg(job)

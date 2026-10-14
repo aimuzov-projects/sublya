@@ -3,6 +3,7 @@ import { existsSync, mkdirSync, mkdtempSync, readdirSync, utimesSync, writeFileS
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
+import { setTimeout as delay } from 'node:timers/promises'
 
 import { defaults, jobsDir, type Settings } from '#bot/config.ts'
 import { hasFilter, run, tool } from '#bot/core/ffmpeg.ts'
@@ -182,6 +183,22 @@ test('a user who blocked the bot fails their job, not the worker', async () => {
 	const job = queue(db, join(jobsDir(settings), '1', 'input.mp4'))
 	await worker.process(db.nextJob()!)
 	assert.equal(db.getJob(job)!.status, 'failed')
+})
+
+test('the progress message keeps changing while a stage runs and stops with it', async () => {
+	const { db, worker, named } = setup()
+	worker.progressEvery = 5
+	const job = db.getJob(queue(db, 'in.mp4'))!
+	type Stage = (j: typeof job, lines: readonly string[], work: () => Promise<void>) => Promise<void>
+	await (worker as unknown as { stage: Stage }).stage(job, texts.RENDERING, () => delay(60))
+	const shown = named('editMessageText').map((p) => p.text)
+	assert.ok(shown.length >= 3, `only ${shown.length} edits`)
+	assert.ok(
+		shown.every((line, i) => texts.RENDERING.includes(line as string) && line !== shown[i - 1]),
+		'every edit is a new line of the stage',
+	)
+	await delay(30)
+	assert.equal(named('editMessageText').length, shown.length)
 })
 
 test('a lost progress message leaves a delivered video done', async () => {

@@ -29,9 +29,28 @@ export const LANG_NAMES: Record<string, string> = {
 }
 export const LANG_FLAGS: Record<string, string> = { ru: '🇷🇺', en: '🇬🇧', uk: '🇺🇦', kk: '🇰🇿' }
 
-export const QUEUED = (position: number) => `В очереди, позиция ${position}.`
-export const RECOGNIZING = 'Распознаю речь…'
-export const RENDERING = 'Рендерю…'
+export const QUEUED = (position: number) => `⏳ В очереди, позиция ${position}. Займи место и не толкайся.`
+// the worker shows these in turn while the stage runs, so each one should make sense on its own
+export const RECOGNIZING = [
+	'👂 Слушаю, что ты там наговорил…',
+	'🎧 Надел наушники, разбираю каждое слово…',
+	'🧐 Расшифровываю твою дикцию…',
+	'📝 Стенографирую, как на допросе…',
+	'🤔 Так, а вот тут ты что сказал?..',
+	'🦻 Прислушиваюсь к шёпоту на фоне…',
+	'🗣 Перевожу с человеческого на буквы…',
+	'🔍 Ищу слова между вздохами…',
+]
+export const RENDERING = [
+	'🔥 Прожигаю субтитры…',
+	'🎬 Монтирую, как в лучших тиктоках…',
+	'🖍 Раскрашиваю слова по одному…',
+	'⚙️ ffmpeg пыхтит, вентиляторы воют…',
+	'✨ Посыпаю видео буквами…',
+	'🧑‍🍳 Готовлю ролик, осталось красиво подать…',
+	'🎞 Склеиваю кадр за кадром…',
+	'☕️ Рендер не быстрый, но я стараюсь…',
+]
 
 export const BTN_FIX = '✏️ Текст'
 export const BTN_STYLE = '🎨 Стиль'
