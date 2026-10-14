@@ -32,7 +32,10 @@ export async function duration(media: string): Promise<number> {
 		'csv=p=0',
 		media,
 	)
-	return Number(stdout)
+	// a container without a duration in its header gives N/A, and NaN would pass any limit
+	const seconds = Number.parseFloat(stdout)
+	if (!Number.isFinite(seconds)) throw new Error(`ffprobe gave no duration for ${media}: ${stdout.trim()}`)
+	return seconds
 }
 
 export async function extractAudio(video: string, audio: string): Promise<void> {

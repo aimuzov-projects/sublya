@@ -6,7 +6,7 @@ import { defaults, type Settings } from '#bot/config.ts'
 import { Db } from '#bot/db.ts'
 import { handlers } from '#bot/handlers.ts'
 import { mirrorIncoming, mirrorOutgoing, Support } from '#bot/support.ts'
-import { fakeBot } from '#bot/testing.ts'
+import { fakeBot, networkError } from '#bot/testing.ts'
 import * as texts from '#bot/texts.ts'
 import type { Worker } from '#bot/worker.ts'
 
@@ -206,4 +206,30 @@ test('groups never get the not-a-video answer', async () => {
 	const s = await wired(GROUP)
 	await s.feed({ message: inGroup({ text: 'что-то', chatId: -999 }) })
 	assert.deepEqual(s.calls, [])
+})
+
+test('a reply lost to the network warns the team', async () => {
+	const { support, named, db, answer } = setup()
+	db.setTopic(ALICE.id, 101)
+	answer('copyMessage', () => {
+		throw networkError('copyMessage')
+	})
+	await support.reply(inGroup())
+	assert.ok(String(named('sendMessage')[0].text).startsWith('⚠️ Не доставлено'))
+})
+
+test('a topic opened alongside is not thrown away', async () => {
+	const { support, db, fail, named } = setup()
+	db.setTopic(ALICE.id, 55)
+	fail('copyMessage', 400, 'Bad Request: message thread not found')
+	// another message already replaced the dead topic with 77
+	const copy = support.api.copyMessage.bind(support.api)
+	support.api.copyMessage = (async (...args: Parameters<typeof copy>) => {
+		const result = copy(...args)
+		db.setTopic(ALICE.id, 77)
+		return result
+	}) as typeof copy
+	await support.incoming(message())
+	assert.equal(db.getTopic(ALICE.id), 77)
+	assert.deepEqual(named('createForumTopic'), [])
 })

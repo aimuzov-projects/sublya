@@ -8,11 +8,12 @@
 //   node src/bot/core/cli.ts IMG_4476.MOV --text poem.txt --style big
 
 import { existsSync } from 'node:fs'
-import { mkdir, readFile, rename, writeFile } from 'node:fs/promises'
+import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { basename, dirname, extname, join, resolve } from 'node:path'
 import { parseArgs } from 'node:util'
 
 import { align } from '#bot/core/align.ts'
+import { move } from '#bot/core/files.ts'
 import { fromJson, toJson } from '#bot/core/models.ts'
 import { render } from '#bot/core/render.ts'
 import { sttFromEnv, transcribe } from '#bot/core/transcribe.ts'
@@ -28,7 +29,8 @@ const { values, positionals } = parseArgs({
 		// keep subtitles inside the circle a Telegram video note is cropped to
 		circle: { type: 'boolean', default: false },
 		// speech language, or auto
-		lang: { type: 'string', default: process.env.DEFAULT_LANG || 'ru' },
+		// an empty DEFAULT_LANG means autodetect, as in the bot
+		lang: { type: 'string', default: (process.env.DEFAULT_LANG ?? 'ru') || 'auto' },
 		// how late the recogniser places word starts, seconds; by default depends on the timing kind
 		lag: { type: 'string', default: process.env.STT_LAG || undefined },
 		// ignore the cached transcript
@@ -79,6 +81,6 @@ if (values.words) {
 	await writeFile(values.words, JSON.stringify(data) + '\n', 'utf8')
 	console.log(values.words)
 } else {
-	await rename(await render(video, words, transcript.size, work, values.style, values.circle), out)
+	await move(await render(video, words, transcript.size, work, values.style, values.circle), out)
 	console.log(out)
 }

@@ -1,12 +1,12 @@
 import { join } from 'node:path'
 import { run } from '@grammyjs/runner'
-import { Bot, GrammyError } from 'grammy'
+import { Bot } from 'grammy'
 
 import { serve } from '#bot/admin.ts'
 import { fromEnv } from '#bot/config.ts'
 import { Db } from '#bot/db.ts'
 import { handlers } from '#bot/handlers.ts'
-import { mirrorIncoming, mirrorOutgoing, Support } from '#bot/support.ts'
+import { isTelegramError, mirrorIncoming, mirrorOutgoing, Support } from '#bot/support.ts'
 import * as texts from '#bot/texts.ts'
 import { cleanupLoop, Worker } from '#bot/worker.ts'
 
@@ -40,14 +40,14 @@ if (settings.adminUrl) {
 	const button = { type: 'web_app' as const, text: texts.BTN_ADMIN, web_app: { url: settings.adminUrl } }
 	for (const admin of settings.adminIds) {
 		await bot.api.setChatMenuButton({ chat_id: admin, menu_button: button }).catch((e) => {
-			if (!(e instanceof GrammyError)) throw e
+			if (!isTelegramError(e)) throw e
 			console.warn(`no admin menu button for ${admin}`)
 		})
 	}
 }
 
 const stop = new AbortController()
-const background = [worker.run(stop.signal), cleanupLoop(settings, stop.signal)].map((task) =>
+void [worker.run(stop.signal), cleanupLoop(settings, stop.signal)].map((task) =>
 	task.catch((e) => {
 		console.error('background task died', e)
 		process.exit(1)
@@ -57,12 +57,14 @@ const background = [worker.run(stop.signal), cleanupLoop(settings, stop.signal)]
 const runner = run(bot)
 console.info('polling')
 
+// Docker kills the container 10 s after SIGTERM, and a render takes longer: the job is left
+// running, and requeueRunning() puts it back in the queue on the next start.
 for (const signal of ['SIGINT', 'SIGTERM'] as const) {
 	process.once(signal, async () => {
-		await runner.stop()
 		stop.abort()
-		await Promise.all(background)
+		await runner.stop()
 		panel?.close()
 		db.close()
+		process.exit(0)
 	})
 }

@@ -2,7 +2,7 @@
 // whatever the team writes in that topic goes back to the user from the bot.
 
 import { AsyncLocalStorage } from 'node:async_hooks'
-import { GrammyError, type Api, type Context, type NextFunction, type Transformer } from 'grammy'
+import { GrammyError, HttpError, type Api, type Context, type NextFunction, type Transformer } from 'grammy'
 import type { CallbackQuery, Message, User } from 'grammy/types'
 
 import type { Db } from '#bot/db.ts'
@@ -29,6 +29,9 @@ const quietly = new AsyncLocalStorage<boolean>()
  * and then deleted, alerts to admins. */
 export const quiet = <T>(body: () => Promise<T>) => quietly.run(true, body)
 
+/** Anything the Bot API call can fail with: an answer from Telegram or no answer at all. */
+export const isTelegramError = (e: unknown): e is GrammyError | HttpError =>
+	e instanceof GrammyError || e instanceof HttpError
 export const isBadRequest = (e: unknown): e is GrammyError => e instanceof GrammyError && e.error_code === 400
 export const isForbidden = (e: unknown): e is GrammyError => e instanceof GrammyError && e.error_code === 403
 
@@ -143,7 +146,8 @@ export class Support {
 				} catch (e) {
 					if (attempt || !isBadRequest(e) || !threadGone(e)) throw e
 					console.warn(`support topic ${topicId} of user ${userId} is gone, opening a new one`)
-					this.db.setTopic(userId, null)
+					// a message sent alongside may have opened the new topic already
+					if (this.db.getTopic(userId) === topicId) this.db.setTopic(userId, null)
 				}
 			}
 		} catch (e) {
@@ -199,7 +203,8 @@ export class Support {
 			await this.api.copyMessage(userId, message.chat.id, message.message_id)
 		} catch (e) {
 			if (isForbidden(e)) await answer(texts.SUPPORT_BLOCKED)
-			else if (e instanceof GrammyError) await answer(texts.SUPPORT_FAILED(e.description))
+			else if (isTelegramError(e))
+				await answer(texts.SUPPORT_FAILED(e instanceof GrammyError ? e.description : e.message))
 			else throw e
 		}
 	}

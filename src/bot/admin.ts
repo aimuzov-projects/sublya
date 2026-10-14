@@ -8,10 +8,11 @@ import { existsSync } from 'node:fs'
 import { copyFile, mkdir, readFile, stat, unlink, writeFile } from 'node:fs/promises'
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http'
 import { join } from 'node:path'
-import { GrammyError, type Api } from 'grammy'
+import type { Api } from 'grammy'
 
 import type { Settings } from '#bot/config.ts'
 import type { Db } from '#bot/db.ts'
+import { isTelegramError } from '#bot/support.ts'
 import * as texts from '#bot/texts.ts'
 
 const PAGE = new URL('admin.html', import.meta.url)
@@ -36,7 +37,8 @@ export function verifyInitData(initData: string, botToken: string, now = Date.no
 		.join('\n')
 	const secret = createHmac('sha256', 'WebAppData').update(botToken).digest()
 	const expected = createHmac('sha256', secret).update(check).digest('hex')
-	if (given.length !== expected.length || !timingSafeEqual(Buffer.from(given), Buffer.from(expected))) return null
+	const [a, b] = [Buffer.from(given), Buffer.from(expected)]
+	if (a.length !== b.length || !timingSafeEqual(a, b)) return null
 	try {
 		if (now - Number.parseInt(fields.get('auth_date')!, 10) > MAX_AGE) return null
 		const userId = JSON.parse(fields.get('user')!).id
@@ -126,7 +128,7 @@ export class Profiles {
 			try {
 				chat = await this.api.getChat(userId)
 			} catch (e) {
-				if (!(e instanceof GrammyError)) throw e
+				if (!isTelegramError(e)) throw e
 				this.noName.add(userId)
 				continue
 			}
@@ -249,7 +251,7 @@ export function makeHandler(db: Db, settings: Settings, openrouter: OpenRouter, 
 			try {
 				await profiles.api.sendMessage(userId, texts.BONUS(n, total))
 			} catch (e) {
-				if (!(e instanceof GrammyError)) throw e
+				if (!isTelegramError(e)) throw e
 				console.warn(`could not tell user ${userId} about the bonus`, e)
 				notified = false
 			}

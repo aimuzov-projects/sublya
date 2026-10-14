@@ -1,6 +1,6 @@
 // A bot without a network for the tests: every Bot API call is recorded and answered here.
 
-import { Bot, GrammyError } from 'grammy'
+import { Bot, GrammyError, HttpError } from 'grammy'
 import type { Update, UserFromGetMe } from 'grammy/types'
 
 export type Call = { method: string; payload: Record<string, unknown> }
@@ -23,6 +23,10 @@ const ME: UserFromGetMe = {
 /** A Bot API error, for an answer to throw. */
 export const apiError = (method: string, code: number, description: string) =>
 	new GrammyError(`Call to '${method}' failed!`, { ok: false, error_code: code, description }, method, {})
+
+/** No answer from Telegram at all, as when the tunnel is down. */
+export const networkError = (method: string) =>
+	new HttpError(`Network request for '${method}' failed!`, new TypeError('fetch failed'))
 
 export function fakeBot() {
 	const bot = new Bot('1:token', { botInfo: ME })

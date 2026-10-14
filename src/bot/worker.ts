@@ -152,6 +152,7 @@ export class Worker {
 		try {
 			await this.api.sendMessage(job.chat_id, userText)
 		} catch (e) {
+			// the user may have blocked the bot; the queue goes on either way
 			console.error(`could not tell user ${job.user_id} about job ${job.id}`, e)
 		}
 		if (notifyAdmins) await this.notifyAdmins(texts.ADMIN_ERROR(job.id, job.user_id, error))
@@ -176,8 +177,9 @@ export class Worker {
 		try {
 			await this.api.editMessageText(job.chat_id, msgId, text)
 		} catch (e) {
-			// the same text again, or the user deleted the message
-			if (!isBadRequest(e)) throw e
+			// the progress message is a courtesy: the same text again, a deleted message, a blocked
+			// bot or a network hiccup must not cost the user their video
+			if (!isBadRequest(e)) console.warn(`could not update the progress of job ${job.id}`, e)
 		}
 	}
 
@@ -187,7 +189,7 @@ export class Worker {
 		try {
 			await this.api.deleteMessage(job.chat_id, msgId)
 		} catch (e) {
-			if (!isBadRequest(e)) throw e
+			if (!isBadRequest(e)) console.warn(`could not drop the progress of job ${job.id}`, e)
 		}
 	}
 }

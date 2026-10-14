@@ -119,3 +119,22 @@ test('a real response parses as in the Python bot', () => {
 	const { response: raw, words } = goldenJson('parse.json')
 	assert.deepEqual(parse(raw), words)
 })
+
+test('a body that breaks off halfway is retried', async () => {
+	const broken = new Response(
+		new ReadableStream({
+			start(controller) {
+				controller.error(new TypeError('terminated'))
+			},
+		}),
+	)
+	const { fetch } = server(broken, json(RESPONSE))
+	assert.equal((await recognize(audio, CFG, null, { fetch, sleep: noSleep })).length, 7)
+})
+
+test('the reason of a failed request reaches the admin', async () => {
+	const fetch = (async () => {
+		throw new TypeError('fetch failed', { cause: new Error('ECONNREFUSED') })
+	}) as unknown as typeof globalThis.fetch
+	await assert.rejects(recognize(audio, CFG, null, { fetch, sleep: noSleep }), /ECONNREFUSED/)
+})

@@ -85,22 +85,25 @@ async function post(audio: string, cfg: SttConfig, lang: string | null, deps: De
 		form.set('timestamp_granularities[]', 'word')
 		if (lang) form.set('language', lang)
 		form.set('file', new Blob([content], { type: 'audio/wav' }), basename(audio))
-		let resp: globalThis.Response
+		let failure: string
 		try {
-			resp = await request(`${cfg.url.replace(/\/+$/, '')}/audio/transcriptions`, {
+			// the timeout covers the body too: a response that stalls halfway is retried as well
+			const resp = await request(`${cfg.url.replace(/\/+$/, '')}/audio/transcriptions`, {
 				method: 'POST',
 				headers: { Authorization: `Bearer ${cfg.key}` },
 				body: form,
 				signal: AbortSignal.timeout(TIMEOUT),
 			})
+			if (resp.ok) return await resp.json()
+			failure = `STT returned ${resp.status}: ${(await resp.text()).slice(0, 300)}`
+			if (resp.status !== 429 && resp.status < 500) throw new SttError(failure)
 		} catch (e) {
-			if (!retry) throw new SttError(`STT request failed: ${e}`, { cause: e })
-			await sleep(BACKOFF[attempt])
-			continue
+			if (e instanceof SttError) throw e
+			// fetch hides the reason in cause: "fetch failed" alone tells the admin nothing
+			const cause = e instanceof Error && e.cause ? `: ${e.cause}` : ''
+			failure = `STT request failed: ${e}${cause}`
 		}
-		if (resp.ok) return resp.json()
-		const failure = `STT returned ${resp.status}: ${(await resp.text()).slice(0, 300)}`
-		if ((resp.status !== 429 && resp.status < 500) || !retry) throw new SttError(failure)
+		if (!retry) throw new SttError(failure)
 		await sleep(BACKOFF[attempt])
 	}
 	throw new Error('unreachable')

@@ -48,12 +48,25 @@ export const defaults = {
 	jobTtl: 24 * 3600,
 } satisfies Partial<Settings>
 
+// a typo must stop the start, not turn into NaN: "123;456" would leave the bot without admins
+function number(name: string, value: string): number {
+	const n = Number(value)
+	if (!value.trim() || !Number.isFinite(n)) throw new Error(`${name} is not a number: ${value}`)
+	return n
+}
+
+function int(name: string, value: string): number {
+	const n = number(name, value)
+	if (!Number.isSafeInteger(n)) throw new Error(`${name} is not an integer: ${value}`)
+	return n
+}
+
 const ids = (value: string) =>
 	new Set(
 		value
 			.split(/[\s,]+/)
 			.filter(Boolean)
-			.map(Number),
+			.map((id) => int('ADMIN_IDS', id)),
 	)
 
 export function fromEnv(env = process.env): Settings {
@@ -67,13 +80,13 @@ export function fromEnv(env = process.env): Settings {
 		apiUrl: env.TELEGRAM_API_URL || null,
 		dataDir: env.DATA_DIR || 'data',
 		adminIds: ids(env.ADMIN_IDS ?? ''),
-		supportChatId: env.SUPPORT_CHAT_ID ? Number(env.SUPPORT_CHAT_ID) : null,
+		supportChatId: env.SUPPORT_CHAT_ID ? int('SUPPORT_CHAT_ID', env.SUPPORT_CHAT_ID) : null,
 		adminUrl: env.ADMIN_URL || null,
-		adminPort: Number(env.ADMIN_PORT || 8090),
-		dailyVideos: Number(env.DAILY_VIDEOS || 10),
-		bonusVideos: Number(env.BONUS_VIDEOS || 10),
-		sttDailyMinutes: Number(env.STT_DAILY_MINUTES || 300),
-		sttLag: env.STT_LAG ? Number(env.STT_LAG) : null,
+		adminPort: int('ADMIN_PORT', env.ADMIN_PORT || '8090'),
+		dailyVideos: int('DAILY_VIDEOS', env.DAILY_VIDEOS || '10'),
+		bonusVideos: int('BONUS_VIDEOS', env.BONUS_VIDEOS || '10'),
+		sttDailyMinutes: number('STT_DAILY_MINUTES', env.STT_DAILY_MINUTES || '300'),
+		sttLag: env.STT_LAG ? number('STT_LAG', env.STT_LAG) : null,
 		defaultLang: (env.DEFAULT_LANG ?? 'ru') || null,
 		stt,
 	}

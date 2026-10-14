@@ -9,7 +9,7 @@ import { hasFilter, run, tool } from '#bot/core/ffmpeg.ts'
 import { markTranscript } from '#bot/core/fixtures.ts'
 import { toJson } from '#bot/core/models.ts'
 import { Db } from '#bot/db.ts'
-import { fakeBot } from '#bot/testing.ts'
+import { apiError, fakeBot, networkError } from '#bot/testing.ts'
 import * as texts from '#bot/texts.ts'
 import { cleanup, Worker } from '#bot/worker.ts'
 
@@ -131,4 +131,28 @@ test('cleanup removes only stale job folders', async () => {
 	utimesSync(old, 1000, 1000)
 	assert.equal(await cleanup(dir, 3600, 1000 + 3601), 1)
 	assert.ok(!existsSync(old) && existsSync(fresh))
+})
+
+test('a user who blocked the bot fails their job, not the worker', async () => {
+	const { db, worker, settings, answer } = setup()
+	for (const method of ['editMessageText', 'deleteMessage', 'sendMessage']) {
+		answer(method, () => {
+			throw apiError(method, 403, 'Forbidden: bot was blocked by the user')
+		})
+	}
+	const job = queue(db, join(jobsDir(settings), '1', 'input.mp4'))
+	await worker.process(db.nextJob()!)
+	assert.equal(db.getJob(job)!.status, 'failed')
+})
+
+test('a lost progress message leaves a delivered video done', async () => {
+	const { db, worker, answer } = setup()
+	answer('deleteMessage', () => {
+		throw networkError('deleteMessage')
+	})
+	const job = db.getJob(queue(db, 'in.mp4'))!
+	db.finish(job.id, 'done')
+	// what handle() does after the video went out
+	await (worker as unknown as { dropProgress: (j: typeof job) => Promise<void> }).dropProgress(job)
+	assert.equal(db.getJob(job.id)!.status, 'done')
 })

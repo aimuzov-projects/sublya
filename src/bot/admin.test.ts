@@ -10,7 +10,7 @@ import { after, test } from 'node:test'
 import { makeHandler, OpenRouter, Profiles, verifyInitData } from '#bot/admin.ts'
 import { defaults, type Settings } from '#bot/config.ts'
 import { Db } from '#bot/db.ts'
-import { apiError, fakeBot } from '#bot/testing.ts'
+import { apiError, fakeBot, networkError } from '#bot/testing.ts'
 
 const TOKEN = '123:secret'
 const NOW = 1_790_000_000
@@ -173,4 +173,17 @@ test('a bonus adds videos for today and tells the user', async () => {
 	r = await post('/admin/api/users/3/bonus', auth())
 	assert.equal((await r.json()).notified, false)
 	assert.equal((await post('/admin/api/users/x/bonus', auth())).status, 404)
+})
+
+test('a bonus the user never heard of because of the network is still a bonus, said so', async () => {
+	const { post, auth, answer } = await client()
+	answer('sendMessage', () => {
+		throw networkError('sendMessage')
+	})
+	const r = await post('/admin/api/users/1/bonus', auth())
+	assert.deepEqual([r.status, await r.json()], [200, { limit: 20, notified: false }])
+})
+
+test('a signature of non-ASCII letters is refused, not a crash', () => {
+	assert.equal(verifyInitData(`user=%7B%22id%22%3A7%7D&auth_date=${NOW}&hash=${'я'.repeat(64)}`, TOKEN, NOW), null)
 })

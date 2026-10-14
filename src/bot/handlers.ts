@@ -1,5 +1,5 @@
 import { createWriteStream, existsSync } from 'node:fs'
-import { copyFile, mkdir, readFile, rename, unlink } from 'node:fs/promises'
+import { mkdir, readFile } from 'node:fs/promises'
 import { dirname, extname, join } from 'node:path'
 import { Readable } from 'node:stream'
 import { pipeline } from 'node:stream/promises'
@@ -8,6 +8,7 @@ import { Composer, type Api, type Context } from 'grammy'
 import type { InlineKeyboardButton, Message } from 'grammy/types'
 
 import { downloadLimit, jobsDir, MB, type Settings } from '#bot/config.ts'
+import { move } from '#bot/core/files.ts'
 import { fromJson, transcriptText } from '#bot/core/models.ts'
 import { Busy, QuotaExceeded, rootId, type Db, type Job } from '#bot/db.ts'
 import { quiet, type Support } from '#bot/support.ts'
@@ -16,6 +17,7 @@ import { jobDir, resultKeyboard, type Worker } from '#bot/worker.ts'
 import { isStyle, STYLES } from '#shared/subtitles.ts'
 
 const AUTO = 'auto'
+const DOWNLOAD_TIMEOUT = 120_000
 
 /** The language hint for recognition. users.lang is null until the user picks one in /lang,
  * and "auto" when they picked autodetection on purpose. */
@@ -40,17 +42,6 @@ const rows = (buttons: InlineKeyboardButton[], ...sizes: number[]) => {
 const styleButtons = (data: (style: string) => string) =>
 	STYLES.map((s) => ({ text: texts.STYLE_NAMES[s], callback_data: data(s) }))
 
-/** Moves a file, copying it when it sits on another volume: the Bot API files are on theirs. */
-async function move(from: string, to: string) {
-	try {
-		await rename(from, to)
-	} catch (e) {
-		if ((e as NodeJS.ErrnoException).code !== 'EXDEV') throw e
-		await copyFile(from, to)
-		await unlink(from)
-	}
-}
-
 export async function download(api: Api, settings: Settings, fileId: string, dest: string) {
 	const file = await api.getFile(fileId)
 	await mkdir(dirname(dest), { recursive: true })
@@ -60,7 +51,10 @@ export async function download(api: Api, settings: Settings, fileId: string, des
 		await move(file.file_path!, dest)
 		return
 	}
-	const resp = await fetch(`https://api.telegram.org/file/bot${settings.botToken}/${file.file_path}`)
+	const resp = await fetch(`https://api.telegram.org/file/bot${settings.botToken}/${file.file_path}`, {
+		// a stalled download would keep the job pending and the user busy until a restart
+		signal: AbortSignal.timeout(DOWNLOAD_TIMEOUT),
+	})
 	if (!resp.ok || !resp.body) throw new Error(`download returned ${resp.status}`)
 	await pipeline(Readable.fromWeb(resp.body as WebStream), createWriteStream(dest))
 }
