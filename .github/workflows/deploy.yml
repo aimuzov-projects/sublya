@@ -1,11 +1,11 @@
-name: deploy
+name: Deploy
 
 on:
   push:
     branches: [main]
   workflow_dispatch:
 
-# Deploys go one after another, a new one doesn't cut off a build already running.
+# Deploys run one by one, a new one doesn't abort a build that has already started.
 concurrency:
   group: deploy
   cancel-in-progress: false
@@ -17,8 +17,11 @@ jobs:
   check:
     uses: ./.github/workflows/check.yml
 
+  # Until the server is ready (key, clone in /srv, site in Caddy), the deploy is skipped.
+  # It's enabled by the repo variable DEPLOY_ENABLED=true.
   deploy:
     needs: check
+    if: vars.DEPLOY_ENABLED == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     environment:
@@ -26,7 +29,7 @@ jobs:
       url: https://sublya.aimuzov.online
     steps:
       # The server knows what to do: the key in authorized_keys is bound to deploy/remote.sh,
-      # so ssh gets no command.
+      # so we don't pass a command to ssh.
       - name: Deploy on server
         env:
           SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}

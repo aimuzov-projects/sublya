@@ -22,6 +22,7 @@ services:
     build:
       context: ..
       dockerfile: deploy/frontend.Dockerfile
+      secrets: [env]
     image: sublya-site
     container_name: sublya-site
     restart: unless-stopped
@@ -83,6 +84,11 @@ services:
     depends_on:
       - telegram-bot-api
     logging: *logging
+
+# Build variables and the bot's secrets live in /srv/sublya/.env, the sample is .env.example.
+secrets:
+  env:
+    file: ../.env
 
 volumes:
   # the bot's login on the local Bot API server lives here; the name is from the time the bot

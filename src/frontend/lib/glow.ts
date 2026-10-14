@@ -21,6 +21,6 @@ export function glow() {
 		frame = Math.abs(target - current) > 0.0005 ? requestAnimationFrame(tick) : 0
 	}
 
-	addEventListener('scroll', () => frame || (frame = requestAnimationFrame(tick)), { passive: true })
+	addEventListener('scroll', () => (frame ||= requestAnimationFrame(tick)), { passive: true })
 	tick()
 }

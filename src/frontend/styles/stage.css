@@ -363,7 +363,7 @@
 	color: var(--muted);
 }
 
-@media (max-width: 860px) {
+@media (--below-stage) {
 	.stage {
 		grid-template-areas: 'hero' 'rail' 'demo';
 		grid-template-columns: 1fr;
@@ -398,7 +398,7 @@
 	}
 }
 
-@media (prefers-reduced-motion: reduce) {
+@media (--reduced-motion) {
 	.card,
 	.styles button {
 		transition: none;

@@ -1,13 +1,13 @@
 .git
-.github
 .astro
 .claude
 .serena
 .DS_Store
 node_modules
 dist
-demo
-docs
-data
 .env
+**/*.test.ts
+docs
+demo
+data
 src/bot

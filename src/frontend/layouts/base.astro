@@ -1,12 +1,25 @@
 ---
 import cyrillic from '#frontend/assets/fonts/montserrat-cyrillic.woff2?url'
 import latin from '#frontend/assets/fonts/montserrat-latin.woff2?url'
-import { withBase } from '#frontend/scripts/base.js'
-import '#frontend/styles/base.css'
+import Metrika from '#frontend/components/metrika.astro'
+import { site } from '#frontend/data/site.ts'
+import { pageTitle } from '#frontend/lib/title.ts'
+import '#frontend/styles/global.css'
 
-const title = 'Сабля — субтитры как в тиктоке'
-const description =
-	'Telegram-бот прожигает в видео субтитры как в тиктоке: на экране пара слов, произносимое подсвечено. Можно подставить свой текст.'
+type Props = {
+	/** Page name, the site name gets appended to it. Not set on the home page. */
+	title?: string
+	/** `meta description` and `og:description`, `site.description` by default. */
+	description?: string
+	/** `false` for service pages like 404: no canonical and indexing is disallowed. */
+	index?: boolean
+}
+
+const { title, description = site.description, index = true } = Astro.props
+const fullTitle = pageTitle(title)
+const canonical = new URL(Astro.url.pathname, Astro.site)
+// a link to the home page is shared the most, so its preview gets the pitch
+const ogDescription = title ? description : site.pitch
 ---
 
 <!doctype html>
@@ -14,70 +27,27 @@ const description =
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<title>{title}</title>
+		<title>{fullTitle}</title>
 		<meta name="description" content={description} />
-		<meta property="og:title" content={title} />
-		<meta
-			property="og:description"
-			content="Пришли видео в Telegram — получи его с субтитрами, где подсвечено произносимое слово."
-		/>
+		{index ? <link rel="canonical" href={canonical} /> : <meta name="robots" content="noindex" />}
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content={site.name} />
+		<meta property="og:locale" content="ru_RU" />
+		<meta property="og:url" content={canonical} />
+		<meta property="og:title" content={fullTitle} />
+		<meta property="og:description" content={ogDescription} />
 		<meta property="og:image" content={new URL('/media/samara/poster.jpg', Astro.site)} />
 		<meta name="theme-color" content="#120a24" />
-		<link rel="icon" href={withBase('favicon.svg')} type="image/svg+xml" />
-		<link rel="canonical" href={Astro.site} />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<link rel="preload" href={cyrillic} as="font" type="font/woff2" crossorigin />
 		<link rel="preload" href={latin} as="font" type="font/woff2" crossorigin />
-		<!-- Yandex.Metrika counter: the stock snippet, except that tag.js (90 KB) is fetched after
-         the page has loaded; calls to ym() queue up until then, so nothing is lost -->
-		<script is:inline type="text/javascript">
-			/* oxlint-disable no-unused-expressions -- the stock snippet, kept as Yandex ships it */
-			;(function (m, e, t, r, i, k, a) {
-				m[i] =
-					m[i] ||
-					function () {
-						;(m[i].a = m[i].a || []).push(arguments)
-					}
-				m[i].l = 1 * new Date()
-				for (var j = 0; j < document.scripts.length; j++) {
-					if (document.scripts[j].src === r) {
-						return
-					}
-				}
-				var load = function () {
-					;((k = e.createElement(t)),
-						(a = e.getElementsByTagName(t)[0]),
-						(k.async = 1),
-						(k.src = r),
-						a.parentNode.insertBefore(k, a))
-				}
-				var later = function () {
-					m.requestIdleCallback ? m.requestIdleCallback(load, { timeout: 1500 }) : setTimeout(load, 1500)
-				}
-				e.readyState === 'complete' ? later() : m.addEventListener('load', later, { once: true })
-			})(window, document, 'script', 'https://mc.yandex.ru/metrika/tag.js?id=113179171', 'ym')
-
-			ym(113179171, 'init', {
-				ssr: true,
-				webvisor: true,
-				clickmap: true,
-				ecommerce: 'dataLayer',
-				referrer: document.referrer,
-				url: location.href,
-				accurateTrackBounce: true,
-				trackLinks: true,
-			})
-		</script>
-		<!-- /Yandex.Metrika counter -->
+		<slot name="head" />
+		<Metrika />
 	</head>
 	<body>
-		<noscript>
-			<div>
-				<img src="https://mc.yandex.ru/watch/113179171" style="position:absolute; left:-9999px;" alt="" />
-			</div>
-		</noscript>
 		<slot />
 		<script>
-			import { glow } from '#frontend/scripts/glow.js'
+			import { glow } from '#frontend/lib/glow.ts'
 			glow()
 		</script>
 	</body>

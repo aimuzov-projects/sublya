@@ -1,15 +1,10 @@
 ---
+import DodgyButton from '#frontend/components/dodgy-button.svelte'
+import { site } from '#frontend/data/site.ts'
 import '#frontend/styles/final.css'
 ---
 
 <section class="final">
 	<h2>Попробуй на своём видео</h2>
-	<a class="btn" href="https://t.me/sublyarobot">
-		@sublyarobot
-	</a>
+	<DodgyButton client:visible href={site.bot} label="@sublyarobot" />
 </section>
-
-<script>
-	import { dodgy } from '#frontend/scripts/dodgy.js'
-	dodgy()
-</script>

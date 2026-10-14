@@ -57,7 +57,7 @@ body {
 	background: radial-gradient(1200px 700px at 85% -10%, #3b1d6b 0%, transparent 60%), var(--bg);
 	-webkit-font-smoothing: antialiased;
 }
-/* the teal glow is pinned to the screen; scripts/glow.js circles it as the page scrolls */
+/* the teal glow is pinned to the screen; lib/glow.ts circles it as the page scrolls */
 body::before {
 	pointer-events: none;
 	content: '';
@@ -264,13 +264,13 @@ footer a:hover {
 	color: var(--yellow);
 }
 
-@media (max-width: 860px) {
+@media (--below-stage) {
 	main > section {
 		padding: 48px 16px;
 	}
 }
 
-@media (prefers-reduced-motion: reduce) {
+@media (--reduced-motion) {
 	html {
 		scroll-behavior: auto;
 	}

@@ -1,6 +1,7 @@
-name: check
+name: Check
 
-# On main the deploy calls the checks before shipping, a separate run there would be a second one.
+# On main the deploy workflow calls these checks before shipping,
+# so a separate run there would be a duplicate.
 on:
   push:
     branches-ignore: [main]
@@ -25,7 +26,8 @@ jobs:
       - run: npm run lint:js
       - run: npm run lint:css
       - run: npm run check
-      # The site is built on the server, but a broken build had better fail here.
+      - run: npm test
+      # The site is built on the server, but it's better for the build to fail here.
       - run: npm run build
 
   bot:
@@ -36,7 +38,7 @@ jobs:
         working-directory: src/bot
     steps:
       - uses: actions/checkout@v5
-      # Ubuntu's ffmpeg is built with libass, so the render tests run too
+      # Ubuntu's ffmpeg is built with libass, so the render tests run too.
       - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg
       - uses: astral-sh/setup-uv@v6
       - run: uv sync --frozen

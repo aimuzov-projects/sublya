@@ -96,7 +96,8 @@
 	position: relative;
 	height: 96px;
 	border-radius: 9px;
-	background: #000 center / cover;
+	/* a frame of the samara demo; CSP blocks style attributes, so it can't come from the markup */
+	background: #000 url('/media/samara/before.webp') center / cover;
 }
 .clip .play {
 	position: absolute;
@@ -239,7 +240,7 @@
 	bottom: 12px;
 	width: 72px;
 	border-radius: 10px;
-	background: #000 center / cover;
+	background: #000 url('/media/samara/before.webp') center / cover;
 }
 .subs {
 	position: absolute;
@@ -292,13 +293,13 @@
 	}
 }
 
-@media (max-width: 860px) {
+@media (--below-stage) {
 	.steps ol {
 		grid-template-columns: 1fr;
 	}
 }
 
-@media (prefers-reduced-motion: reduce) {
+@media (--reduced-motion) {
 	.scene * {
 		animation: none !important;
 	}

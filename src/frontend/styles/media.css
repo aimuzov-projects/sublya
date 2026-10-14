@@ -1,0 +1,23 @@
+/* Breakpoints for @media (--md) and the like. PostCSS injects this file
+   into every style block, it never gets into the bundle by itself.
+   Each --below-* ends exactly where its pair begins. */
+@custom-media --sm (width >= 600px);
+@custom-media --md (width >= 900px);
+@custom-media --lg (width >= 1000px);
+
+@custom-media --below-sm (width < 600px);
+@custom-media --below-md (width < 900px);
+@custom-media --below-lg (width < 1000px);
+@custom-media --below-xl (width < 1280px);
+
+/* The stage drops its phone column under the text here. */
+@custom-media --below-stage (width <= 860px);
+
+@custom-media --reduced-motion (prefers-reduced-motion: reduce);
+
+/* A finger instead of a mouse: phones and tablets. */
+@custom-media --touch (pointer: coarse);
+
+/* Hide what scripts reveal only if scripts run: without them the page shows at once. */
+@custom-media --scripting (scripting: enabled);
+@custom-media --no-scripting (scripting: none);

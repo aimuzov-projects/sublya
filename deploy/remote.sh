@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
-# The deploy on the server itself: pull main and rebuild the containers.
-# GitHub Actions call it on every push to main and on a manual run of the workflow.
-# For the key from Actions it's the only command allowed (command= in authorized_keys).
+# Deploy on the server itself: pull main and rebuild the containers.
+# GitHub Actions runs it on every push to main and on a manual workflow run.
+# It's the only command allowed for the Actions key (command= in authorized_keys).
 set -euo pipefail
 
-# The body sits in a block: bash reads it whole before git pull replaces this file.
+# The body is a block, so bash reads all of it before git pull replaces this file.
 {
 	cd /srv/sublya
 
-	# Two pushes in a row mustn't build at the same time: the second one waits for the first.
+	# Two pushes in a row must not run compose at once: the second waits for the first.
 	exec 9>/tmp/sublya-deploy.lock
 	flock 9
 
