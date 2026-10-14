@@ -1,0 +1,10 @@
+.git
+.venv
+data
+.env
+**/__pycache__
+.pytest_cache
+tests
+docs
+.serena
+deploy
