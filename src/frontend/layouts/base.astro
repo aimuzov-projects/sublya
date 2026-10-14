@@ -1,7 +1,8 @@
 ---
+import Metrika from '@aimuzov-projects/infra-site-kit/metrika.astro'
+import MetrikaPixel from '@aimuzov-projects/infra-site-kit/metrika-pixel.astro'
 import cyrillic from '#frontend/assets/fonts/montserrat-cyrillic.woff2?url'
 import latin from '#frontend/assets/fonts/montserrat-latin.woff2?url'
-import Metrika from '#frontend/components/metrika.astro'
 import { site } from '#frontend/data/site.ts'
 import { pageTitle } from '#frontend/lib/title.ts'
 import '#frontend/styles/global.css'
@@ -20,6 +21,9 @@ const fullTitle = pageTitle(title)
 const canonical = new URL(Astro.url.pathname, Astro.site)
 // a link to the home page is shared the most, so its preview gets the pitch
 const ogDescription = title ? description : site.pitch
+
+/** Yandex Metrika counter. */
+const metrikaId = 113179171
 ---
 
 <!doctype html>
@@ -42,9 +46,10 @@ const ogDescription = title ? description : site.pitch
 		<link rel="preload" href={cyrillic} as="font" type="font/woff2" crossorigin />
 		<link rel="preload" href={latin} as="font" type="font/woff2" crossorigin />
 		<slot name="head" />
-		<Metrika />
+		<Metrika id={metrikaId} />
 	</head>
 	<body>
+		<MetrikaPixel id={metrikaId} />
 		<slot />
 		<script>
 			import { glow } from '#frontend/lib/glow.ts'
