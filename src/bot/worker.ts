@@ -136,8 +136,10 @@ export class Worker {
 			render(video, words, transcript.size, work, style, Boolean(job.note)),
 		)
 
+		let inPlace: boolean
+
 		try {
-			await this.send(job, out, transcript)
+			inPlace = await this.send(job, out, transcript)
 		} finally {
 			await unlink(out).catch(() => {})
 		}
@@ -147,9 +149,13 @@ export class Worker {
 		// the result carries the buttons and the job folder keeps the input, so the original is
 		// clutter; on a failure it stays for the user to send again
 		await this.drop(job, job.source_msg_id, 'source')
+
+		// a video note can't be swapped in place, so the old one goes once the new one is out
+		if (!inPlace) await this.drop(job, job.replace_msg_id, 'old result')
 	}
 
-	async send(job: Job, out: string, transcript: Transcript): Promise<void> {
+	/** Sends the result; true if it took the place of the old one in the same message. */
+	async send(job: Job, out: string, transcript: Transcript): Promise<boolean> {
 		const [w, h] = transcript.size
 		const seconds = Math.round(transcript.duration)
 		const markup = { reply_markup: resultKeyboard(job.id) }
@@ -162,7 +168,7 @@ export class Worker {
 					...markup,
 				})
 
-				return
+				return false
 			} catch (e) {
 				if (!isBadRequest(e)) throw e
 
@@ -180,7 +186,7 @@ export class Worker {
 
 				await this.api.editMessageMedia(job.chat_id, job.replace_msg_id, media, markup)
 
-				return
+				return true
 			} catch (e) {
 				if (!isBadRequest(e)) throw e
 
@@ -190,6 +196,8 @@ export class Worker {
 		}
 
 		await this.api.sendVideo(job.chat_id, new InputFile(out, 'sublya.mp4'), { ...video, ...markup })
+
+		return false
 	}
 
 	private async fail(job: Job, userText: string, error: string, notifyAdmins = false) {
