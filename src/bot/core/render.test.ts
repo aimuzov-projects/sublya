@@ -16,6 +16,7 @@ const DIALOGUE = /^Dialogue: (\d+),([\d:.]+),([\d:.]+),[^,]*,[^,]*,\d+,\d+,\d+,[
 
 const seconds = (t: string) => {
 	const [h, m, s] = t.split(':')
+
 	return Number(h) * 3600 + Number(m) * 60 + Number(s)
 }
 const events = (ass: string) =>
@@ -38,9 +39,12 @@ for (const style of STYLES) {
 
 	test(`${style} lights one word per event`, () => {
 		const evs = events(buildAss(words, [1080, 1920], style))
+
 		assert.equal(evs.length, words.length)
+
 		for (const { text } of evs) {
 			assert.equal(text.split(HIGHLIGHT).length - 1, 1)
+
 			if (style === 'single') {
 				assert.equal(
 					visible(text)
@@ -54,21 +58,28 @@ for (const style of STYLES) {
 
 	test(`${style} events don't overlap`, () => {
 		const evs = events(buildAss(words, [1080, 1920], style))
+
 		evs.slice(1).forEach((next, i) => assert.ok(evs[i].start <= evs[i].end && evs[i].end <= next.start + 1e-9))
 	})
 
 	test(`${style} in a circle keeps off the corners`, () => {
 		const ass = buildAss(words, [400, 400], style, { circle: true })
 		const p = forCircle(presets[style])
+
 		for (const line of ass.split('\n').filter((l) => l.startsWith('Style: '))) {
 			const [marginL, marginR, marginV] = line.split(',').slice(-4, -1).map(Number)
+
 			assert.equal(marginL, 48)
 			assert.equal(marginR, 48)
+
 			if (p.alignment === 2) assert.ok(marginV >= 80)
 		}
+
 		for (const { text } of events(ass)) {
 			const shown = visible(text).split(/\s+/).join(' ')
+
 			assert.ok(shown.length <= p.maxChars || !shown.includes(' '), shown)
+
 			if (shown.length > p.maxChars) assert.equal(text.split(String.raw`\fscx`).length - 1, 3)
 		}
 	})
@@ -83,12 +94,14 @@ test('override braces in the text are defused', () => {
 
 test('a long word is squeezed only in a circle', () => {
 	const word: Word[] = [{ text: 'высокопревосходительство', start: 0, end: 1, line_end: false }]
+
 	assert.equal(buildAss(word, [400, 400], 'single', { circle: true }), golden('long-circle.ass'))
 	assert.ok(!buildAss(word, [400, 400], 'single').includes(String.raw`\fscx`))
 })
 
 test('circle pages are shorter', () => {
 	for (const style of STYLES) assert.ok(forCircle(presets[style]).maxChars <= presets[style].maxChars)
+
 	assert.ok(forCircle(presets.big).maxChars < presets.big.maxChars)
 	assert.ok(forCircle(presets.single).font < presets.single.font)
 })
@@ -96,14 +109,17 @@ test('circle pages are shorter', () => {
 test('a short word holds on to the next one with a hard space', () => {
 	const page: Word[] = ['ездили', 'в', 'Самару'].map((text, i) => ({ text, start: i, end: i + 0.5, line_end: false }))
 	const [first] = events(buildAss(page, [1080, 1920], 'classic'))
+
 	assert.ok(first.text.endsWith(String.raw`ЕЗДИЛИ{\r} В\hСАМАРУ`), first.text)
 })
 
 for (const style of STYLES) {
 	test(`libass renders a frame in ${style}`, async (t) => {
 		if (!(await hasFilter('ass'))) return t.skip('ffmpeg without libass (set SUBLYA_FFMPEG)')
+
 		const dir = mkdtempSync(join(tmpdir(), 'sublya-'))
 		const video = join(dir, 'in.mp4')
+
 		await run(
 			tool('ffmpeg'),
 			'-v',
@@ -125,10 +141,13 @@ for (const style of STYLES) {
 			'aac',
 			video,
 		)
+
 		const ass = join(dir, 'subs.ass')
 		const { writeFile } = await import('node:fs/promises')
+
 		await writeFile(ass, buildAss(words, [270, 480], style))
 		const out = join(dir, 'out.mp4')
+
 		await burn(video, ass, out, ['-ss', '14', '-frames:v', '1'])
 		assert.ok((await stat(out)).size > 0)
 	})

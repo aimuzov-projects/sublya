@@ -6,6 +6,7 @@ export async function move(from: string, to: string) {
 		await rename(from, to)
 	} catch (e) {
 		if ((e as NodeJS.ErrnoException).code !== 'EXDEV') throw e
+
 		await copyFile(from, to)
 		await unlink(from)
 	}

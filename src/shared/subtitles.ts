@@ -56,8 +56,10 @@ export const presets: Record<Style, Preset> = {
 export function paginate(words: Word[], perPage = PER_PAGE, maxChars = MAX_CHARS): Word[][] {
 	const pages: Word[][] = []
 	let page: Word[] = []
+
 	for (const w of words) {
 		const last = page.at(-1)
+
 		if (
 			last &&
 			(page.length >= perPage ||
@@ -69,9 +71,12 @@ export function paginate(words: Word[], perPage = PER_PAGE, maxChars = MAX_CHARS
 			pages.push(page)
 			page = []
 		}
+
 		page.push(w)
 	}
+
 	if (page.length) pages.push(page)
+
 	return pages
 }
 

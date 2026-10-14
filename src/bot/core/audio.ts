@@ -17,6 +17,7 @@ export async function videoSize(video: string): Promise<[number, number]> {
 	)
 	const info = JSON.parse(stdout).streams[0]
 	const rotation = info.side_data_list?.[0]?.rotation ?? 0
+
 	// ffmpeg autorotates on decode, so the frame the subtitles land on is swapped
 	return Math.abs(rotation) % 180 === 90 ? [info.height, info.width] : [info.width, info.height]
 }
@@ -34,7 +35,9 @@ export async function duration(media: string): Promise<number> {
 	)
 	// a container without a duration in its header gives N/A, and NaN would pass any limit
 	const seconds = Number.parseFloat(stdout)
+
 	if (!Number.isFinite(seconds)) throw new Error(`ffprobe gave no duration for ${media}: ${stdout.trim()}`)
+
 	return seconds
 }
 
@@ -61,5 +64,6 @@ export async function silences(audio: string): Promise<[number, number][]> {
 	const { stderr } = await run(tool('ffmpeg'), '-v', 'info', '-i', audio, '-af', SILENCE, '-f', 'null', '-')
 	const starts = [...stderr.matchAll(/silence_start: ([\d.]+)/g)].map((m) => Number(m[1]))
 	const ends = [...stderr.matchAll(/silence_end: ([\d.]+)/g)].map((m) => Number(m[1]))
+
 	return starts.slice(0, ends.length).map((s, i) => [s, ends[i]])
 }

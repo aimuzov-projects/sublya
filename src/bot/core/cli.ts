@@ -41,6 +41,7 @@ const { values, positionals } = parseArgs({
 })
 
 const [input] = positionals
+
 if (!input || !isStyle(values.style)) {
 	console.error(`usage: cli.ts VIDEO [-o OUT] [--text FILE] [--style ${STYLES.join('|')}] [--circle] [--words FILE]`)
 	process.exit(2)
@@ -50,16 +51,20 @@ const video = resolve(input)
 const stem = basename(video, extname(video))
 const out = values.output ?? join(dirname(video), `${stem}.subs.mp4`)
 const work = join(dirname(video), 'work', stem)
+
 await mkdir(work, { recursive: true })
 const cached = join(work, 'transcript.json')
 
 let transcript
+
 if (values.retranscribe || !existsSync(cached)) {
 	const cfg = sttFromEnv()
+
 	if (!cfg.key) {
 		console.error('set STT_API_KEY')
 		process.exit(1)
 	}
+
 	transcript = await transcribe(video, work, cfg, values.lang === 'auto' ? null : values.lang)
 	await writeFile(cached, toJson(transcript), 'utf8')
 } else {
@@ -68,16 +73,19 @@ if (values.retranscribe || !existsSync(cached)) {
 
 const text = values.text ? await readFile(values.text, 'utf8') : null
 const words = align(transcript, text, values.lag ? Number(values.lag) : null)
+
 await writeFile(
 	join(work, 'words.tsv'),
 	words.map((w) => `${w.start.toFixed(2)}\t${w.end.toFixed(2)}\t${w.text}\n`).join(''),
 	'utf8',
 )
+
 console.error('text:', words.map((w) => w.text).join(' '))
 
 if (values.words) {
 	const round = (t: number) => Math.round(t * 1000) / 1000
 	const data = words.map((w) => ({ ...w, start: round(w.start), end: round(w.end) }))
+
 	await writeFile(values.words, JSON.stringify(data) + '\n', 'utf8')
 	console.log(values.words)
 } else {

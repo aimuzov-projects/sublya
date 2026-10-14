@@ -51,13 +51,17 @@ export const defaults = {
 // a typo must stop the start, not turn into NaN: "123;456" would leave the bot without admins
 function number(name: string, value: string): number {
 	const n = Number(value)
+
 	if (!value.trim() || !Number.isFinite(n)) throw new Error(`${name} is not a number: ${value}`)
+
 	return n
 }
 
 function int(name: string, value: string): number {
 	const n = number(name, value)
+
 	if (!Number.isSafeInteger(n)) throw new Error(`${name} is not an integer: ${value}`)
+
 	return n
 }
 
@@ -71,9 +75,13 @@ const ids = (value: string) =>
 
 export function fromEnv(env = process.env): Settings {
 	const botToken = env.BOT_TOKEN
+
 	if (!botToken) throw new Error('BOT_TOKEN is not set')
+
 	const stt = sttFromEnv(env)
+
 	if (!stt.key) throw new Error('STT_API_KEY is not set')
+
 	return {
 		...defaults,
 		botToken,

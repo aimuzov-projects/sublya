@@ -23,19 +23,24 @@ const DOWNLOAD_TIMEOUT = 120_000
  * and "auto" when they picked autodetection on purpose. */
 export function sttLang(chosen: string | null, fallback: string | null): string | null {
 	if (chosen === AUTO) return null
+
 	return chosen || fallback
 }
 
 export function langName(chosen: string | null, fallback: string | null): string {
 	const lang = sttLang(chosen, fallback)
+
 	return lang ? (texts.LANG_NAMES[lang] ?? lang) : texts.LANG_AUTO
 }
 
 const rows = (buttons: InlineKeyboardButton[], ...sizes: number[]) => {
 	const out: InlineKeyboardButton[][] = []
 	let at = 0
+
 	for (const size of sizes) out.push(buttons.slice(at, (at += size)))
+
 	if (at < buttons.length) out.push(buttons.slice(at))
+
 	return { inline_keyboard: out.filter((row) => row.length) }
 }
 
@@ -44,18 +49,24 @@ const styleButtons = (data: (style: string) => string) =>
 
 export async function download(api: Api, settings: Settings, fileId: string, dest: string) {
 	const file = await api.getFile(fileId)
+
 	await mkdir(dirname(dest), { recursive: true })
+
 	if (settings.apiUrl) {
 		// a local Bot API server hands out a path on the shared volume; moving it keeps the
 		// server's cache from growing
 		await move(file.file_path!, dest)
+
 		return
 	}
+
 	const resp = await fetch(`https://api.telegram.org/file/bot${settings.botToken}/${file.file_path}`, {
 		// a stalled download would keep the job pending and the user busy until a restart
 		signal: AbortSignal.timeout(DOWNLOAD_TIMEOUT),
 	})
+
 	if (!resp.ok || !resp.body) throw new Error(`download returned ${resp.status}`)
+
 	await pipeline(Readable.fromWeb(resp.body as WebStream), createWriteStream(dest))
 }
 
@@ -66,6 +77,7 @@ async function dropMessages(ctx: Context, ids: number[]) {
 			await ctx.api.deleteMessage(ctx.chat!.id, id)
 		} catch (e) {
 			if (!isTelegramError(e)) throw e
+
 			console.warn(`could not delete message ${id} in chat ${ctx.chat!.id}`, e)
 		}
 	}
@@ -76,15 +88,18 @@ async function dropMessages(ctx: Context, ids: number[]) {
 async function captionProgress(ctx: Context, msgId: number, caption: string): Promise<number | null> {
 	try {
 		await ctx.api.editMessageCaption(ctx.chat!.id, msgId, { caption })
+
 		return msgId
 	} catch (e) {
 		if (!isTelegramError(e)) throw e
+
 		return null
 	}
 }
 
 const replaceOf = (ctx: Context, job: Job) => {
 	const msgId = ctx.callbackQuery?.message?.message_id
+
 	return msgId === undefined ? undefined : { msgId, jobId: job.id }
 }
 
@@ -102,7 +117,9 @@ export function handlers({ db, worker, settings, support }: Deps) {
 	/** The prompt and the transcript have done their job once the text comes or the user moves on. */
 	async function stopFixing(ctx: Context) {
 		const fix = fixing.get(ctx.from!.id)
+
 		if (!fix) return
+
 		fixing.delete(ctx.from!.id)
 		await dropMessages(ctx, fix.promptMsgIds)
 	}
@@ -121,6 +138,7 @@ export function handlers({ db, worker, settings, support }: Deps) {
 		await stopFixing(ctx)
 		const user = db.getUser(ctx.from.id)
 		const current = isStyle(user.style) ? texts.STYLE_NAMES[user.style] : user.style
+
 		await ctx.reply(texts.CHOOSE_STYLE(current), {
 			reply_markup: rows(
 				styleButtons((s) => `defstyle:${s}`),
@@ -132,7 +150,9 @@ export function handlers({ db, worker, settings, support }: Deps) {
 
 	router.callbackQuery(/^defstyle:(.+)$/, async (ctx) => {
 		const style = ctx.match[1]
+
 		if (!isStyle(style)) return ctx.answerCallbackQuery()
+
 		db.setUser(ctx.from.id, { style })
 		await ctx.editMessageText(texts.STYLE_SET(texts.STYLE_NAMES[style]))
 		await ctx.answerCallbackQuery()
@@ -148,6 +168,7 @@ export function handlers({ db, worker, settings, support }: Deps) {
 				callback_data: `lang:${code}`,
 			})),
 		]
+
 		await ctx.reply(texts.CHOOSE_LANG(langName(user.lang, settings.defaultLang)), {
 			reply_markup: rows(buttons, 3),
 		})
@@ -155,7 +176,9 @@ export function handlers({ db, worker, settings, support }: Deps) {
 
 	router.callbackQuery(/^lang:(.+)$/, async (ctx) => {
 		const code = ctx.match[1]
+
 		if (code !== AUTO && !(code in texts.LANG_NAMES)) return ctx.answerCallbackQuery()
+
 		db.setUser(ctx.from.id, { lang: code })
 		await ctx.editMessageText(texts.LANG_SET(langName(code, settings.defaultLang)))
 		await ctx.answerCallbackQuery()
@@ -163,12 +186,15 @@ export function handlers({ db, worker, settings, support }: Deps) {
 
 	dm.command('stats', async (ctx) => {
 		if (!settings.adminIds.has(ctx.from.id)) return
+
 		await ctx.reply(texts.STATS({ ...db.stats(), stt_limit: settings.sttDailyMinutes }))
 	})
 
 	dm.command('admin', async (ctx) => {
 		if (!settings.adminIds.has(ctx.from.id) || !settings.adminUrl) return
+
 		const button = { text: texts.BTN_ADMIN, web_app: { url: settings.adminUrl } }
+
 		await ctx.reply(texts.ADMIN_PANEL, { reply_markup: { inline_keyboard: [[button]] } })
 	})
 
@@ -192,6 +218,7 @@ export function handlers({ db, worker, settings, support }: Deps) {
 		const { parent, replace } = job
 		const note = parent ? Boolean(parent.note) : job.note
 		let jobId: number
+
 		try {
 			jobId = db.submit({
 				userId: job.userId,
@@ -211,37 +238,50 @@ export function handlers({ db, worker, settings, support }: Deps) {
 			if (e instanceof Busy) await ctx.reply(texts.BUSY)
 			else if (e instanceof QuotaExceeded) await ctx.reply(texts.QUOTA(settings.dailyVideos))
 			else throw e
+
 			return null
 		}
+
 		const queued = texts.QUEUED(db.position(jobId) || 1)
 		let progress = replace && !note ? await captionProgress(ctx, replace.msgId, queued) : null
+
 		progress ??= (await quiet(() => ctx.api.sendMessage(ctx.chat!.id, queued))).message_id
 		db.setProgressMsg(jobId, progress)
 		worker.wake()
+
 		return jobId
 	}
 
 	dm.on([':video', ':video_note', ':document'], async (ctx, next) => {
 		if (fixing.has(ctx.from.id)) return next()
+
 		const msg: Message = ctx.msg
 		const media = msg.video ?? msg.video_note ?? msg.document!
+
 		if (msg.document && !(msg.document.mime_type ?? '').startsWith('video/')) {
 			await ctx.reply(texts.NOT_VIDEO)
+
 			return
 		}
+
 		if ('duration' in media && media.duration > settings.maxDuration) {
 			await ctx.reply(texts.TOO_LONG(Math.floor(settings.maxDuration / 60)))
+
 			return
 		}
+
 		const limit = downloadLimit(settings)
+
 		if ((media.file_size ?? 0) > limit) {
 			await ctx.reply(texts.TOO_BIG(Math.floor(limit / MB)))
+
 			return
 		}
 
 		const user = db.getUser(ctx.from.id)
 		// names are only for the admin panel, so they are refreshed when a video comes
 		const name = [ctx.from.first_name, ctx.from.last_name].filter(Boolean).join(' ')
+
 		db.setUser(user.id, { name, username: ctx.from.username ?? null })
 		const jobId = await enqueue(ctx, {
 			userId: user.id,
@@ -251,67 +291,90 @@ export function handlers({ db, worker, settings, support }: Deps) {
 			note: Boolean(msg.video_note),
 			sourceMsgId: msg.message_id,
 		})
+
 		if (jobId === null) return
 
 		const ext = extname(('file_name' in media && media.file_name) || '').toLowerCase() || '.mp4'
 		const dest = join(jobsDir(settings), String(jobId), `input${ext}`)
+
 		try {
 			await download(ctx.api, settings, media.file_id, dest)
 		} catch (e) {
 			console.error(`download of job ${jobId} failed`, e)
 			db.finish(jobId, 'failed', `download: ${e}`)
 			await ctx.reply(texts.DOWNLOAD_FAILED)
+
 			return
 		}
+
 		db.ready(jobId, dest)
 		worker.wake()
 	})
 
 	async function ownedJob(ctx: Context, jobId: number): Promise<Job | null> {
 		const job = db.getJob(jobId)
+
 		if (!job || job.user_id !== ctx.from!.id) {
 			await ctx.answerCallbackQuery({ text: texts.NOT_YOURS, show_alert: true })
+
 			return null
 		}
+
 		if (!existsSync(join(jobDir(settings, job), 'transcript.json'))) {
 			await ctx.answerCallbackQuery({ text: texts.EXPIRED, show_alert: true })
+
 			return null
 		}
+
 		return job
 	}
 
 	router.callbackQuery(/^fix:(\d+)$/, async (ctx) => {
 		const job = await ownedJob(ctx, Number(ctx.match[1]))
+
 		if (!job) return
+
 		const transcript = fromJson(await readFile(join(jobDir(settings, job), 'transcript.json'), 'utf8'))
+
 		// a second press starts over, the first prompt would only clutter the chat
 		await stopFixing(ctx)
 		const prompt = await ctx.reply(texts.FIX_PROMPT)
 		const heard = await ctx.reply(transcriptText(transcript).slice(0, 4000))
 		const result = ctx.callbackQuery.message?.message_id
+
 		fixing.set(ctx.from.id, {
 			jobId: job.id,
 			replace: result === undefined ? undefined : { msgId: result, jobId: job.id },
 			promptMsgIds: [prompt.message_id, heard.message_id],
 		})
+
 		await ctx.answerCallbackQuery()
 	})
 
 	dm.on('message', async (ctx, next) => {
 		const fix = fixing.get(ctx.from.id)
+
 		if (fix === undefined) return next()
+
 		const text = ctx.msg.text
+
 		if (!text || text.startsWith('/')) {
 			const reminder = await ctx.reply(texts.FIX_WAITING)
+
 			fix.promptMsgIds.push(reminder.message_id)
+
 			return
 		}
+
 		await stopFixing(ctx)
 		const job = db.getJob(fix.jobId)
+
 		if (!job || !existsSync(join(jobDir(settings, job), 'transcript.json'))) {
 			await ctx.reply(texts.EXPIRED)
+
 			return
 		}
+
 		await enqueue(ctx, {
 			userId: job.user_id,
 			text,
@@ -325,11 +388,15 @@ export function handlers({ db, worker, settings, support }: Deps) {
 
 	router.callbackQuery(/^restyle:(\d+)$/, async (ctx) => {
 		const job = await ownedJob(ctx, Number(ctx.match[1]))
+
 		if (!job) return
+
 		const back = { text: texts.BTN_BACK, callback_data: `back:${job.id}` }
+
 		await ctx.editMessageReplyMarkup({
 			reply_markup: rows([...styleButtons((s) => `st:${job.id}:${s}`), back], 2, 2, 1),
 		})
+
 		await ctx.answerCallbackQuery()
 	})
 
@@ -341,9 +408,12 @@ export function handlers({ db, worker, settings, support }: Deps) {
 	router.callbackQuery(/^st:(\d+):(.+)$/, async (ctx) => {
 		const style = ctx.match[2]
 		const job = await ownedJob(ctx, Number(ctx.match[1]))
+
 		if (!job || !isStyle(style)) return
+
 		await ctx.editMessageReplyMarkup({ reply_markup: resultKeyboard(job.id) })
 		await ctx.answerCallbackQuery()
+
 		await enqueue(ctx, {
 			userId: job.user_id,
 			text: job.text,

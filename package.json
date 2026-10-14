@@ -15,17 +15,18 @@
 		"test": "node --test 'src/**/*.test.ts'",
 		"bot": "node --watch --env-file-if-exists=.env src/bot/main.ts",
 		"astro": "astro",
-		"format": "prettier --write .",
+		"format": "oxlint --fix && prettier --write .",
 		"format:check": "prettier --check .",
 		"lint:css": "stylelint \"src/**/*.{css,astro,svelte}\"",
-		"lint:js": "oxlint --deny-warnings"
+		"lint:js": "oxlint --deny-warnings",
+		"lint:fix": "oxlint --fix"
 	},
 	"dependencies": {
 		"@grammyjs/runner": "2.0.3",
 		"grammy": "1.46.0"
 	},
 	"devDependencies": {
-		"@aimuzov-projects/infra-site-kit": "github:aimuzov-projects/infra-site-kit#v1.1.0",
+		"@aimuzov-projects/infra-site-kit": "github:aimuzov-projects/infra-site-kit#v1.2.0",
 		"@astrojs/check": "0.9.10",
 		"@astrojs/sitemap": "3.7.4",
 		"@astrojs/svelte": "9.0.1",

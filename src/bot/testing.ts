@@ -38,10 +38,13 @@ export function fakeBot() {
 
 	bot.api.config.use(async (_prev, method, payload) => {
 		const p = (payload ?? {}) as Record<string, unknown>
+
 		calls.push({ method, payload: p })
 		const failure = failures.get(method)
+
 		if (failure) {
 			failures.delete(method)
+
 			throw new GrammyError(
 				`Call to '${method}' failed!`,
 				{ ok: false, error_code: failure.code, description: failure.description },
@@ -49,10 +52,12 @@ export function fakeBot() {
 				p,
 			)
 		}
+
 		const answer = answers.get(method)
 		const result = answer
 			? answer(p)
 			: { message_id: ++messageId, date: 0, chat: { id: p.chat_id, type: 'private' }, text: p.text }
+
 		return { ok: true, result } as never
 	})
 

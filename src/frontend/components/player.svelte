@@ -31,12 +31,17 @@
 	// a new card shows its poster until its video can play
 	export async function open(src: string) {
 		const current = ++seq
+
 		loading = true
 		video.src = src
 		await once(video, 'loadeddata')
+
 		if (current !== seq) return
+
 		if (active) await video.play().catch(() => {})
+
 		if (current !== seq) return
+
 		loading = false
 	}
 
@@ -53,7 +58,9 @@
 	// the subtitles follow the frames on screen, not the coarse timeupdate events
 	function follow() {
 		time = video.currentTime
+
 		if (video.paused) return
+
 		if ('requestVideoFrameCallback' in video) video.requestVideoFrameCallback(follow)
 		else requestAnimationFrame(follow)
 	}
@@ -61,6 +68,7 @@
 	function toggleSound() {
 		muted = !muted
 		video.muted = muted
+
 		if (!muted) play()
 	}
 </script>

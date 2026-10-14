@@ -18,10 +18,13 @@
 
 	function shuffle<T>(list: T[]) {
 		const a = [...list]
+
 		for (let i = a.length - 1; i > 0; i--) {
 			const j = Math.floor(Math.random() * (i + 1))
+
 			;[a[i], a[j]] = [a[j], a[i]]
 		}
+
 		return a
 	}
 
@@ -53,8 +56,10 @@
 
 	function step(dir: number) {
 		if (!several) return
+
 		if (dir > 0) order.push(order.shift()!)
 		else order.unshift(order.pop()!)
+
 		seen = (seen + (dir > 0 ? 1 : demos.length - 1)) % demos.length
 		openTop()
 	}
@@ -63,6 +68,7 @@
 	function fly(dir: number) {
 		drag = null
 		flight = { id: order[0], dir }
+
 		setTimeout(() => {
 			flight = null
 			step(1)
@@ -71,13 +77,17 @@
 
 	function transform(id: string) {
 		if (flight?.id === id) return `translateX(${flight.dir * 140}%) rotate(${flight.dir * 24}deg)`
+
 		if (drag?.id === id) return `translateX(${drag.dx}px) rotate(${drag.dx / 18}deg)`
+
 		return undefined
 	}
 
 	function grab(e: PointerEvent) {
 		const card = e.currentTarget as HTMLElement
+
 		if (!several || (e.target as HTMLElement).closest('button')) return
+
 		drag = { id: order[0], x: e.clientX, dx: 0, pointer: e.pointerId }
 		card.setPointerCapture(e.pointerId)
 	}
@@ -88,13 +98,17 @@
 
 	function release(e: PointerEvent) {
 		if (!drag || e.pointerId !== drag.pointer) return
+
 		const { dx } = drag
+
 		drag = null
+
 		if (Math.abs(dx) > 80) fly(Math.sign(dx))
 	}
 
 	function keydown(e: KeyboardEvent) {
 		if (e.key === 'ArrowRight') fly(-1)
+
 		if (e.key === 'ArrowLeft') step(-1)
 	}
 
@@ -118,6 +132,7 @@
 
 	$effect(() => {
 		if (started || !player || !loaded || !visible) return
+
 		started = true
 		untrack(openTop)
 	})
@@ -125,6 +140,7 @@
 	// the video plays only while on screen
 	$effect(() => {
 		const on = visible
+
 		if (player) untrack(() => (on ? player!.play() : player!.pause()))
 	})
 
@@ -134,9 +150,11 @@
 
 		loaded = document.readyState === 'complete'
 		const onLoad = () => (loaded = true)
+
 		addEventListener('load', onLoad, { once: true })
 
 		const io = new IntersectionObserver(([entry]) => (visible = entry.isIntersecting), { threshold: 0.4 })
+
 		io.observe(deck)
 
 		return () => {

@@ -40,14 +40,19 @@ export function dropHallucinations(words: Word[]): Word[] {
 	const same = (from: number, phrase: string[]) => phrase.every((p, i) => keys[from + i] === p)
 	let [start, end] = [0, words.length]
 	let trimmed = true
+
 	while (trimmed) {
 		trimmed = false
+
 		for (const phrase of HALLUCINATIONS) {
 			const n = phrase.length
+
 			if (end - start >= n && same(start, phrase)) [start, trimmed] = [start + n, true]
+
 			if (end - start >= n && same(end - n, phrase)) [end, trimmed] = [end - n, true]
 		}
 	}
+
 	return words.slice(start, end)
 }
 
@@ -55,17 +60,22 @@ type Response = { text?: string; words?: { word: string; start: number; end: num
 
 export function parse(data: Response): Word[] {
 	if (!data.words) throw new SttError('the STT response has no word timestamps')
+
 	let heard: Word[] = data.words
 		.filter((w) => w.word.trim())
 		.map((w) => ({ text: w.word.trim(), start: Number(w.start), end: Number(w.end), line_end: false }))
 	// words come without punctuation; the full text has it
 	const ref = readText(data.text ?? '')
+
 	if (ref.length) {
 		ref.at(-1)!.line_end = false
 		heard = applyText(heard, ref)
 	}
+
 	heard = dropHallucinations(heard)
+
 	if (!heard.length) throw new NoSpeech('no speech recognised')
+
 	return heard
 }
 
@@ -77,15 +87,20 @@ export type Deps = {
 async function post(audio: string, cfg: SttConfig, lang: string | null, deps: Deps): Promise<Response> {
 	const { fetch: request = fetch, sleep = (s: number) => delay(s * 1000) } = deps
 	const content = await readFile(audio)
+
 	for (let attempt = 0; attempt <= BACKOFF.length; attempt++) {
 		const retry = attempt < BACKOFF.length
 		const form = new FormData()
+
 		form.set('model', cfg.model)
 		form.set('response_format', 'verbose_json')
 		form.set('timestamp_granularities[]', 'word')
+
 		if (lang) form.set('language', lang)
+
 		form.set('file', new Blob([content], { type: 'audio/wav' }), basename(audio))
 		let failure: string
+
 		try {
 			// the timeout covers the body too: a response that stalls halfway is retried as well
 			const resp = await request(`${cfg.url.replace(/\/+$/, '')}/audio/transcriptions`, {
@@ -94,18 +109,26 @@ async function post(audio: string, cfg: SttConfig, lang: string | null, deps: De
 				body: form,
 				signal: AbortSignal.timeout(TIMEOUT),
 			})
+
 			if (resp.ok) return await resp.json()
+
 			failure = `STT returned ${resp.status}: ${(await resp.text()).slice(0, 300)}`
+
 			if (resp.status !== 429 && resp.status < 500) throw new SttError(failure)
 		} catch (e) {
 			if (e instanceof SttError) throw e
+
 			// fetch hides the reason in cause: "fetch failed" alone tells the admin nothing
 			const cause = e instanceof Error && e.cause ? `: ${e.cause}` : ''
+
 			failure = `STT request failed: ${e}${cause}`
 		}
+
 		if (!retry) throw new SttError(failure)
+
 		await sleep(BACKOFF[attempt])
 	}
+
 	throw new Error('unreachable')
 }
 
@@ -120,8 +143,10 @@ export async function transcribe(
 	lang: string | null = null,
 ): Promise<Transcript> {
 	const audio = join(workdir, 'audio.wav')
+
 	await extractAudio(video, audio)
 	const words = await recognize(audio, cfg, lang)
+
 	return {
 		words,
 		silences: await silences(audio),

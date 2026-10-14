@@ -7,6 +7,7 @@ const base = { BOT_TOKEN: '1:t', STT_API_KEY: 'k' }
 
 test('numbers and ids come from the environment', () => {
 	const s = fromEnv({ ...base, ADMIN_IDS: '1, 2 3', SUPPORT_CHAT_ID: '-1001', DAILY_VIDEOS: '5', STT_LAG: '0.1' })
+
 	assert.deepEqual([...s.adminIds], [1, 2, 3])
 	assert.equal(s.supportChatId, -1001)
 	assert.equal(s.dailyVideos, 5)

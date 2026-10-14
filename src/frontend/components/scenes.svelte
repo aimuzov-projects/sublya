@@ -22,6 +22,7 @@
 		let i = 0
 		const step = () => {
 			typed = caption.slice(0, i)
+
 			if (i++ < caption.length) timers[1] = setTimeout(step, 55 + Math.random() * 60)
 			else
 				timers[1] = setTimeout(() => {
@@ -29,6 +30,7 @@
 					step()
 				}, 1800)
 		}
+
 		step()
 	}
 
@@ -38,6 +40,7 @@
 			lit = i++ % (words.length + 1)
 			timers[2] = setTimeout(step, 650)
 		}
+
 		step()
 	}
 
@@ -45,12 +48,16 @@
 	function run(n: number, on: boolean) {
 		running[n] = false
 		clearTimeout(timers[n])
+
 		if (!on) return
+
 		// the class has to leave the DOM and come back for the CSS animations to restart
 		flushSync()
 		void scenes[n].offsetWidth
 		running[n] = true
+
 		if (n === 1) typing()
+
 		if (n === 2) lighting()
 	}
 
@@ -61,8 +68,10 @@
 	onMount(() => {
 		if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
 			typed = caption
+
 			return
 		}
+
 		const io = new IntersectionObserver(
 			(entries) => {
 				for (const { target, isIntersecting } of entries)
@@ -70,9 +79,12 @@
 			},
 			{ threshold: 0.3 },
 		)
+
 		for (const scene of scenes) io.observe(scene)
+
 		return () => {
 			io.disconnect()
+
 			for (const t of timers) clearTimeout(t)
 		}
 	})
