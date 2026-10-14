@@ -7,11 +7,11 @@ and the domains belong to the shared Caddy from
 [infra-server](https://github.com/aimuzov-projects/infra-server).
 
 Every push to `main` deploys it: `.github/workflows/deploy.yml` runs the checks, then logs into
-the server with the `DEPLOY_SSH_KEY` secret. That key is bound to `deploy/remote.sh` in the
-server's `authorized_keys`:
+the server with the `DEPLOY_SSH_KEY` secret. That key runs [`deploy/site.sh`](https://github.com/aimuzov-projects/infra-server/blob/main/deploy/site.sh) of
+infra-server, the deploy script shared by the sites, through the server's `authorized_keys`:
 
 ```
-command="git -C /srv/sublya pull --ff-only --quiet && /srv/sublya/deploy/remote.sh",restrict ssh-ed25519 ... github-actions@sublya
+command="/srv/infra-server/deploy/site.sh sublya",restrict ssh-ed25519 ... github-actions@sublya
 ```
 
 The script pulls `main` and rebuilds the containers. To deploy without a push:
@@ -43,7 +43,7 @@ docker run --rm --network vpn curlimages/curl -sS -o /dev/null -w '%{http_code}\
 3. If the bot has been polling the public Bot API, log it out once:
    `curl https://api.telegram.org/bot$BOT_TOKEN/logOut`. If it ran against another local
    Bot API server, call `close` on that one instead.
-4. `/srv/sublya/deploy/remote.sh`, then add the Actions key as above.
+4. `/srv/infra-server/deploy/site.sh sublya`, then add the Actions key as above.
 
 ## Files on the server
 

@@ -7,7 +7,7 @@
 # traffic into the shared VPN exit from infra-server (SOCKS on vpn:1080). Neither of them knows
 # about the proxy.
 #
-# deploy/remote.sh rebuilds everything on every push to main; secrets live in /srv/sublya/.env.
+# deploy/site.sh of infra-server rebuilds everything on every push to main; secrets live in /srv/sublya/.env.
 
 name: sublya
 
