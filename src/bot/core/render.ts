@@ -2,6 +2,7 @@
 
 import { writeFile } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
 
 import { run, tool } from '#bot/core/ffmpeg.ts'
 import {
@@ -17,6 +18,9 @@ import {
 } from '#shared/subtitles.ts'
 
 const FONT = 'Montserrat ExtraBold'
+// Montserrat 7.222, as Debian packaged it: libass sizes the font by its vertical metrics, and
+// newer versions changed them, so another copy would draw other subtitles
+const FONTS_DIR = fileURLToPath(new URL('../fonts', import.meta.url))
 export const HIGHLIGHT = String.raw`{\rHi}` // switches to the Hi style; {\r} switches back
 
 // ASS colours are &HAABBGGRR
@@ -127,8 +131,7 @@ const filterArg = (path: string) =>
 
 export async function burn(video: string, ass: string, out: string, extra: string[] = []): Promise<void> {
 	let vf = `ass=${filterArg(ass)}`
-	const fonts = process.env.SUBLYA_FONTS_DIR
-	if (fonts) vf += `:fontsdir=${filterArg(fonts)}`
+	vf += `:fontsdir=${filterArg(process.env.SUBLYA_FONTS_DIR || FONTS_DIR)}`
 	await run(
 		tool('ffmpeg'),
 		'-y',
