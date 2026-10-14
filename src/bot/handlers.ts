@@ -104,7 +104,10 @@ export function handlers({ db, worker, settings, support }: Deps) {
 		const user = db.getUser(ctx.from.id)
 		const buttons = [
 			{ text: texts.BTN_AUTO, callback_data: `lang:${AUTO}` },
-			...Object.entries(texts.LANG_NAMES).map(([code, name]) => ({ text: name, callback_data: `lang:${code}` })),
+			...Object.entries(texts.LANG_NAMES).map(([code, name]) => ({
+				text: `${texts.LANG_FLAGS[code]} ${name}`,
+				callback_data: `lang:${code}`,
+			})),
 		]
 		await ctx.reply(texts.CHOOSE_LANG(langName(user.lang, settings.defaultLang)), {
 			reply_markup: rows(buttons, 3),
@@ -134,7 +137,15 @@ export function handlers({ db, worker, settings, support }: Deps) {
 	 * keep the parent's shape: a video note comes back as a video note. */
 	async function enqueue(
 		ctx: Context,
-		job: { userId: number; text: string | null; style: string; lang: string | null; parent?: Job; note?: boolean },
+		job: {
+			userId: number
+			text: string | null
+			style: string
+			lang: string | null
+			parent?: Job
+			note?: boolean
+			sourceMsgId?: number
+		},
 	): Promise<number | null> {
 		const { parent } = job
 		let jobId: number
@@ -149,6 +160,7 @@ export function handlers({ db, worker, settings, support }: Deps) {
 				parentId: parent ? rootId(parent) : null,
 				dailyLimit: settings.adminIds.has(job.userId) ? null : settings.dailyVideos,
 				note: parent ? Boolean(parent.note) : job.note,
+				sourceMsgId: job.sourceMsgId,
 			})
 		} catch (e) {
 			if (e instanceof Busy) await ctx.reply(texts.BUSY)
@@ -191,6 +203,7 @@ export function handlers({ db, worker, settings, support }: Deps) {
 			style: user.style,
 			lang: sttLang(user.lang, settings.defaultLang),
 			note: Boolean(msg.video_note),
+			sourceMsgId: msg.message_id,
 		})
 		if (jobId === null) return
 

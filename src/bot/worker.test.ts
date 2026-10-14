@@ -28,7 +28,11 @@ function setup() {
 	return { ...fake, settings, db, worker: new Worker(fake.api, db, settings) }
 }
 
-const queue = (db: Db, inputPath: string, { parentId = null as number | null, note = false } = {}) => {
+const queue = (
+	db: Db,
+	inputPath: string,
+	{ parentId = null as number | null, note = false, sourceMsgId = null as number | null } = {},
+) => {
 	const job = db.submit({
 		userId: 1,
 		chatId: 1,
@@ -39,6 +43,7 @@ const queue = (db: Db, inputPath: string, { parentId = null as number | null, no
 		parentId,
 		dailyLimit: 10,
 		note,
+		sourceMsgId,
 	})
 	db.setProgressMsg(job, 500)
 	return job
@@ -56,9 +61,19 @@ test('a missing video has expired', async () => {
 	assert.ok(!calls.some((c) => c.payload.chat_id === 99), "users' mistakes don't page admins")
 })
 
-test('a re-render uses the cached transcript', async (t) => {
-	if (!(await hasFilter('ass'))) return t.skip('ffmpeg without libass (set SUBLYA_FFMPEG)')
-	const { db, worker, calls, settings } = setup()
+test('a failed job keeps the original video', async () => {
+	const { db, worker, named, settings } = setup()
+	queue(db, join(jobsDir(settings), '1', 'input.mp4'), { sourceMsgId: 300 })
+	await worker.process(db.nextJob()!)
+	assert.deepEqual(
+		named('deleteMessage').map((p) => p.message_id),
+		[500],
+		'the user may want to send it again',
+	)
+})
+
+/** A job folder with a silent video and its transcript, so a render needs no STT. */
+async function cachedVideo(settings: Settings) {
 	const work = join(jobsDir(settings), '1')
 	mkdirSync(work, { recursive: true })
 	const video = join(work, 'input.mp4')
@@ -84,6 +99,13 @@ test('a re-render uses the cached transcript', async (t) => {
 		video,
 	)
 	writeFileSync(join(work, 'transcript.json'), toJson({ ...markTranscript(), size: [180, 320] }))
+	return { work, video }
+}
+
+test('a re-render uses the cached transcript', async (t) => {
+	if (!(await hasFilter('ass'))) return t.skip('ffmpeg without libass (set SUBLYA_FFMPEG)')
+	const { db, worker, calls, settings } = setup()
+	const { work, video } = await cachedVideo(settings)
 
 	const root = queue(db, video)
 	db.finish(root, 'done')
@@ -97,6 +119,23 @@ test('a re-render uses the cached transcript', async (t) => {
 	)
 	assert.equal(db.sttSecondsToday(), 0, 'a re-render must not call STT')
 	assert.ok(!readdirSync(work).some((f) => f.startsWith('out-')), 'the rendered file is removed after sending')
+})
+
+test('a delivered video drops the original, even when it is already gone', async (t) => {
+	if (!(await hasFilter('ass'))) return t.skip('ffmpeg without libass (set SUBLYA_FFMPEG)')
+	const { db, worker, named, settings, answer } = setup()
+	answer('deleteMessage', (p) => {
+		if (p.message_id === 300) throw apiError('deleteMessage', 400, 'Bad Request: message to delete not found')
+		return true
+	})
+	const { video } = await cachedVideo(settings)
+	const job = queue(db, video, { sourceMsgId: 300 })
+	await worker.process(db.nextJob()!)
+	assert.equal(db.getJob(job)!.status, 'done')
+	assert.deepEqual(
+		named('deleteMessage').map((p) => p.message_id),
+		[500, 300],
+	)
 })
 
 function sent(note: boolean) {
