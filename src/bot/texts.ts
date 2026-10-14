@@ -10,10 +10,10 @@ export const START = `Пришли видео, и я прожгу в нём су
 /lang — язык речи`
 
 export const STYLE_NAMES: Record<Style, string> = {
-	classic: 'Классика',
-	big: 'Крупно',
-	box: 'Плашка',
-	single: 'По слову',
+	classic: '📝 Классика',
+	big: '🔠 Крупно',
+	box: '🟨 Плашка',
+	single: '☝️ По слову',
 }
 
 export const CHOOSE_STYLE = (current: string) => `Какой стиль ставить по умолчанию? Сейчас: ${current}.`
@@ -27,15 +27,16 @@ export const LANG_NAMES: Record<string, string> = {
 	uk: 'украинский',
 	kk: 'казахский',
 }
+export const LANG_FLAGS: Record<string, string> = { ru: '🇷🇺', en: '🇬🇧', uk: '🇺🇦', kk: '🇰🇿' }
 
 export const QUEUED = (position: number) => `В очереди, позиция ${position}.`
 export const RECOGNIZING = 'Распознаю речь…'
 export const RENDERING = 'Рендерю…'
 
-export const BTN_FIX = 'Исправить текст'
-export const BTN_STYLE = 'Стиль'
-export const BTN_BACK = 'Назад'
-export const BTN_AUTO = 'Авто'
+export const BTN_FIX = '✏️ Текст'
+export const BTN_STYLE = '🎨 Стиль'
+export const BTN_BACK = '⬅️ Назад'
+export const BTN_AUTO = '🌐 Авто'
 
 export const FIX_PROMPT =
 	'Вот что я услышал. Пришли исправленный текст или стих целиком, и я перерендерю видео. Переносы строк станут сменой экрана.'

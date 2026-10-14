@@ -90,6 +90,7 @@ test('a video is queued, moved from the Bot API volume and handed to the worker'
 	assert.ok(!existsSync(local), "the Bot API server's copy is gone")
 	assert.deepEqual(s.replies(), [texts.QUEUED(1)])
 	assert.notEqual(job.progress_msg_id, null)
+	assert.equal(job.source_msg_id, 1, 'the original is deleted once the result is out')
 	assert.equal(s.woken(), 2)
 	assert.equal(s.db.getUser(ALICE.id).name, 'Alice Smith')
 })
@@ -136,6 +137,7 @@ test('fixing the text re-renders with the new text', async () => {
 	await s.message({ text: 'новый текст' })
 	const rerender = s.db.getJob(job + 1)!
 	assert.deepEqual([rerender.parent_id, rerender.text, rerender.status], [job, 'новый текст', 'queued'])
+	assert.equal(rerender.source_msg_id, null, "the user's text is not a video to clean up")
 })
 
 test('cancel leaves the fix', async () => {
@@ -152,6 +154,7 @@ test('another style re-renders the same video', async () => {
 	await s.press(`st:${job}:big`)
 	const rerender = s.db.getJob(job + 1)!
 	assert.deepEqual([rerender.parent_id, rerender.style, rerender.lang], [job, 'big', 'ru'])
+	assert.equal(rerender.source_msg_id, null)
 })
 
 test("someone else's video can't be restyled", async () => {

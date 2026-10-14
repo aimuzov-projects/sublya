@@ -117,6 +117,9 @@ export class Worker {
 		}
 		this.db.finish(job.id, 'done')
 		await this.dropProgress(job)
+		// the result carries the buttons and the job folder keeps the input, so the original is
+		// clutter; on a failure it stays for the user to send again
+		await this.drop(job, job.source_msg_id, 'source')
 	}
 
 	async send(job: Job, out: string, transcript: Transcript): Promise<void> {
@@ -183,13 +186,14 @@ export class Worker {
 		}
 	}
 
-	private async dropProgress(job: Job) {
-		const msgId = this.progressMsg(job)
+	private dropProgress = (job: Job) => this.drop(job, this.progressMsg(job), 'progress')
+
+	private async drop(job: Job, msgId: number | null, what: string) {
 		if (msgId === null) return
 		try {
 			await this.api.deleteMessage(job.chat_id, msgId)
 		} catch (e) {
-			if (!isBadRequest(e)) console.warn(`could not drop the progress of job ${job.id}`, e)
+			if (!isBadRequest(e)) console.warn(`could not drop the ${what} of job ${job.id}`, e)
 		}
 	}
 }

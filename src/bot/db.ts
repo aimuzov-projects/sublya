@@ -48,7 +48,7 @@ CREATE TABLE IF NOT EXISTS support_topics (
 // columns added after the first release: CREATE TABLE IF NOT EXISTS won't add them
 const MIGRATIONS: Record<string, Record<string, string>> = {
 	users: { name: 'TEXT', username: 'TEXT' },
-	jobs: { note: 'INTEGER NOT NULL DEFAULT 0' },
+	jobs: { note: 'INTEGER NOT NULL DEFAULT 0', source_msg_id: 'INTEGER' },
 	usage: { bonus: 'INTEGER NOT NULL DEFAULT 0' },
 }
 
@@ -71,6 +71,8 @@ export type Job = {
 	finished_at: number | null
 	/** The video came as a video note, so the result goes back as one. */
 	note: number
+	/** The user's message with the video, deleted once the result is out. */
+	source_msg_id: number | null
 }
 
 /** Re-renders reuse the files of the job that received the video. */
@@ -98,6 +100,7 @@ export type Submit = {
 	/** null (admins) means no quota, though the video is still counted. */
 	dailyLimit: number | null
 	note?: boolean
+	sourceMsgId?: number | null
 }
 
 const DAY = 86400
@@ -222,7 +225,7 @@ export class Db {
 			}
 			const { lastInsertRowid } = this.run(
 				'INSERT INTO jobs (user_id, chat_id, parent_id, status, input_path, text, style,' +
-					' lang, note, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+					' lang, note, source_msg_id, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
 				s.userId,
 				s.chatId,
 				s.parentId,
@@ -232,6 +235,7 @@ export class Db {
 				s.style,
 				s.lang,
 				s.note ? 1 : 0,
+				s.sourceMsgId ?? null,
 				this.clock(),
 			)
 			return Number(lastInsertRowid)
