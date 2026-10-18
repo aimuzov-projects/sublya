@@ -1,0 +1,15 @@
+# Changelog
+
+## [1.1.0](https://github.com/aimuzov-projects/sublya/compare/v1.0.0...v1.1.0) (2026-10-18)
+
+
+### Features
+
+* move the 404 to the shared not-found page ([ab1ce3b](https://github.com/aimuzov-projects/sublya/commit/ab1ce3bb4f65f1193da906b2e31aa896536e29e1))
+* move the 404 to the shared not-found page ([2abb53b](https://github.com/aimuzov-projects/sublya/commit/2abb53b952e9e87b36069c604a5b4024651d8548))
+
+
+### Bug Fixes
+
+* **ci:** don't deploy a cancelled run ([#30](https://github.com/aimuzov-projects/sublya/issues/30)) ([e673fa2](https://github.com/aimuzov-projects/sublya/commit/e673fa2a39bbf6f2ea7824d19a1d545bd6a6f3a2))
+* **ci:** run checks once per PR push ([#32](https://github.com/aimuzov-projects/sublya/issues/32)) ([20d121c](https://github.com/aimuzov-projects/sublya/commit/20d121cd987d898017942389a3e2433f8cee2194))
