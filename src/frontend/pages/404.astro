@@ -1,4 +1,5 @@
 ---
+import NotFound from '@aimuzov-projects/infra-site-kit/not-found.astro'
 import Header from '#frontend/components/header.astro'
 import Base from '#frontend/layouts/base.astro'
 ---
@@ -6,26 +7,20 @@ import Base from '#frontend/layouts/base.astro'
 <Base title="Страница не найдена" description="Такой страницы на сайте нет." index={false}>
 	<Header />
 	<main class="missing">
-		<h1>Такой страницы нет</h1>
-		<p class="missing__text">Возможно, ссылка устарела или в ней опечатка.</p>
-		<a href="/" class="btn">
-			На главную
-		</a>
+		<!-- В sitemap одна главная, подсказывать нечего. -->
+		<NotFound suggest={false} />
 	</main>
 </Base>
 
 <style>
 	.missing {
+		/* Тема общей 404 -- от сайтовой кнопки `.btn`. */
+		--not-found-accent: var(--yellow);
+		--not-found-muted: var(--muted);
+		--not-found-radius: 999px;
+
 		display: grid;
 		place-content: center;
-		justify-items: center;
 		min-height: calc(100svh - 64px);
-		padding: 0 16px;
-		text-align: center;
-
-		&__text {
-			margin: 1rem 0 2rem;
-			color: var(--muted);
-		}
 	}
 </style>
