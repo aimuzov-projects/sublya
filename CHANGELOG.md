@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.3.0](https://github.com/aimuzov-projects/sublya/compare/v1.2.0...v1.3.0) (2026-10-20)
+
+
+### Features
+
+* add a What's new page ([f7b7681](https://github.com/aimuzov-projects/sublya/commit/f7b7681aac0e05c57bc75bfbf32c769db57b9656))
+* add a What's new page linked from the header and footer ([9859e06](https://github.com/aimuzov-projects/sublya/commit/9859e0686a1aa600b55f2f44ade41714d3dfe5ea))
+
 ## [1.2.0](https://github.com/aimuzov-projects/sublya/compare/v1.1.0...v1.2.0) (2026-10-20)
 
 
