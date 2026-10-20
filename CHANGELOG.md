@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.2.0](https://github.com/aimuzov-projects/sublya/compare/v1.1.0...v1.2.0) (2026-10-20)
+
+
+### Features
+
+* reserve the scrollbar gutter on every page ([423cccc](https://github.com/aimuzov-projects/sublya/commit/423ccccb23da7ab1175140f3d18226d4b22a11c7))
+* reserve the scrollbar gutter on every page ([b7a243e](https://github.com/aimuzov-projects/sublya/commit/b7a243e21b44acb10d8395e3f61ea41056dfb385))
+
 ## [1.1.0](https://github.com/aimuzov-projects/sublya/compare/v1.0.0...v1.1.0) (2026-10-18)
 
 
