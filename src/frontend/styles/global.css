@@ -177,7 +177,7 @@ h3 {
 	gap: 14px;
 	align-items: center;
 }
-.gh {
+.top-icon {
 	display: grid;
 	place-items: center;
 	width: 40px;
@@ -185,12 +185,13 @@ h3 {
 	border-radius: 50%;
 	color: var(--muted);
 
-	/* до кода и так один клик из карточек и подвала, а кнопка бота важнее */
+	/* до кода и ченжлога и так один клик из подвала, а кнопка бота важнее */
 	@media (--below-header) {
 		display: none;
 	}
 }
-.gh:hover {
+.top-icon:hover,
+.top-icon[aria-current='page'] {
 	color: var(--text);
 	background: rgba(255, 255, 255, 0.06);
 }

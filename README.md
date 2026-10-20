@@ -40,7 +40,7 @@ The bot and the site speak Russian, so the names below are translated.
 - **Quotas**: new videos per user per day and recognised minutes per day for the whole bot. Admins have no limit, re-renders are free.
 - **Support**: with a forum group set up, every user gets a topic with their whole dialogue, and what the team writes there goes back to the user from the bot.
 - **Admin panel**: a Telegram Mini App with users, videos, errors and the OpenRouter balance; `/admin` opens it for admins. Telegram signs the Mini App's initData with the bot token, and that signature is the whole authentication.
-- **Site**: the landing page with a deck of real demo videos. The page plays the video as it was sent and draws the bot's subtitles over it, so a style switch is instant and a card downloads one video.
+- **Site**: the landing page with a deck of real demo videos. The page plays the video as it was sent and draws the bot's subtitles over it, so a style switch is instant and a card downloads one video. The [What's new](https://sublya.aimuzov.online/changelog/) page tells in plain words what changed in the bot and on the site.
 
 ## How a video becomes subtitles
 
