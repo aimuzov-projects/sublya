@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.3.1](https://github.com/aimuzov-projects/sublya/compare/v1.3.0...v1.3.1) (2026-10-20)
+
+
+### Bug Fixes
+
+* **deps:** move to infra-site-kit v2 with base.css ([261de64](https://github.com/aimuzov-projects/sublya/commit/261de64b1f4285635cffe03a576b4f0b16eeff75))
+* **deps:** move to infra-site-kit v2 with base.css ([c78b473](https://github.com/aimuzov-projects/sublya/commit/c78b473f21bdbbaecb4fc8d8a3a2f72331973d6c))
+
 ## [1.3.0](https://github.com/aimuzov-projects/sublya/compare/v1.2.0...v1.3.0) (2026-10-20)
 
 
