@@ -1,0 +1,28 @@
+---
+import Changelog from '@aimuzov-projects/infra-site-kit/changelog.astro'
+import * as lucide from 'lucide-static'
+
+import Footer from '#frontend/components/footer.astro'
+import Header from '#frontend/components/header.astro'
+import releases from '#frontend/data/changelog.json'
+import Base from '#frontend/layouts/base.astro'
+---
+
+<Base title="Что нового" description="Что изменилось в Сабле: что научился бот и что нового на сайте.">
+	<Header />
+	<main class="changelog-page">
+		<Changelog {releases} icons={lucide} lead="Как менялась Сабля: что научился бот и что нового на сайте." />
+	</main>
+	<Footer />
+</Base>
+
+<style>
+	.changelog-page {
+		--changelog-accent: var(--yellow);
+		--changelog-muted: var(--muted);
+		--changelog-width: 1120px;
+		--changelog-padding: 56px 16px 72px;
+		/* оглавление прилипает под липкой шапкой */
+		--changelog-sticky-top: 88px;
+	}
+</style>

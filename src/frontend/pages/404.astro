@@ -7,7 +7,7 @@ import Base from '#frontend/layouts/base.astro'
 <Base title="Страница не найдена" description="Такой страницы на сайте нет." index={false}>
 	<Header />
 	<main class="missing">
-		<!-- В sitemap одна главная, подсказывать нечего. -->
+		<!-- Кроме главной в sitemap только «Что нового», подсказывать нечего. -->
 		<NotFound suggest={false} />
 	</main>
 </Base>
