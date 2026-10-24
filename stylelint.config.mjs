@@ -1,3 +1,3 @@
 export default {
-	extends: ['@aimuzov-projects/infra-site-kit/stylelint'],
+	extends: ['@aimuzov/infra-site-kit/stylelint'],
 }

@@ -8,14 +8,14 @@
 </p>
 
 <p align="center">
-	<a href="https://github.com/aimuzov-projects/sublya/actions/workflows/deploy.yml"><img src="https://img.shields.io/github/actions/workflow/status/aimuzov-projects/sublya/deploy.yml?branch=main&label=deploy" alt="Deploy"></a>
+	<a href="https://github.com/aimuzov/sublya/actions/workflows/deploy.yml"><img src="https://img.shields.io/github/actions/workflow/status/aimuzov/sublya/deploy.yml?branch=main&label=deploy" alt="Deploy"></a>
 	<a href="https://sublya.aimuzov.online"><img src="https://img.shields.io/website?url=https%3A%2F%2Fsublya.aimuzov.online&label=site" alt="Site status"></a>
 	<a href="https://t.me/sublyarobot"><img src="https://img.shields.io/badge/Telegram-@sublyarobot-26a5e4?logo=telegram&logoColor=white" alt="Telegram bot"></a>
-	<a href="package.json"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Faimuzov-projects%2Fsublya%2Fmain%2Fpackage.json&query=%24.engines.node&label=node&logo=nodedotjs&logoColor=white&color=5fa04e" alt="Node"></a>
-	<a href="https://grammy.dev"><img src="https://img.shields.io/github/package-json/dependency-version/aimuzov-projects/sublya/grammy?label=grammY&color=009dca" alt="grammY"></a>
-	<a href="https://astro.build"><img src="https://img.shields.io/github/package-json/dependency-version/aimuzov-projects/sublya/dev/astro?logo=astro&logoColor=white&color=bc52ee" alt="Astro"></a>
-	<a href="https://svelte.dev"><img src="https://img.shields.io/github/package-json/dependency-version/aimuzov-projects/sublya/dev/svelte?logo=svelte&logoColor=white&color=ff3e00" alt="Svelte"></a>
-	<a href="LICENSE"><img src="https://img.shields.io/github/license/aimuzov-projects/sublya" alt="License"></a>
+	<a href="package.json"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Faimuzov%2Fsublya%2Fmain%2Fpackage.json&query=%24.engines.node&label=node&logo=nodedotjs&logoColor=white&color=5fa04e" alt="Node"></a>
+	<a href="https://grammy.dev"><img src="https://img.shields.io/github/package-json/dependency-version/aimuzov/sublya/grammy?label=grammY&color=009dca" alt="grammY"></a>
+	<a href="https://astro.build"><img src="https://img.shields.io/github/package-json/dependency-version/aimuzov/sublya/dev/astro?logo=astro&logoColor=white&color=bc52ee" alt="Astro"></a>
+	<a href="https://svelte.dev"><img src="https://img.shields.io/github/package-json/dependency-version/aimuzov/sublya/dev/svelte?logo=svelte&logoColor=white&color=ff3e00" alt="Svelte"></a>
+	<a href="LICENSE"><img src="https://img.shields.io/github/license/aimuzov/sublya" alt="License"></a>
 </p>
 
 <h3 align="center">TikTok-style subtitles in one message</h3>
@@ -61,7 +61,7 @@ Imports go through `#bot/*`, `#frontend/*` and `#shared/*`. Files are named in k
 
 ## Running
 
-Stack and layout follow [infra-site-template](https://github.com/aimuzov-projects/infra-site-template); the Prettier, stylelint and oxlint configs and the CI steps come from [infra-site-kit](https://github.com/aimuzov-projects/infra-site-kit). Node comes from [`mise.toml`](mise.toml).
+Stack and layout follow [infra-site-template](https://github.com/aimuzov/infra-site-template); the Prettier, stylelint and oxlint configs and the CI steps come from [infra-site-kit](https://github.com/aimuzov/infra-site-kit). Node comes from [`mise.toml`](mise.toml).
 
 ```sh
 cp .env.example .env   # BOT_TOKEN and STT_API_KEY for the bot; the site needs none
@@ -76,7 +76,7 @@ Before committing, the same checks as in CI:
 npm run format:check && npm run lint:js && npm run lint:css && npm run check && npm test
 ```
 
-The e2e tests in [`e2e`](e2e) build the site and open it in Chromium with the shared checks of [infra-site-kit](https://github.com/aimuzov-projects/infra-site-kit): the sitemap pages answer without console errors and pass axe, Yandex Metrica waits for the first interaction. The browser is installed once with `npx playwright install chromium`, then `npm run test:e2e`.
+The e2e tests in [`e2e`](e2e) build the site and open it in Chromium with the shared checks of [infra-site-kit](https://github.com/aimuzov/infra-site-kit): the sitemap pages answer without console errors and pass axe, Yandex Metrica waits for the first interaction. The browser is installed once with `npx playwright install chromium`, then `npm run test:e2e`.
 
 Render tests need ffmpeg with libass and are skipped otherwise. Homebrew's `ffmpeg` has no libass, `ffmpeg-full` does:
 
@@ -139,7 +139,7 @@ The build puts a CSP with hashes of Astro's scripts and styles into every page (
 
 ## Deployment
 
-The projects server from [infra-server](https://github.com/aimuzov-projects/infra-server): merging the release PR that release-please keeps open runs `deploy.yml`, which runs the checks and logs in over SSH, where the key runs the shared [`deploy/site.sh`](https://github.com/aimuzov-projects/infra-server/blob/main/deploy/site.sh) of infra-server. It pulls `main` into `/srv/sublya` and rebuilds [`deploy/docker-compose.yml`](deploy/docker-compose.yml): the site in nginx, the bot, the local Bot API server and a tun2socks tunnel that takes the bot's traffic to Telegram and OpenRouter out through the shared VPN exit. The domain and TLS are on the shared Caddy, which also sends `/admin` to the bot. Secrets live in `/srv/sublya/.env`, the database and job files in `/srv/sublya/data`. Details and the first deploy: [docs/deploy.md](docs/deploy.md).
+The projects server from [infra-server](https://github.com/aimuzov/infra-server): merging the release PR that release-please keeps open runs `deploy.yml`, which runs the checks and logs in over SSH, where the key runs the shared [`deploy/site.sh`](https://github.com/aimuzov/infra-server/blob/main/deploy/site.sh) of infra-server. It pulls `main` into `/srv/sublya` and rebuilds [`deploy/docker-compose.yml`](deploy/docker-compose.yml): the site in nginx, the bot, the local Bot API server and a tun2socks tunnel that takes the bot's traffic to Telegram and OpenRouter out through the shared VPN exit. The domain and TLS are on the shared Caddy, which also sends `/admin` to the bot. Secrets live in `/srv/sublya/.env`, the database and job files in `/srv/sublya/data`. Details and the first deploy: [docs/deploy.md](docs/deploy.md).
 
 Once an hour [`monitor.yml`](.github/workflows/monitor.yml) checks from outside that the site answers and that `/admin/api/health` does: the bot asks Telegram for `getMe` through the local Bot API server and the tunnel. A failed run is the alert, GitHub emails it.
 
