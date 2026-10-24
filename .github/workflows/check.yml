@@ -16,7 +16,7 @@ jobs:
     timeout-minutes: 15
     steps:
       # ffmpeg в Ubuntu собран с libass, поэтому тесты рендера бота тоже прогоняются.
-      - uses: aimuzov/infra-site-kit/check@v3
+      - uses: aimuzov/infra-site-kit/check@v4
         with:
           apt-packages: ffmpeg
       # e2e из infra-site-kit: сборка в Chromium. Браузер кэшируется по версии Playwright,
