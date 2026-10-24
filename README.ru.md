@@ -8,7 +8,7 @@
 </p>
 
 <p align="center">
-	<a href="https://github.com/aimuzov/sublya/actions/workflows/deploy.yml"><img src="https://img.shields.io/github/actions/workflow/status/aimuzov/sublya/deploy.yml?branch=main&label=deploy" alt="Deploy"></a>
+	<a href="https://github.com/aimuzov/sublya/actions/workflows/deploy.yml"><img src="https://img.shields.io/github/actions/workflow/status/aimuzov/sublya/deploy.yml?branch=main&label=release" alt="Release"></a>
 	<a href="https://sublya.aimuzov.online"><img src="https://img.shields.io/website?url=https%3A%2F%2Fsublya.aimuzov.online&label=site" alt="Сайт"></a>
 	<a href="https://t.me/sublyarobot"><img src="https://img.shields.io/badge/Telegram-@sublyarobot-26a5e4?logo=telegram&logoColor=white" alt="Бот в Telegram"></a>
 	<a href="package.json"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Faimuzov%2Fsublya%2Fmain%2Fpackage.json&query=%24.engines.node&label=node&logo=nodedotjs&logoColor=white&color=5fa04e" alt="Node"></a>
@@ -141,7 +141,7 @@ SUBLYA_FFMPEG=/opt/homebrew/opt/ffmpeg-full/bin/ffmpeg demo/make-demo.sh name vi
 
 Раз в час [`monitor.yml`](.github/workflows/monitor.yml) снаружи проверяет, что отвечают сайт и `/admin/api/health`: бот запрашивает у Telegram `getMe` через локальный Bot API и туннель. Упавший запуск и есть алерт, GitHub пришлёт о нём письмо.
 
-Быстро откатиться — запустить Deploy вручную с прошлым тегом: `gh workflow run deploy.yml -f tag=v1.2.3`. Исправление плохого коммита выезжает через релизный PR, как любое изменение.
+Быстро откатиться — запустить Release вручную с прошлым тегом: `gh workflow run deploy.yml -f tag=v1.2.3`. Исправление плохого коммита выезжает через релизный PR, как любое изменение.
 
 ## Лицензия
 

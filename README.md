@@ -8,7 +8,7 @@
 </p>
 
 <p align="center">
-	<a href="https://github.com/aimuzov/sublya/actions/workflows/deploy.yml"><img src="https://img.shields.io/github/actions/workflow/status/aimuzov/sublya/deploy.yml?branch=main&label=deploy" alt="Deploy"></a>
+	<a href="https://github.com/aimuzov/sublya/actions/workflows/deploy.yml"><img src="https://img.shields.io/github/actions/workflow/status/aimuzov/sublya/deploy.yml?branch=main&label=release" alt="Release"></a>
 	<a href="https://sublya.aimuzov.online"><img src="https://img.shields.io/website?url=https%3A%2F%2Fsublya.aimuzov.online&label=site" alt="Site status"></a>
 	<a href="https://t.me/sublyarobot"><img src="https://img.shields.io/badge/Telegram-@sublyarobot-26a5e4?logo=telegram&logoColor=white" alt="Telegram bot"></a>
 	<a href="package.json"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Faimuzov%2Fsublya%2Fmain%2Fpackage.json&query=%24.engines.node&label=node&logo=nodedotjs&logoColor=white&color=5fa04e" alt="Node"></a>
@@ -143,7 +143,7 @@ The projects server from [infra-server](https://github.com/aimuzov/infra-server)
 
 Once an hour [`monitor.yml`](.github/workflows/monitor.yml) checks from outside that the site answers and that `/admin/api/health` does: the bot asks Telegram for `getMe` through the local Bot API server and the tunnel. A failed run is the alert, GitHub emails it.
 
-To roll back fast, run Deploy by hand with the previous tag: `gh workflow run deploy.yml -f tag=v1.2.3`. A fix of the bad commit goes out through the release PR like any change.
+To roll back fast, run Release by hand with the previous tag: `gh workflow run deploy.yml -f tag=v1.2.3`. A fix of the bad commit goes out through the release PR like any change.
 
 ## License
 
