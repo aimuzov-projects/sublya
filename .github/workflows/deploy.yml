@@ -60,14 +60,5 @@ jobs:
         with:
           ssh-key: ${{ secrets.DEPLOY_SSH_KEY }}
           url: https://sublya.aimuzov.online/
+          health-url: https://sublya.aimuzov.online/admin/api/health
           ref: ${{ needs.release.outputs.tag || inputs.tag }}
-
-      # Своего адреса у бота нет: его health-check отвечает через Caddy, а до Telegram
-      # достучивается через локальный сервер Bot API и туннель.
-      - name: Check bot
-        run: |
-          for i in 1 2 3 4 5 6; do
-            curl -fsS https://sublya.aimuzov.online/admin/api/health && exit 0
-            sleep 5
-          done
-          exit 1
