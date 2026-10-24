@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.3.2](https://github.com/aimuzov/sublya/compare/v1.3.1...v1.3.2) (2026-10-24)
+
+
+### Bug Fixes
+
+* **deps:** move to infra-site-kit v3 under the personal aimuzov account ([16a9644](https://github.com/aimuzov/sublya/commit/16a9644e9389d3236a2ce69bd3a27429dd6381a2))
+* **deps:** move to infra-site-kit v3 under the personal aimuzov account ([b66c911](https://github.com/aimuzov/sublya/commit/b66c911e6494ff1d416ce851c39bb6dd5e6b6e31))
+
 ## [1.3.1](https://github.com/aimuzov-projects/sublya/compare/v1.3.0...v1.3.1) (2026-10-20)
 
 
