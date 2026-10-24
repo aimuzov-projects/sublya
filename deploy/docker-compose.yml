@@ -1,5 +1,5 @@
 # Прод, на сервере проектов. Порты 80/443 принадлежат общему Caddy из
-# aimuzov-projects/infra-server: он проксирует sublya.aimuzov.online на сайт, а
+# aimuzov/infra-server: он проксирует sublya.aimuzov.online на сайт, а
 # /admin -- на админку бота, и то и другое через сеть edge.
 #
 # С сервера напрямую до Telegram и OpenRouter не достучаться, поэтому бот и сервер

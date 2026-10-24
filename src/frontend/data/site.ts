@@ -9,5 +9,5 @@ export const site = {
 	/** `og:description` главной — то, что покажет превью ссылки в мессенджере. */
 	pitch: 'Пришли видео в Telegram — получи его с субтитрами, где подсвечено произносимое слово.',
 	bot: 'https://t.me/sublyarobot',
-	repo: 'https://github.com/aimuzov-projects/sublya',
+	repo: 'https://github.com/aimuzov/sublya',
 }

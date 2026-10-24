@@ -4,11 +4,11 @@ The bot and the site run on the projects server (1 vCPU, 2 GB RAM), which they s
 other projects. The repository is cloned to `/srv/sublya` there, and `deploy/docker-compose.yml`
 builds and runs both: the site in nginx, the bot next to its local Bot API server. Ports 80/443
 and the domains belong to the shared Caddy from
-[infra-server](https://github.com/aimuzov-projects/infra-server).
+[infra-server](https://github.com/aimuzov/infra-server).
 
 Every release deploys it: merging the release PR that release-please keeps open runs
 `.github/workflows/deploy.yml`, which runs the checks, then logs into
-the server with the `DEPLOY_SSH_KEY` secret. That key runs [`deploy/site.sh`](https://github.com/aimuzov-projects/infra-server/blob/main/deploy/site.sh) of
+the server with the `DEPLOY_SSH_KEY` secret. That key runs [`deploy/site.sh`](https://github.com/aimuzov/infra-server/blob/main/deploy/site.sh) of
 infra-server, the deploy script shared by the sites, through the server's `authorized_keys`:
 
 ```
@@ -38,7 +38,7 @@ docker run --rm --network vpn curlimages/curl -sS -o /dev/null -w '%{http_code}\
 
 ## First deploy
 
-1. `git clone https://github.com/aimuzov-projects/sublya.git /srv/sublya` on the server.
+1. `git clone https://github.com/aimuzov/sublya.git /srv/sublya` on the server.
 2. Create `/srv/sublya/.env` from `.env.example`. `TELEGRAM_API_URL` and `DATA_DIR` are set
    by the compose file.
 3. If the bot has been polling the public Bot API, log it out once:
